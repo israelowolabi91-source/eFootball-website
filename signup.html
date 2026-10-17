@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create account | Tim eFootball League</title>
+    <meta name="description" content="Create your Tim eFootball League account and verify your Gmail.">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body class="account-page">
+    <header class="site-header">
+        <div class="header-container">
+            <a class="brand" href="index.html" aria-label="Tim eFootball League home">
+                <span class="brand-mark"><img src="favicon.png" alt=""></span>
+                <span class="brand-copy">
+                    <span class="brand-name">Tim eFootball</span>
+                    <span class="brand-label">League <span>•</span> Est. 2024</span>
+                </span>
+            </a>
+            <a class="back-link" href="login.html">Sign in <span>→</span></a>
+        </div>
+    </header>
+
+    <main class="account-shell">
+        <section class="register-card">
+            <div id="signup-state">
+                <div class="auth-heading">
+                    <span class="auth-kicker">Join the community</span>
+                    <h1>Create your account</h1>
+                    <p>Verify your Gmail to unlock your player profile.</p>
+                </div>
+                <form id="signup-form" class="register-form" novalidate>
+                    <div class="form-grid">
+                        <div class="field-group">
+                            <label for="signup-name">Full name</label>
+                            <input id="signup-name" name="firstName" type="text" placeholder="Ray Parker" autocomplete="name" minlength="2" maxlength="60" required>
+                        </div>
+                        <div class="field-group">
+                            <label for="signup-gamer">eFootball gamer name</label>
+                            <input id="signup-gamer" name="gamerTag" type="text" placeholder="RaysLegend" autocomplete="nickname" minlength="3" maxlength="32" required>
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label for="signup-email">Gmail</label>
+                        <input id="signup-email" name="email" type="email" placeholder="you@gmail.com" autocomplete="email" maxlength="254" required>
+                    </div>
+                    <div class="field-group">
+                        <label for="signup-password">Password</label>
+                        <div class="password-field">
+                            <input id="signup-password" name="password" type="password" placeholder="8 or more characters" autocomplete="new-password" minlength="8" maxlength="72" required>
+                            <button type="button" class="password-toggle" data-password-toggle="signup-password" aria-label="Show or hide password">Show</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-button">Create account</button>
+                    <div id="signup-message" class="form-message" role="status" aria-live="polite"></div>
+                </form>
+                <div class="auth-divider" style="display:flex; align-items:center; gap:10px; margin:16px 0; color:#64748b; font-size:0.75rem;">
+                    <span style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></span>
+                    <span>OR</span>
+                    <span style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></span>
+                </div>
+                <button type="button" class="gate-google-btn" id="signup-google-btn" style="margin-bottom:16px;">
+                    <svg class="gate-google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                    <span>Continue with Google</span>
+                </button>
+                <p class="signup-prompt">Already registered? <a href="login.html">Sign in</a></p>
+            </div>
+
+            <div id="verification-state" class="verification-state" hidden>
+                <span class="recovery-icon" aria-hidden="true">✉</span>
+                <p class="auth-kicker">Check your Gmail</p>
+                <h2>Verify your account</h2>
+                <p>We sent a confirmation email to <strong id="verification-email"></strong>. Click the <strong>Verify my email</strong> button in that message to activate your account.</p>
+                <a class="secondary-button verification-login-link" href="login.html">Go to sign in</a>
+            </div>
+            <p class="security-note"><span aria-hidden="true">🔒</span>Your password is securely hashed. Your account stays locked until email verification.</p>
+        </section>
+    </main>
+
+    <script>
+        const signupForm = document.getElementById('signup-form');
+        const signupState = document.getElementById('signup-state');
+        const verificationState = document.getElementById('verification-state');
+
+        document.querySelectorAll('.password-toggle').forEach((button) => {
+            button.addEventListener('click', () => {
+                const input = document.getElementById(button.dataset.passwordToggle);
+                input.type = input.type === 'password' ? 'text' : 'password';
+                button.textContent = input.type === 'password' ? 'Show' : 'Hide';
+            });
+        });
+
+        signupForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const message = document.getElementById('signup-message');
+            const button = signupForm.querySelector('[type="submit"]');
+            const account = {
+                firstName: signupForm.firstName.value.trim(),
+                gamerTag: signupForm.gamerTag.value.trim(),
+                email: signupForm.email.value.trim().toLowerCase(),
+                password: signupForm.password.value
+            };
+            const tell = (text, isError = false) => {
+                message.textContent = text;
+                message.style.color = isError ? '#ffd5d5' : '#f8e6a2';
+            };
+
+            if (account.firstName.length < 2 || account.firstName.length > 60) {
+                tell('Enter your full name (2–60 characters).', true);
+                return;
+            }
+            if (account.gamerTag.length < 3 || account.gamerTag.length > 32) {
+                tell('Your gamer name must be 3–32 characters.', true);
+                return;
+            }
+            if (!/^[^\s@]+@gmail\.com$/i.test(account.email)) {
+                tell('Use a valid Gmail address ending in @gmail.com.', true);
+                return;
+            }
+            if (account.password.length < 8) {
+                tell('Password must contain at least 8 characters.', true);
+                return;
+            }
+            if (new TextEncoder().encode(account.password).length > 72) {
+                tell('Password must be 72 bytes or fewer.', true);
+                return;
+            }
+
+            button.disabled = true;
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(account)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Account creation failed.');
+                if (result.requiresVerification || !result.verified) {
+                    tell(`✓ Account created! A verification link was sent to ${account.email}. Check your Gmail, verify, then sign in.`);
+                    button.textContent = 'Verification email sent';
+                    setTimeout(() => {
+                        window.location.href = `login.html?pending_verification=${encodeURIComponent(account.email)}`;
+                    }, 3500);
+                    return;
+                }
+                window.location.href = 'index.html';
+            } catch (error) {
+                tell(error.message, true);
+            } finally {
+                button.disabled = false;
+            }
+        });
+
+        document.getElementById('signup-google-btn')?.addEventListener('click', async () => {
+            const email = prompt('Enter your Gmail address to continue with Google:', '');
+            if (!email || !email.trim()) return;
+            tell('Connecting with Google…');
+            try {
+                const response = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ email: email.trim() })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Google sign up failed.');
+                window.location.href = 'index.html';
+            } catch (err) {
+                tell(err.message, true);
+            }
+        });
+
+        (async () => {
+            try {
+                const response = await fetch('/api/me', { credentials: 'same-origin' });
+                if (response.ok) window.location.href = 'index.html';
+            } catch (error) {
+                document.getElementById('signup-message').textContent = 'Cannot reach the server. Try again in a moment.';
+            }
+        })();
+    </script>
+</body>
+</html>

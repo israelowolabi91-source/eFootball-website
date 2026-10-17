@@ -1,0 +1,28 @@
+{
+  "version": "2.0",
+  "envId": "{{env.ENV_ID}}",
+  "$schema": "https://framework-api.cloudbase.net/schema/latest.json",
+  "framework": {
+    "name": "tim-efootball-league",
+    "plugins": {
+      "container": {
+        "use": "@cloudbase/framework-plugin-container",
+        "inputs": {
+          "serviceName": "efootball-league",
+          "servicePath": "/",
+          "containerPort": 3000,
+          "dockerfilePath": "./Dockerfile",
+          "cpu": 0.5,
+          "mem": 1,
+          "minNum": 1,
+          "maxNum": 5,
+          "envVariables": {
+            "NODE_ENV": "production",
+            "PORT": "3000"
+          }
+        }
+      }
+    }
+  }
+}
+

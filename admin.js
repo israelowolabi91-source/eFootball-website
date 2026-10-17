@@ -1,0 +1,1236 @@
+// Admin Operations Console Client Logic
+(function() {
+    'use strict';
+
+    let currentAdminKey = sessionStorage.getItem('tim_admin_key') || localStorage.getItem('tim_admin_key') || '';
+    let adminUser = null;
+    let cachedUsers = [];
+    let cachedMatches = [];
+    let cachedContent = {};
+
+    const toastContainer = document.getElementById('admin-toast-container');
+    const authDialog = document.getElementById('admin-auth-dialog');
+    const authMessage = document.getElementById('admin-auth-message');
+
+    // Show toast message
+    const showToast = (message, type = 'success') => {
+        if (!toastContainer) return;
+        const toast = document.createElement('div');
+        toast.className = `admin-toast toast-${type}`;
+        toast.innerHTML = `<span class="toast-icon">${type === 'success' ? '✓' : '⚠️'}</span> <span>${message}</span>`;
+        toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    };
+
+    // Admin API fetch helper
+    const adminFetch = async (url, options = {}) => {
+        const headers = options.headers ? { ...options.headers } : {};
+        if (currentAdminKey) {
+            headers['X-Admin-Key'] = currentAdminKey;
+        }
+        headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+
+        const response = await fetch(url, {
+            ...options,
+            headers,
+            credentials: 'same-origin'
+        });
+
+        if (response.status === 403 || response.status === 401) {
+            showAuthDialog();
+            throw new Error('Admin authentication required.');
+        }
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.message || `Request failed with status ${response.status}`);
+        }
+        return data;
+    };
+
+    const showAuthDialog = () => {
+        if (authDialog && !authDialog.open) {
+            authDialog.showModal();
+        }
+    };
+
+    const hideAuthDialog = () => {
+        if (authDialog && authDialog.open) {
+            authDialog.close();
+        }
+    };
+
+    // Check existing admin session
+    const checkAdminSession = async () => {
+        try {
+            const result = await adminFetch('/api/admin/session');
+            if (result.ok && result.isAdmin) {
+                adminUser = result.user;
+                document.getElementById('admin-tag').textContent = adminUser.gamerTag || 'Admin';
+                document.getElementById('admin-avatar').textContent = (adminUser.gamerTag || 'A').charAt(0).toUpperCase();
+                hideAuthDialog();
+                loadInitialData();
+            } else {
+                showAuthDialog();
+            }
+        } catch {
+            showAuthDialog();
+        }
+    };
+
+    // Master Key login
+    document.getElementById('admin-key-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('admin-master-key').value.trim();
+        authMessage.textContent = 'Verifying key…';
+        authMessage.className = 'admin-auth-message';
+
+        try {
+            const result = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ key })
+            });
+            const data = await result.json();
+            if (!result.ok) throw new Error(data.message || 'Invalid master key.');
+
+            currentAdminKey = key;
+            sessionStorage.setItem('tim_admin_key', key);
+            localStorage.setItem('tim_admin_key', key);
+            adminUser = data.user;
+            hideAuthDialog();
+            showToast('Authenticated as Administrator!');
+            loadInitialData();
+        } catch (err) {
+            authMessage.textContent = err.message.includes('fetch') ? 'Cannot connect to server. Ensure the server is running on port 3000.' : err.message;
+            authMessage.className = 'admin-auth-message error';
+        }
+    });
+
+    // Password login
+    document.getElementById('admin-password-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('admin-email').value.trim();
+        const password = document.getElementById('admin-password').value;
+        authMessage.textContent = 'Authenticating…';
+        authMessage.className = 'admin-auth-message';
+
+        try {
+            const result = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ email, password })
+            });
+            const data = await result.json();
+            if (!result.ok) throw new Error(data.message || 'Invalid administrator credentials.');
+
+            if (data.token) {
+                currentAdminKey = data.token;
+                sessionStorage.setItem('tim_admin_key', data.token);
+                localStorage.setItem('tim_admin_key', data.token);
+            }
+            adminUser = data.user;
+            hideAuthDialog();
+            showToast('Signed in successfully.');
+            loadInitialData();
+        } catch (err) {
+            authMessage.textContent = err.message.includes('fetch') ? 'Cannot connect to server. Ensure the server is running on port 3000.' : err.message;
+            authMessage.className = 'admin-auth-message error';
+        }
+    });
+
+    // Toggle password visibility buttons
+    document.querySelectorAll('.btn-toggle-pw').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.dataset.target;
+            const input = document.getElementById(targetId);
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        });
+    });
+
+    // Auth tabs toggle
+    document.querySelectorAll('.admin-auth-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.admin-auth-tab').forEach(t => t.classList.remove('is-active'));
+            tab.classList.add('is-active');
+            const mode = tab.dataset.authMode;
+            document.getElementById('admin-key-form').hidden = mode !== 'key';
+            document.getElementById('admin-password-form').hidden = mode !== 'password';
+            authMessage.textContent = '';
+        });
+    });
+
+    // Logout
+    document.getElementById('admin-logout-btn')?.addEventListener('click', async () => {
+        sessionStorage.removeItem('tim_admin_key');
+        localStorage.removeItem('tim_admin_key');
+        try {
+            await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+        } catch {}
+        window.location.href = 'index.html';
+    });
+
+    // Tab Navigation
+    document.querySelectorAll('.admin-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('is-active'));
+            document.querySelectorAll('.admin-tab-pane').forEach(p => p.classList.remove('is-active'));
+            tab.classList.add('is-active');
+            const targetPane = document.getElementById(`pane-${tab.dataset.tab}`);
+            if (targetPane) targetPane.classList.add('is-active');
+
+            if (tab.dataset.tab === 'users') loadUsers();
+            if (tab.dataset.tab === 'matches') loadMatches();
+            if (tab.dataset.tab === 'broadcast') loadBroadcastContent();
+            if (tab.dataset.tab === 'tournaments') loadTournaments();
+            if (tab.dataset.tab === 'clubs') loadClubs();
+            if (tab.dataset.tab === 'bracket') loadBracket();
+        });
+    });
+
+    // Shortcuts from overview cards
+    document.getElementById('btn-goto-broadcast')?.addEventListener('click', () => {
+        document.querySelector('.admin-tab[data-tab="broadcast"]')?.click();
+    });
+    document.getElementById('btn-goto-users')?.addEventListener('click', () => {
+        document.querySelector('.admin-tab[data-tab="users"]')?.click();
+    });
+    document.getElementById('btn-goto-matches')?.addEventListener('click', () => {
+        document.querySelector('.admin-tab[data-tab="matches"]')?.click();
+    });
+
+    // Load Overview Data
+    const loadOverview = async () => {
+        try {
+            const data = await adminFetch('/api/admin/overview');
+            const stats = data.stats;
+            document.getElementById('stat-total-users').textContent = stats.totalUsers;
+            document.getElementById('stat-verified-users').textContent = `${stats.verifiedUsers} verified accounts`;
+            document.getElementById('stat-total-matches').textContent = stats.totalMatches;
+            document.getElementById('stat-approved-matches').textContent = `${stats.approvedMatches} approved fixtures`;
+            document.getElementById('stat-pending-reviews').textContent = stats.pendingReviews;
+
+            if (stats.topPlayer) {
+                document.getElementById('stat-top-player').textContent = stats.topPlayer.gamerTag;
+                document.getElementById('stat-top-player-elo').textContent = `${stats.topPlayer.rating} Elo · ${stats.topPlayer.wins} wins`;
+            } else {
+                document.getElementById('stat-top-player').textContent = '—';
+                document.getElementById('stat-top-player-elo').textContent = 'No player data';
+            }
+        } catch (err) {
+            console.error('Failed to load overview:', err);
+        }
+    };
+
+    // Load Users
+    const loadUsers = async () => {
+        const tbody = document.getElementById('users-tbody');
+        tbody.innerHTML = '<tr><td colspan="7" class="table-loading">Loading players from database…</td></tr>';
+        try {
+            const data = await adminFetch('/api/admin/users');
+            cachedUsers = data.users || [];
+            renderUsersTable();
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="7" class="table-error">Error loading players: ${err.message}</td></tr>`;
+        }
+    };
+
+    const renderUsersTable = () => {
+        const tbody = document.getElementById('users-tbody');
+        const search = (document.getElementById('user-search-input')?.value || '').toLowerCase().trim();
+        const roleFilter = document.getElementById('user-filter-role')?.value || 'all';
+        const verifiedFilter = document.getElementById('user-filter-verified')?.value || 'all';
+
+        const filtered = cachedUsers.filter((u) => {
+            const matchSearch = (u.gamerTag || '').toLowerCase().includes(search) ||
+                                (u.name || '').toLowerCase().includes(search) ||
+                                (u.email || '').toLowerCase().includes(search);
+            const matchRole = roleFilter === 'all' || u.role === roleFilter;
+            const matchVerified = verifiedFilter === 'all' ||
+                                  (verifiedFilter === 'verified' && u.verified) ||
+                                  (verifiedFilter === 'unverified' && !u.verified);
+            return matchSearch && matchRole && matchVerified;
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No players matched your filters.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = filtered.map((u) => `
+            <tr>
+                <td>
+                    <div class="table-player-cell">
+                        <span class="user-avatar-badge">${(u.gamerTag || 'P').charAt(0).toUpperCase()}</span>
+                        <div>
+                            <strong>${u.gamerTag}</strong>
+                            <small>${u.name}</small>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="text-email">${u.email}</span></td>
+                <td><strong class="user-elo-val">${u.rating.toLocaleString()}</strong></td>
+                <td><span class="user-record-pill">${u.wins}W - ${u.draws}D - ${u.losses}L</span></td>
+                <td>
+                    <span class="status-badge ${u.verified ? 'badge-verified' : 'badge-unverified'}">
+                        ${u.verified ? '✓ Verified' : 'Unverified'}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">
+                        ${u.role === 'admin' ? '⚡ Admin' : 'Player'}
+                    </span>
+                </td>
+                <td class="text-right">
+                    <div class="row-actions">
+                        <button type="button" class="btn-action edit" data-user-email="${encodeURIComponent(u.email)}" title="Edit Player">✏️ Edit</button>
+                        <button type="button" class="btn-action password" data-user-email="${encodeURIComponent(u.email)}" title="Set Password">🔑 Pass</button>
+                        <button type="button" class="btn-action delete" data-user-email="${encodeURIComponent(u.email)}" title="Delete Account">🗑️</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    };
+
+    document.getElementById('user-search-input')?.addEventListener('input', renderUsersTable);
+    document.getElementById('user-filter-role')?.addEventListener('change', renderUsersTable);
+    document.getElementById('user-filter-verified')?.addEventListener('change', renderUsersTable);
+
+    // Edit User Modal
+    const modalEditUser = document.getElementById('modal-edit-user');
+    document.getElementById('users-tbody')?.addEventListener('click', (e) => {
+        const btnEdit = e.target.closest('.btn-action.edit');
+        const btnPass = e.target.closest('.btn-action.password');
+        const btnDel = e.target.closest('.btn-action.delete');
+
+        if (btnEdit) {
+            const email = decodeURIComponent(btnEdit.dataset.userEmail);
+            const user = cachedUsers.find(u => u.email === email);
+            if (!user) return;
+
+            document.getElementById('edit-user-original-email').value = user.email;
+            document.getElementById('edit-user-tag').value = user.gamerTag;
+            document.getElementById('edit-user-name').value = user.name;
+            document.getElementById('edit-user-email').value = user.email;
+            document.getElementById('edit-user-rating').value = user.rating;
+            document.getElementById('edit-user-wins').value = user.wins;
+            document.getElementById('edit-user-draws').value = user.draws;
+            document.getElementById('edit-user-losses').value = user.losses;
+            document.getElementById('edit-user-role').value = user.role || 'user';
+            document.getElementById('edit-user-verified').value = String(user.verified);
+            document.getElementById('edit-user-feedback').textContent = '';
+
+            modalEditUser.showModal();
+        }
+
+        if (btnPass) {
+            const email = decodeURIComponent(btnPass.dataset.userEmail);
+            const newPass = prompt(`Enter new password for player (${email}):\n(Minimum 6 characters)`);
+            if (newPass && newPass.length >= 6) {
+                adminFetch(`/api/admin/users/${encodeURIComponent(email)}/reset-password`, {
+                    method: 'POST',
+                    body: JSON.stringify({ newPassword: newPass })
+                }).then(() => {
+                    showToast(`Password updated for ${email}`);
+                }).catch(err => {
+                    alert(`Error: ${err.message}`);
+                });
+            } else if (newPass !== null) {
+                alert('Password must be at least 6 characters.');
+            }
+        }
+
+        if (btnDel) {
+            const email = decodeURIComponent(btnDel.dataset.userEmail);
+            if (confirm(`Are you sure you want to permanently delete player ${email}?\nThis action cannot be undone.`)) {
+                adminFetch(`/api/admin/users/${encodeURIComponent(email)}`, {
+                    method: 'DELETE'
+                }).then(() => {
+                    showToast(`Player ${email} deleted.`);
+                    loadUsers();
+                    loadOverview();
+                }).catch(err => {
+                    alert(`Error: ${err.message}`);
+                });
+            }
+        }
+    });
+
+    // Form: Edit User Submit
+    document.getElementById('form-edit-user')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const originalEmail = document.getElementById('edit-user-original-email').value;
+        const feedback = document.getElementById('edit-user-feedback');
+        feedback.textContent = 'Saving changes live…';
+        feedback.className = 'modal-feedback';
+
+        const updatedData = {
+            gamerTag: document.getElementById('edit-user-tag').value.trim(),
+            name: document.getElementById('edit-user-name').value.trim(),
+            email: document.getElementById('edit-user-email').value.trim(),
+            rating: Number(document.getElementById('edit-user-rating').value),
+            wins: Number(document.getElementById('edit-user-wins').value),
+            draws: Number(document.getElementById('edit-user-draws').value),
+            losses: Number(document.getElementById('edit-user-losses').value),
+            role: document.getElementById('edit-user-role').value,
+            verified: document.getElementById('edit-user-verified').value === 'true'
+        };
+
+        try {
+            const res = await adminFetch(`/api/admin/users/${encodeURIComponent(originalEmail)}`, {
+                method: 'PUT',
+                body: JSON.stringify(updatedData)
+            });
+            showToast(res.message || 'Player updated live.');
+            modalEditUser.close();
+            loadUsers();
+            loadOverview();
+        } catch (err) {
+            feedback.textContent = err.message;
+            feedback.className = 'modal-feedback error';
+        }
+    });
+
+    // Create User Modal
+    const modalCreateUser = document.getElementById('modal-create-user');
+    document.getElementById('btn-open-create-user')?.addEventListener('click', () => {
+        document.getElementById('form-create-user').reset();
+        document.getElementById('create-user-feedback').textContent = '';
+        modalCreateUser.showModal();
+    });
+    document.getElementById('btn-quick-new-user')?.addEventListener('click', () => {
+        document.getElementById('form-create-user').reset();
+        modalCreateUser.showModal();
+    });
+
+    document.getElementById('form-create-user')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const feedback = document.getElementById('create-user-feedback');
+        feedback.textContent = 'Creating account…';
+        feedback.className = 'modal-feedback';
+
+        const newUser = {
+            gamerTag: document.getElementById('create-user-tag').value.trim(),
+            name: document.getElementById('create-user-name').value.trim(),
+            email: document.getElementById('create-user-email').value.trim(),
+            password: document.getElementById('create-user-password').value || 'password123',
+            rating: Number(document.getElementById('create-user-rating').value),
+            role: document.getElementById('create-user-role').value,
+            verified: document.getElementById('create-user-verified').value === 'true'
+        };
+
+        try {
+            const res = await adminFetch('/api/admin/users', {
+                method: 'POST',
+                body: JSON.stringify(newUser)
+            });
+            showToast(res.message || 'Player created.');
+            modalCreateUser.close();
+            loadUsers();
+            loadOverview();
+        } catch (err) {
+            feedback.textContent = err.message;
+            feedback.className = 'modal-feedback error';
+        }
+    });
+
+    // Close Modals
+    document.querySelectorAll('[data-close-modal]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            btn.closest('dialog')?.close();
+        });
+    });
+
+    // Load Matches
+    let currentMatchStatusFilter = 'all';
+    const loadMatches = async () => {
+        const tbody = document.getElementById('matches-tbody');
+        tbody.innerHTML = '<tr><td colspan="6" class="table-loading">Loading matches from database…</td></tr>';
+        try {
+            const data = await adminFetch('/api/admin/all-matches');
+            cachedMatches = data.matches || [];
+            renderMatchesTable();
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="6" class="table-error">Error loading matches: ${err.message}</td></tr>`;
+        }
+    };
+
+    const renderMatchesTable = () => {
+        const tbody = document.getElementById('matches-tbody');
+        const filtered = cachedMatches.filter((m) => {
+            if (currentMatchStatusFilter === 'all') return true;
+            return m.status === currentMatchStatusFilter;
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No matches found with this status filter.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = filtered.map((m) => {
+            const scoreText = m.scores
+                ? `<strong>${m.scores.challenger} — ${m.scores.opponent}</strong>`
+                : '<span class="text-muted">Not reported</span>';
+            const compLabel = (m.competition || 'Cup').toUpperCase();
+            const dateStr = m.scheduledAt ? new Date(m.scheduledAt).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }) : 'TBD';
+
+            return `
+                <tr>
+                    <td>
+                        <span class="comp-badge comp-${m.competition}">${compLabel}</span>
+                        <small class="match-id-sub">#${m.id.slice(0, 10)}</small>
+                    </td>
+                    <td>
+                        <div class="match-players-cell">
+                            <strong>${m.challenger.gamerTag}</strong>
+                            <span class="text-vs">vs</span>
+                            <strong>${m.opponent.gamerTag}</strong>
+                        </div>
+                    </td>
+                    <td><small>${dateStr}</small></td>
+                    <td>${scoreText}</td>
+                    <td><span class="match-status-pill status-${m.status}">${m.status}</span></td>
+                    <td class="text-right">
+                        <div class="row-actions">
+                            <button type="button" class="btn-action edit" data-match-id="${m.id}" title="Edit / Settle Match">⚖️ Settle</button>
+                            <button type="button" class="btn-action delete" data-match-id="${m.id}" title="Delete Match">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    };
+
+    document.querySelectorAll('#match-status-tabs .filter-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('#match-status-tabs .filter-tab').forEach(t => t.classList.remove('is-active'));
+            tab.classList.add('is-active');
+            currentMatchStatusFilter = tab.dataset.status;
+            renderMatchesTable();
+        });
+    });
+
+    // Edit Match Modal
+    const modalEditMatch = document.getElementById('modal-edit-match');
+    document.getElementById('matches-tbody')?.addEventListener('click', (e) => {
+        const btnEdit = e.target.closest('.btn-action.edit');
+        const btnDel = e.target.closest('.btn-action.delete');
+
+        if (btnEdit) {
+            const matchId = btnEdit.dataset.matchId;
+            const match = cachedMatches.find(m => m.id === matchId);
+            if (!match) return;
+
+            document.getElementById('edit-match-id').value = match.id;
+            document.getElementById('match-modal-participants').innerHTML = `
+                <div class="modal-h2h-row">
+                    <span>${match.challenger.gamerTag} (${match.challenger.rating} Elo)</span>
+                    <strong>VS</strong>
+                    <span>${match.opponent.gamerTag} (${match.opponent.rating} Elo)</span>
+                </div>
+            `;
+            document.getElementById('edit-match-challenger-score').value = match.scores ? match.scores.challenger : 0;
+            document.getElementById('edit-match-opponent-score').value = match.scores ? match.scores.opponent : 0;
+            document.getElementById('edit-match-status').value = match.status;
+            document.getElementById('edit-match-ranked').value = String(match.ranked !== false);
+            document.getElementById('edit-match-note').value = match.reviewNote || '';
+            document.getElementById('edit-match-feedback').textContent = '';
+
+            modalEditMatch.showModal();
+        }
+
+        if (btnDel) {
+            const matchId = btnDel.dataset.matchId;
+            if (confirm(`Delete match fixture #${matchId}?`)) {
+                adminFetch(`/api/admin/matches/${encodeURIComponent(matchId)}`, {
+                    method: 'DELETE'
+                }).then(() => {
+                    showToast('Match deleted.');
+                    loadMatches();
+                    loadOverview();
+                }).catch(err => {
+                    alert(`Error: ${err.message}`);
+                });
+            }
+        }
+    });
+
+    // Form: Edit Match Submit
+    document.getElementById('form-edit-match')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const matchId = document.getElementById('edit-match-id').value;
+        const feedback = document.getElementById('edit-match-feedback');
+        feedback.textContent = 'Saving match decision live…';
+
+        const challengerScore = Number(document.getElementById('edit-match-challenger-score').value);
+        const opponentScore = Number(document.getElementById('edit-match-opponent-score').value);
+        const status = document.getElementById('edit-match-status').value;
+        const ranked = document.getElementById('edit-match-ranked').value === 'true';
+        const note = document.getElementById('edit-match-note').value;
+
+        try {
+            let res;
+            if (status === 'approved') {
+                res = await adminFetch(`/api/admin/matches/${encodeURIComponent(matchId)}/force-approve`, {
+                    method: 'POST',
+                    body: JSON.stringify({ challengerScore, opponentScore, note })
+                });
+            } else {
+                res = await adminFetch(`/api/admin/matches/${encodeURIComponent(matchId)}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status, challengerScore, opponentScore, ranked, reviewNote: note })
+                });
+            }
+            showToast(res.message || 'Match outcome recorded live!');
+            modalEditMatch.close();
+            loadMatches();
+            loadOverview();
+        } catch (err) {
+            feedback.textContent = err.message;
+            feedback.className = 'modal-feedback error';
+        }
+    });
+
+    // Create Match Modal
+    const modalCreateMatch = document.getElementById('modal-create-match');
+    const openCreateMatchModal = () => {
+        // Populate challenger and opponent selects with all available players
+        const selectC = document.getElementById('create-match-challenger');
+        const selectO = document.getElementById('create-match-opponent');
+        selectC.innerHTML = '';
+        selectO.innerHTML = '';
+
+        cachedUsers.forEach((u) => {
+            selectC.add(new Option(`${u.gamerTag} (${u.email})`, u.email));
+            selectO.add(new Option(`${u.gamerTag} (${u.email})`, u.email));
+        });
+        if (cachedUsers.length > 1) {
+            selectO.selectedIndex = 1;
+        }
+
+        // Default tomorrow
+        const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        document.getElementById('create-match-date').value = tomorrow.toISOString().slice(0, 16);
+        document.getElementById('create-match-feedback').textContent = '';
+        modalCreateMatch.showModal();
+    };
+
+    document.getElementById('btn-open-create-match')?.addEventListener('click', openCreateMatchModal);
+    document.getElementById('btn-quick-new-match')?.addEventListener('click', openCreateMatchModal);
+
+    document.getElementById('form-create-match')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const feedback = document.getElementById('create-match-feedback');
+        feedback.textContent = 'Scheduling fixture…';
+
+        const payload = {
+            challengerEmail: document.getElementById('create-match-challenger').value,
+            opponentEmail: document.getElementById('create-match-opponent').value,
+            competition: document.getElementById('create-match-comp').value,
+            scheduledAt: new Date(document.getElementById('create-match-date').value).toISOString(),
+            ranked: document.getElementById('create-match-ranked').value === 'true'
+        };
+
+        try {
+            const res = await adminFetch('/api/admin/matches', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            showToast(res.message || 'Match fixture scheduled live.');
+            modalCreateMatch.close();
+            loadMatches();
+            loadOverview();
+        } catch (err) {
+            feedback.textContent = err.message;
+            feedback.className = 'modal-feedback error';
+        }
+    });
+
+    // Recalculate Rankings
+    document.getElementById('btn-recalculate-rankings')?.addEventListener('click', async () => {
+        if (!confirm('Recalculate all player records and rankings?')) return;
+        try {
+            const res = await adminFetch('/api/admin/rankings/recalculate', { method: 'POST' });
+            showToast(res.message || 'Rankings refreshed.');
+            loadOverview();
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
+    });
+
+    // Load Live Broadcast Banner
+    const loadBroadcastContent = async () => {
+        try {
+            const data = await adminFetch('/api/admin/content');
+            const ann = data.content?.announcement || {};
+            document.getElementById('broadcast-active').checked = Boolean(ann.active);
+            document.getElementById('broadcast-text').value = ann.text || '';
+            document.getElementById('broadcast-link-text').value = ann.linkText || '';
+            document.getElementById('broadcast-link-url').value = ann.linkUrl || '';
+
+            const themeRadio = document.querySelector(`input[name="broadcast-theme"][value="${ann.type || 'gold'}"]`);
+            if (themeRadio) themeRadio.checked = true;
+
+            updateBroadcastPreview();
+        } catch (err) {
+            console.error('Failed to load broadcast content:', err);
+        }
+    };
+
+    const updateBroadcastPreview = () => {
+        const text = document.getElementById('broadcast-text').value || 'Live Announcement Preview';
+        const linkText = document.getElementById('broadcast-link-text').value;
+        const linkUrl = document.getElementById('broadcast-link-url').value;
+        const active = document.getElementById('broadcast-active').checked;
+        const theme = document.querySelector('input[name="broadcast-theme"]:checked')?.value || 'gold';
+
+        const previewBar = document.getElementById('preview-bar');
+        const previewText = document.getElementById('preview-text');
+        const previewLink = document.getElementById('preview-link');
+
+        if (!active) {
+            previewBar.style.opacity = '0.35';
+        } else {
+            previewBar.style.opacity = '1';
+        }
+
+        previewBar.className = `site-announcement-bar announcement-${theme}`;
+        previewText.textContent = text;
+        if (linkText && linkUrl) {
+            previewLink.hidden = false;
+            previewLink.textContent = linkText;
+            previewLink.href = linkUrl;
+        } else {
+            previewLink.hidden = true;
+        }
+    };
+
+    document.getElementById('broadcast-active')?.addEventListener('change', updateBroadcastPreview);
+    document.getElementById('broadcast-text')?.addEventListener('input', updateBroadcastPreview);
+    document.getElementById('broadcast-link-text')?.addEventListener('input', updateBroadcastPreview);
+    document.getElementById('broadcast-link-url')?.addEventListener('input', updateBroadcastPreview);
+    document.querySelectorAll('input[name="broadcast-theme"]').forEach(r => r.addEventListener('change', updateBroadcastPreview));
+
+    document.getElementById('broadcast-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const feedback = document.getElementById('broadcast-feedback');
+        feedback.textContent = 'Publishing sitewide banner live…';
+
+        const payload = {
+            active: document.getElementById('broadcast-active').checked,
+            text: document.getElementById('broadcast-text').value.trim(),
+            linkText: document.getElementById('broadcast-link-text').value.trim(),
+            linkUrl: document.getElementById('broadcast-link-url').value.trim(),
+            type: document.querySelector('input[name="broadcast-theme"]:checked')?.value || 'gold'
+        };
+
+        try {
+            const res = await adminFetch('/api/admin/content/announcement', {
+                method: 'PUT',
+                body: JSON.stringify(payload)
+            });
+            feedback.textContent = '✓ Announcement published live across all pages!';
+            showToast('Broadcast banner is now live sitewide!');
+        } catch (err) {
+            feedback.textContent = `Error: ${err.message}`;
+        }
+    });
+
+    // Tournaments Management
+    const modalTournament = document.getElementById('modal-tournament');
+
+    const loadTournaments = async () => {
+        const grid = document.getElementById('tournaments-cards-grid');
+        if (!grid) return;
+        grid.innerHTML = '<p class="table-loading">Loading tournament entries…</p>';
+        try {
+            const [tData, iData] = await Promise.all([
+                adminFetch('/api/admin/content'),
+                adminFetch('/api/admin/tournaments/interests').catch(() => ({ interestCounts: {} }))
+            ]);
+
+            const tournaments = tData.content?.tournaments || [];
+            cachedContent.tournaments = tournaments;
+            const interests = iData.interestCounts || {};
+
+            if (!tournaments.length) {
+                grid.innerHTML = '<p class="table-loading" style="grid-column: 1/-1;">No tournaments added yet. Click "+ Add Tournament" to create one.</p>';
+                return;
+            }
+
+            grid.innerHTML = tournaments.map((t, idx) => {
+                const interestCount = interests[t.id] || 0;
+                const statusCls = t.status === 'Registration Open' ? 'open' : t.status === 'In Progress' ? 'live' : 'upcoming';
+                return `
+                <div class="admin-event-card" data-tid="${t.id}">
+                    <div class="event-card-header">
+                        <span class="event-badge">${t.badge || 'EVENT'}</span>
+                        <span class="event-status-tag status-${statusCls}">${t.status || 'Coming Soon'}</span>
+                    </div>
+                    <h3>${t.title}</h3>
+                    <p class="event-desc">${t.kicker ? `<em>${t.kicker}</em><br>` : ''}${t.desc || 'No description provided.'}</p>
+                    <div class="event-details-grid">
+                        <div><span>Format:</span> <strong>${t.format}</strong></div>
+                        <div><span>Slots:</span> <strong>${t.slots || 'Unlimited'}</strong></div>
+                        <div><span>Dates:</span> <strong>${t.dates || 'TBC'}</strong></div>
+                        <div><span>Interest:</span> <strong style="color: #f4b72f;">★ ${interestCount} players</strong></div>
+                        ${t.prizePool ? `<div><span>Prize:</span> <strong>${t.prizePool}</strong></div>` : ''}
+                        ${t.minElo || t.maxElo ? `<div><span>Elo Req:</span> <strong>${t.minElo ? t.minElo + '+' : 'Any'} ${t.maxElo ? 'to ' + t.maxElo : ''}</strong></div>` : ''}
+                    </div>
+                    <div class="event-actions">
+                        <button type="button" class="btn-action edit" data-edit-tourn="${t.id}">Edit</button>
+                        <button type="button" class="btn-action" data-roster-tourn="${t.id}" style="background: rgba(244, 183, 47, 0.12); color: #f4b72f; border-color: rgba(244, 183, 47, 0.3);">👥 Roster (${interestCount})</button>
+                        <button type="button" class="btn-action toggle-reg" data-toggle-reg="${t.id}" data-current="${Boolean(t.registrationOpen)}">${t.registrationOpen ? 'Close Reg' : 'Open Reg'}</button>
+                        <button type="button" class="btn-action delete" data-delete-tourn="${t.id}">Remove</button>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        } catch (err) {
+            grid.innerHTML = `<p class="table-error">Error loading tournaments: ${err.message}</p>`;
+        }
+    };
+
+    // Open Tournament Roster / Participants Modal
+    const modalTournamentRoster = document.getElementById('modal-tournament-roster');
+    let currentRosterTournId = null;
+
+    const openTournamentRoster = async (tid) => {
+        currentRosterTournId = tid;
+        const t = (cachedContent.tournaments || []).find(item => item.id === tid);
+        if (!t || !modalTournamentRoster) return;
+
+        document.getElementById('roster-tournament-title').textContent = `${t.title} — Competitors`;
+        document.getElementById('roster-tournament-subtitle').textContent = `Format: ${t.format} · Schedule: ${t.dates || 'TBC'}`;
+        const tbody = document.getElementById('roster-tbody');
+        tbody.innerHTML = '<tr><td colspan="6" class="table-loading">Loading registered players…</td></tr>';
+        modalTournamentRoster.showModal();
+
+        try {
+            const data = await adminFetch(`/api/admin/tournaments/${encodeURIComponent(tid)}/participants`);
+            const participants = data.participants || [];
+
+            if (!participants.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 25px; color: #94a3b8;">No registered players yet for this event.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = participants.map((p, idx) => `
+                <tr>
+                    <td><strong style="color: ${idx < 3 ? '#f4b72f' : '#94a3b8'};">#${idx + 1}</strong></td>
+                    <td><strong>${p.gamerTag}</strong> <small style="color: #64748b;">(${p.name})</small></td>
+                    <td><small style="color: #cbd5e1;">${p.email}</small></td>
+                    <td><strong class="user-elo-val">${p.rating.toLocaleString()}</strong></td>
+                    <td><small>${p.wins}W–${p.draws}D–${p.losses}L</small></td>
+                    <td class="text-right">
+                        <button type="button" class="btn-action delete" data-remove-player="${encodeURIComponent(p.email)}" data-player-tag="${p.gamerTag}" style="padding: 4px 8px; font-size: 0.72rem;">Remove</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="6" class="table-error">Error loading roster: ${err.message}</td></tr>`;
+        }
+    };
+
+    // Handle Kick Player from Roster
+    document.getElementById('roster-tbody')?.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-remove-player]');
+        if (!btn || !currentRosterTournId) return;
+
+        const email = decodeURIComponent(btn.dataset.removePlayer);
+        const tag = btn.dataset.playerTag;
+
+        if (confirm(`Remove player "${tag}" from this tournament?`)) {
+            try {
+                const res = await adminFetch(`/api/admin/tournaments/${encodeURIComponent(currentRosterTournId)}/participants/${encodeURIComponent(email)}`, {
+                    method: 'DELETE'
+                });
+                showToast(res.message || 'Player removed from roster.');
+                openTournamentRoster(currentRosterTournId);
+                loadTournaments();
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+    });
+
+    // Open Add Tournament Modal
+    document.getElementById('btn-add-tournament')?.addEventListener('click', () => {
+        if (!modalTournament) return;
+        document.getElementById('modal-tournament-title').textContent = 'Add Tournament';
+        document.getElementById('tournament-edit-id').value = '';
+        document.getElementById('form-tournament').reset();
+        document.getElementById('tournament-feedback').textContent = '';
+        modalTournament.showModal();
+    });
+
+    // Handle Edit / Toggle / Delete from Grid
+    document.getElementById('tournaments-cards-grid')?.addEventListener('click', async (e) => {
+        const btnEdit = e.target.closest('[data-edit-tourn]');
+        const btnDel = e.target.closest('[data-delete-tourn]');
+        const btnToggle = e.target.closest('[data-toggle-reg]');
+        const btnRoster = e.target.closest('[data-roster-tourn]');
+
+        if (btnRoster) {
+            openTournamentRoster(btnRoster.dataset.rosterTourn);
+            return;
+        }
+
+        if (btnEdit) {
+            const tid = btnEdit.dataset.editTourn;
+            const t = (cachedContent.tournaments || []).find(item => item.id === tid);
+            if (!t || !modalTournament) return;
+
+            document.getElementById('modal-tournament-title').textContent = 'Edit Tournament';
+            document.getElementById('tournament-edit-id').value = t.id;
+            document.getElementById('t-title').value = t.title || '';
+            document.getElementById('t-badge').value = t.badge || '';
+            document.getElementById('t-kicker').value = t.kicker || '';
+            document.getElementById('t-status').value = t.status || 'Coming Soon';
+            document.getElementById('t-format').value = t.format || '';
+            document.getElementById('t-slots').value = t.slots || '';
+            document.getElementById('t-dates').value = t.dates || '';
+            document.getElementById('t-prize').value = t.prizePool || '';
+            document.getElementById('t-min-elo').value = t.minElo || '';
+            document.getElementById('t-max-elo').value = t.maxElo || '';
+            document.getElementById('t-entry-link').value = t.entryLink || '';
+            document.getElementById('t-desc').value = t.desc || '';
+            document.getElementById('t-reg-open').checked = Boolean(t.registrationOpen);
+            document.getElementById('tournament-feedback').textContent = '';
+
+            modalTournament.showModal();
+        }
+
+        if (btnToggle) {
+            const tid = btnToggle.dataset.toggleReg;
+            const current = btnToggle.dataset.current === 'true';
+            const newStatus = !current ? 'Registration Open' : 'Coming Soon';
+            try {
+                await adminFetch(`/api/admin/tournaments/${encodeURIComponent(tid)}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ registrationOpen: !current, status: newStatus })
+                });
+                showToast(`Registration ${!current ? 'opened' : 'closed'}!`);
+                loadTournaments();
+            } catch (err) {
+                alert(`Error toggling registration: ${err.message}`);
+            }
+        }
+
+        if (btnDel) {
+            const tid = btnDel.dataset.deleteTourn;
+            if (confirm('Delete this tournament event?')) {
+                try {
+                    await adminFetch(`/api/admin/tournaments/${encodeURIComponent(tid)}`, {
+                        method: 'DELETE'
+                    });
+                    showToast('Tournament deleted.');
+                    loadTournaments();
+                } catch (err) {
+                    alert(`Error: ${err.message}`);
+                }
+            }
+        }
+    });
+
+    // Submit Tournament Form
+    document.getElementById('form-tournament')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('tournament-edit-id').value;
+        const feedback = document.getElementById('tournament-feedback');
+        feedback.textContent = 'Saving tournament…';
+        feedback.className = 'modal-feedback';
+
+        const payload = {
+            title: document.getElementById('t-title').value.trim(),
+            badge: document.getElementById('t-badge').value.trim(),
+            kicker: document.getElementById('t-kicker').value.trim(),
+            status: document.getElementById('t-status').value,
+            format: document.getElementById('t-format').value.trim(),
+            slots: document.getElementById('t-slots').value.trim(),
+            dates: document.getElementById('t-dates').value.trim(),
+            prizePool: document.getElementById('t-prize').value.trim(),
+            minElo: document.getElementById('t-min-elo').value ? Number(document.getElementById('t-min-elo').value) : null,
+            maxElo: document.getElementById('t-max-elo').value ? Number(document.getElementById('t-max-elo').value) : null,
+            entryLink: document.getElementById('t-entry-link').value.trim(),
+            desc: document.getElementById('t-desc').value.trim(),
+            registrationOpen: document.getElementById('t-reg-open').checked
+        };
+
+        try {
+            const url = editId ? `/api/admin/tournaments/${encodeURIComponent(editId)}` : '/api/admin/tournaments';
+            const method = editId ? 'PUT' : 'POST';
+            const res = await adminFetch(url, {
+                method,
+                body: JSON.stringify(payload)
+            });
+            showToast(res.message || 'Tournament saved!');
+            modalTournament.close();
+            loadTournaments();
+        } catch (err) {
+            feedback.textContent = err.message;
+            feedback.className = 'modal-feedback error';
+        }
+    });
+
+    // Clubs Standings Management
+    const loadClubs = async () => {
+        const tbody = document.getElementById('clubs-tbody');
+        tbody.innerHTML = '<tr><td colspan="8" class="table-loading">Loading club standings…</td></tr>';
+        try {
+            const data = await adminFetch('/api/admin/content');
+            const clubs = data.content?.clubs || [];
+            cachedContent.clubs = clubs;
+
+            tbody.innerHTML = clubs.map((c, idx) => `
+                <tr>
+                    <td><strong>#${c.rank}</strong></td>
+                    <td><strong>${c.name}</strong></td>
+                    <td>${c.captain}</td>
+                    <td><span class="comp-badge comp-open">${c.division.toUpperCase()}</span></td>
+                    <td><strong class="user-elo-val">${c.points.toLocaleString()}</strong></td>
+                    <td>${c.record}</td>
+                    <td>${c.matches}</td>
+                    <td class="text-right">
+                        <button type="button" class="btn-action edit" data-edit-club="${idx}">Edit</button>
+                        <button type="button" class="btn-action delete" data-delete-club="${idx}">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="8" class="table-error">Error: ${err.message}</td></tr>`;
+        }
+    };
+
+    document.getElementById('btn-add-club')?.addEventListener('click', async () => {
+        const name = prompt('Club Name:');
+        if (!name) return;
+        const captain = prompt('Captain GamerTag:');
+        const points = Number(prompt('Club Points:', '1800')) || 1800;
+
+        cachedContent.clubs = cachedContent.clubs || [];
+        cachedContent.clubs.push({
+            id: `club-${Date.now()}`,
+            rank: cachedContent.clubs.length + 1,
+            name,
+            captain: captain || 'Captain',
+            division: 'premier',
+            points,
+            record: '10–2–2',
+            matches: 14,
+            change: '+15 this week'
+        });
+
+        await adminFetch('/api/admin/content/clubs', {
+            method: 'PUT',
+            body: JSON.stringify(cachedContent.clubs)
+        });
+        showToast('Club added live.');
+        loadClubs();
+    });
+
+    document.getElementById('clubs-tbody')?.addEventListener('click', async (e) => {
+        const btnEdit = e.target.closest('[data-edit-club]');
+        const btnDel = e.target.closest('[data-delete-club]');
+
+        if (btnEdit) {
+            const idx = Number(btnEdit.dataset.editClub);
+            const club = cachedContent.clubs[idx];
+            const newPoints = prompt(`Edit points for ${club.name}:`, club.points);
+            if (newPoints !== null) {
+                club.points = Number(newPoints) || club.points;
+                const newRecord = prompt(`Edit record (W–D–L) for ${club.name}:`, club.record);
+                if (newRecord) club.record = newRecord;
+
+                await adminFetch('/api/admin/content/clubs', {
+                    method: 'PUT',
+                    body: JSON.stringify(cachedContent.clubs)
+                });
+                showToast(`Club ${club.name} updated.`);
+                loadClubs();
+            }
+        }
+
+        if (btnDel) {
+            const idx = Number(btnDel.dataset.deleteClub);
+            if (confirm(`Delete club ${cachedContent.clubs[idx].name}?`)) {
+                cachedContent.clubs.splice(idx, 1);
+                // re-rank
+                cachedContent.clubs.forEach((c, i) => c.rank = i + 1);
+                await adminFetch('/api/admin/content/clubs', {
+                    method: 'PUT',
+                    body: JSON.stringify(cachedContent.clubs)
+                });
+                showToast('Club removed.');
+                loadClubs();
+            }
+        }
+    });
+
+    // League Cup Bracket Master
+    const loadBracket = async () => {
+        const container = document.getElementById('admin-bracket-tree');
+        container.innerHTML = '<p class="table-loading">Loading tournament bracket…</p>';
+        try {
+            const data = await adminFetch('/api/admin/content');
+            const bracket = data.content?.bracket || {};
+            cachedContent.bracket = bracket;
+            renderAdminBracket();
+        } catch (err) {
+            container.innerHTML = `<p class="table-error">Error: ${err.message}</p>`;
+        }
+    };
+
+    const renderAdminBracket = () => {
+        const container = document.getElementById('admin-bracket-tree');
+        const b = cachedContent.bracket || {};
+        const r1 = b.round1 || [];
+        const qf = b.quarterFinals || [];
+        const sf = b.semiFinals || [];
+        const fin = b.finalMatch || {};
+
+        container.innerHTML = `
+            <div class="admin-bracket-grid">
+                <div class="bracket-col">
+                    <h4>Round of 16 (8 Matchups)</h4>
+                    ${r1.map((m, idx) => `
+                        <div class="admin-bracket-card">
+                            <label class="bracket-team-option ${m.winner === m.p1 ? 'is-winner' : ''}">
+                                <input type="radio" name="r1-${idx}" value="p1" ${m.winner === m.p1 ? 'checked' : ''} data-r1-idx="${idx}">
+                                <span>${m.p1}</span>
+                            </label>
+                            <label class="bracket-team-option ${m.winner === m.p2 ? 'is-winner' : ''}">
+                                <input type="radio" name="r1-${idx}" value="p2" ${m.winner === m.p2 ? 'checked' : ''} data-r1-idx="${idx}">
+                                <span>${m.p2}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="bracket-col">
+                    <h4>Quarter-Finals (4 Matchups)</h4>
+                    ${qf.map((m, idx) => `
+                        <div class="admin-bracket-card">
+                            <label class="bracket-team-option ${m.winner === m.p1 && m.p1 !== 'TBD' ? 'is-winner' : ''}">
+                                <input type="radio" name="qf-${idx}" value="p1" ${m.winner === m.p1 ? 'checked' : ''} data-qf-idx="${idx}" ${m.p1 === 'TBD' ? 'disabled' : ''}>
+                                <span>${m.p1}</span>
+                            </label>
+                            <label class="bracket-team-option ${m.winner === m.p2 && m.p2 !== 'TBD' ? 'is-winner' : ''}">
+                                <input type="radio" name="qf-${idx}" value="p2" ${m.winner === m.p2 ? 'checked' : ''} data-qf-idx="${idx}" ${m.p2 === 'TBD' ? 'disabled' : ''}>
+                                <span>${m.p2}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="bracket-col">
+                    <h4>Semi-Finals (2 Matchups)</h4>
+                    ${sf.map((m, idx) => `
+                        <div class="admin-bracket-card">
+                            <label class="bracket-team-option ${m.winner === m.p1 && m.p1 !== 'TBD' ? 'is-winner' : ''}">
+                                <input type="radio" name="sf-${idx}" value="p1" ${m.winner === m.p1 ? 'checked' : ''} data-sf-idx="${idx}" ${m.p1 === 'TBD' ? 'disabled' : ''}>
+                                <span>${m.p1}</span>
+                            </label>
+                            <label class="bracket-team-option ${m.winner === m.p2 && m.p2 !== 'TBD' ? 'is-winner' : ''}">
+                                <input type="radio" name="sf-${idx}" value="p2" ${m.winner === m.p2 ? 'checked' : ''} data-sf-idx="${idx}" ${m.p2 === 'TBD' ? 'disabled' : ''}>
+                                <span>${m.p2}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="bracket-col final-col">
+                    <h4>Grand Final &amp; Champion</h4>
+                    <div class="admin-bracket-card is-final">
+                        <label class="bracket-team-option ${fin.winner === fin.p1 && fin.p1 !== 'TBD' ? 'is-winner' : ''}">
+                            <input type="radio" name="fin-0" value="p1" ${fin.winner === fin.p1 ? 'checked' : ''} data-fin-idx="0" ${fin.p1 === 'TBD' ? 'disabled' : ''}>
+                            <span>${fin.p1}</span>
+                        </label>
+                        <label class="bracket-team-option ${fin.winner === fin.p2 && fin.p2 !== 'TBD' ? 'is-winner' : ''}">
+                            <input type="radio" name="fin-0" value="p2" ${fin.winner === fin.p2 ? 'checked' : ''} data-fin-idx="0" ${fin.p2 === 'TBD' ? 'disabled' : ''}>
+                            <span>${fin.p2}</span>
+                        </label>
+                    </div>
+                    ${fin.winner && fin.winner !== 'TBD' ? `
+                        <div class="admin-champ-box">
+                            🏆 CROWNED CHAMPION: <strong>${fin.winner}</strong>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    };
+
+    document.getElementById('admin-bracket-tree')?.addEventListener('change', (e) => {
+        const input = e.target;
+        const b = cachedContent.bracket;
+        if (!b) return;
+
+        if (input.dataset.r1Idx !== undefined) {
+            const idx = Number(input.dataset.r1Idx);
+            const m = b.round1[idx];
+            m.winner = input.value === 'p1' ? m.p1 : m.p2;
+
+            const qfIdx = Math.floor(idx / 2);
+            const qfPos = idx % 2 === 0 ? 'p1' : 'p2';
+            b.quarterFinals[qfIdx][qfPos] = m.winner;
+            renderAdminBracket();
+        } else if (input.dataset.qfIdx !== undefined) {
+            const idx = Number(input.dataset.qfIdx);
+            const m = b.quarterFinals[idx];
+            m.winner = input.value === 'p1' ? m.p1 : m.p2;
+
+            const sfIdx = Math.floor(idx / 2);
+            const sfPos = idx % 2 === 0 ? 'p1' : 'p2';
+            b.semiFinals[sfIdx][sfPos] = m.winner;
+            renderAdminBracket();
+        } else if (input.dataset.sfIdx !== undefined) {
+            const idx = Number(input.dataset.sfIdx);
+            const m = b.semiFinals[idx];
+            m.winner = input.value === 'p1' ? m.p1 : m.p2;
+
+            const finPos = idx === 0 ? 'p1' : 'p2';
+            b.finalMatch[finPos] = m.winner;
+            renderAdminBracket();
+        } else if (input.dataset.finIdx !== undefined) {
+            b.finalMatch.winner = input.value === 'p1' ? b.finalMatch.p1 : b.finalMatch.p2;
+            b.champion = b.finalMatch.winner;
+            renderAdminBracket();
+        }
+    });
+
+    document.getElementById('btn-save-bracket-live')?.addEventListener('click', async () => {
+        try {
+            await adminFetch('/api/admin/content/bracket', {
+                method: 'PUT',
+                body: JSON.stringify(cachedContent.bracket)
+            });
+            showToast('Knockout Bracket published live to cup.html!');
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
+    });
+
+    // Initial Data Load
+    const loadInitialData = async () => {
+        await loadOverview();
+        await loadUsers();
+    };
+
+    // Run Auth Check on startup
+    checkAdminSession();
+
+})();
+

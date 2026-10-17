@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b2042">
+    <meta name="description" content="Official Season 04 League Cup Championship knockout bracket, live verified seeds, competition rules, and opening schedule for Tim eFootball League.">
+    <title>League Cup Championship | Tim eFootball League</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    <style>
+        /* ─── League Cup Official Styles & Opening Indicators ─── */
+        .cup-live-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            border: 1px solid rgba(74, 222, 128, 0.4);
+            border-radius: 99px;
+            background: rgba(74, 222, 128, 0.12);
+            color: #4ade80;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .status-dot-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 10px #4ade80;
+            display: inline-block;
+            animation: cupDotPulse 2s infinite ease-in-out;
+        }
+
+        @keyframes cupDotPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* Opening Schedule & Timeline Card */
+        .cup-opening-section {
+            margin: 28px 0 36px;
+        }
+
+        .cup-opening-card {
+            background: linear-gradient(135deg, rgba(14, 34, 67, 0.95), rgba(9, 23, 47, 0.98));
+            border: 1px solid rgba(244, 183, 47, 0.3);
+            border-radius: 16px;
+            padding: 24px 28px;
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+        }
+
+        .cup-opening-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 16px;
+            margin-bottom: 22px;
+        }
+
+        .opening-status-tag {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #f4b72f;
+            font-size: 0.84rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .opening-timer-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 7px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .timer-label {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .timer-val {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: #38bdf8;
+        }
+
+        .cup-timeline-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 16px;
+        }
+
+        .timeline-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: transform 0.2s ease;
+        }
+
+        .timeline-step.completed {
+            border-color: rgba(74, 222, 128, 0.3);
+            background: rgba(74, 222, 128, 0.06);
+        }
+
+        .timeline-step.completed .step-num {
+            background: #4ade80;
+            color: #050811;
+        }
+
+        .timeline-step.active {
+            border-color: rgba(244, 183, 47, 0.5);
+            background: rgba(244, 183, 47, 0.08);
+            box-shadow: 0 0 16px rgba(244, 183, 47, 0.12);
+        }
+
+        .timeline-step.active .step-num {
+            background: #f4b72f;
+            color: #050811;
+            font-weight: 900;
+        }
+
+        .timeline-step.upcoming .step-num {
+            background: rgba(255, 255, 255, 0.08);
+            color: #64748b;
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .step-info strong {
+            display: block;
+            font-size: 0.82rem;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+
+        .step-info small {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            line-height: 1.35;
+            display: block;
+        }
+
+        /* Bracket Official Admin Badge */
+        .bracket-admin-sync-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 18px;
+            background: rgba(14, 165, 233, 0.12);
+            border: 1px solid rgba(14, 165, 233, 0.35);
+            border-radius: 999px;
+            color: #38bdf8;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+
+        .bracket-admin-sync-tag .live-pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #38bdf8;
+            box-shadow: 0 0 10px #38bdf8;
+            display: inline-block;
+            animation: cupDotPulse 1.8s infinite;
+        }
+
+        #cup-interactive-bracket .bracket-team-btn {
+            cursor: default !important;
+            user-select: none;
+        }
+
+        #cup-interactive-bracket .bracket-team-btn:hover {
+            transform: none !important;
+        }
+
+        #cup-interactive-bracket .bracket-team-btn.is-winner {
+            background: rgba(16, 185, 129, 0.18) !important;
+            border-color: #10b981 !important;
+            color: #34d399 !important;
+        }
+
+        #cup-interactive-bracket .bracket-match-card.is-final .bracket-team-btn.is-winner {
+            background: rgba(245, 158, 11, 0.25) !important;
+            border-color: #f59e0b !important;
+            color: #fbbf24 !important;
+        }
+    </style>
+</head>
+<body class="cup-page">
+    <header class="site-header">
+        <div class="header-container">
+            <a class="brand" href="index.html" aria-label="Tim eFootball League home">
+                <span class="brand-mark"><img src="favicon.png" alt=""></span>
+                <span class="brand-copy">
+                    <span class="brand-name">Tim eFootball</span>
+                    <span class="brand-label">League <span>•</span> Est. 2024</span>
+                </span>
+            </a>
+
+            <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+                <span class="sr-only">Toggle navigation</span>
+                <span></span><span></span><span></span>
+            </button>
+
+            <nav class="navigation" id="primary-navigation" aria-label="Primary navigation">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="tournaments.html">Tournaments</a></li>
+                    <li><a href="rankings.html">Rankings</a></li>
+                    <li><a href="play.html">How to play</a></li>
+                    <li><a href="matches.html">Matches</a></li>
+                    <li><a class="active" href="cup.html" aria-current="page">League Cup</a></li>
+                    <li class="nav-auth-item"><a href="login.html">Sign in</a></li>
+                    <li class="nav-auth-item"><a href="signup.html">Create account</a></li>
+                </ul>
+            </nav>
+
+            <div class="header-actions" id="header-actions">
+                <a class="header-sign-in" href="login.html">Sign in</a>
+                <a class="header-action" href="#cup-interactive-bracket">Live Bracket <span aria-hidden="true">↓</span></a>
+            </div>
+        </div>
+    </header>
+
+    <main class="tournament-shell cup-shell">
+        <section class="cup-hero" aria-labelledby="cup-title">
+            <div class="cup-hero-copy">
+                <p class="eyebrow"><span class="eyebrow-line"></span> Season 04 · Official Championship</p>
+                <h1 id="cup-title">The road to<br><em>the cup.</em></h1>
+                <p>The premier 32-seed knockout championship of the Tim eFootball League. Verified tournament records, live bracket advancement, and official Elo adjustments at every single stage.</p>
+                <div class="cup-hero-actions">
+                    <a class="tournament-primary-cta" href="#cup-interactive-bracket">View Official Bracket <span aria-hidden="true">↓</span></a>
+                    <a class="cup-secondary-link" href="tournaments.html">All tournaments <span aria-hidden="true">↗</span></a>
+                </div>
+            </div>
+
+            <aside class="cup-feature-card" aria-label="League Cup official status">
+                <div class="cup-feature-topline">
+                    <span class="featured-label">Tim eFootball League</span>
+                    <span class="cup-live-status"><i class="status-dot-pulse"></i> Official Championship</span>
+                </div>
+                <div class="featured-emblem cup-feature-emblem" aria-hidden="true">LC<span>04</span></div>
+                <p class="featured-kicker">Season 04 Championship</p>
+                <h2>League Cup</h2>
+                <p class="featured-description">The pinnacle 1v1 knockout tournament. Top 32 seeds battle across single-elimination rounds for the championship trophy and global leaderboard dominance.</p>
+                <div class="featured-facts">
+                    <span><strong>1v1</strong><small>Knockout Format</small></span>
+                    <span><strong>32</strong><small>Seeded Competitors</small></span>
+                    <span><strong>K=32</strong><small>Official Elo Rating</small></span>
+                </div>
+            </aside>
+        </section>
+
+        <!-- EVENT OPENING SCHEDULE & PROGRESSION PHASES -->
+        <section class="cup-opening-section" aria-label="League Cup schedule and opening phases">
+            <div class="cup-opening-card">
+                <div class="cup-opening-header">
+                    <div class="opening-status-tag">
+                        <span class="status-dot-pulse"></span>
+                        <span>Round of 16: Active Fixture Window</span>
+                    </div>
+                    <div class="opening-timer-box" id="cup-opening-countdown">
+                        <span class="timer-label">Current Round Window</span>
+                        <span class="timer-val" id="cup-deadline-timer">Active · Match Window Open</span>
+                    </div>
+                </div>
+                <div class="cup-timeline-steps">
+                    <div class="timeline-step completed">
+                        <div class="step-num">✓</div>
+                        <div class="step-info">
+                            <strong>Registration &amp; Seeding</strong>
+                            <small>32 Seeds locked via Elo leaderboard</small>
+                        </div>
+                    </div>
+                    <div class="timeline-step active">
+                        <div class="step-num">02</div>
+                        <div class="step-info">
+                            <strong>Round of 16 (Current)</strong>
+                            <small>8 Knockout fixtures underway</small>
+                        </div>
+                    </div>
+                    <div class="timeline-step upcoming">
+                        <div class="step-num">03</div>
+                        <div class="step-info">
+                            <strong>Quarter &amp; Semi-Finals</strong>
+                            <small>Advancing winners scheduled next</small>
+                        </div>
+                    </div>
+                    <div class="timeline-step upcoming">
+                        <div class="step-num">04</div>
+                        <div class="step-info">
+                            <strong>Championship Grand Final</strong>
+                            <small>Winner lifts the Season 04 trophy</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cup-facts" aria-label="League Cup key pillars">
+            <article><span aria-hidden="true">🏆</span><div><strong>Single Elimination</strong><small>Every fixture is decisive. Winners advance directly; defeated players exit.</small></div></article>
+            <article><span aria-hidden="true">⚡</span><div><strong>Elo Leaderboard Seeding</strong><small>Tournament bracket positions are seeded strictly from verified player ratings.</small></div></article>
+            <article><span aria-hidden="true">🛡️</span><div><strong>Admin Verified Records</strong><small>Advancements are recorded by league admins following verified score submissions.</small></div></article>
+        </section>
+
+        <section class="cup-section" id="cup-format" aria-labelledby="cup-format-title">
+            <div class="cup-section-heading">
+                <p class="eyebrow"><span class="eyebrow-line"></span> The competition</p>
+                <h2 id="cup-format-title">Tournament format &amp; structure.</h2>
+                <p>Standardized competitive rules ensuring transparent, balanced, and fair gameplay across all cup matchups.</p>
+            </div>
+            <div class="cup-format-grid">
+                <article class="cup-info-card cup-format-card">
+                    <span class="cup-card-kicker">Championship Format</span>
+                    <h3>Knockout Bracket Progression</h3>
+                    <p>Competitors are seeded into a balanced 32-player single-elimination bracket. Win five consecutive rounds to claim the championship title.</p>
+                    <ul class="cup-check-list">
+                        <li>Head-to-head 1v1 competition with home/away seed advantages</li>
+                        <li>Official pairings and match rooms coordinated through the Match Centre</li>
+                        <li>10-minute regulation match with Extra Time and Penalties enabled</li>
+                    </ul>
+                </article>
+                <article class="cup-info-card cup-confirm-card">
+                    <span class="cup-card-kicker">Match Day Protocol</span>
+                    <h3>Official League Standards</h3>
+                    <p>Both players must observe verified league guidelines to ensure dispute-free competitive records.</p>
+                    <ul class="cup-publish-list">
+                        <li><span>01</span>Verify opponent gamertag and match settings before kick-off</li>
+                        <li><span>02</span>Maintain stable cross-platform connection across supported devices</li>
+                        <li><span>03</span>Capture final scoreline screenshot showing player gamertags</li>
+                        <li><span>04</span>Submit match results within 2 hours of fixture completion</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+
+        <!-- OFFICIAL KNOCKOUT BRACKET (ADMIN LIVE ADVANCEMENT) -->
+        <section class="cup-section cup-bracket-section" id="cup-interactive-bracket" aria-labelledby="bracket-title">
+            <div class="cup-section-heading">
+                <div>
+                    <p class="eyebrow"><span class="eyebrow-line"></span> Championship roadmap</p>
+                    <h2 id="bracket-title">Official League Cup Knockout Bracket.</h2>
+                    <p>Live championship progression powered by verified tournament records. Match advancements and champion coronation are managed and certified exclusively by League Officials.</p>
+                </div>
+                <div class="bracket-controls">
+                    <div class="bracket-admin-sync-tag">
+                        <span class="live-pulse-dot"></span>
+                        <span>Official League Bracket &bull; Admin Verified Records</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crowned Champion Banner -->
+            <div class="bracket-champion-banner" id="bracket-champion-banner" hidden>
+                <span class="champ-crown" aria-hidden="true">🏆</span>
+                <div>
+                    <span class="champ-label">SEASON 04 LEAGUE CUP CHAMPION</span>
+                    <h3 id="champ-name">NovaBlade</h3>
+                </div>
+            </div>
+
+            <div class="bracket-scroll-container">
+                <div class="bracket-tree-grid">
+                    <!-- Round of 16 -->
+                    <div class="bracket-column">
+                        <div class="bracket-round-header">
+                            <h4>Round of 16</h4>
+                            <span>8 Matchups · 16 Seeds</span>
+                        </div>
+                        <div class="bracket-matches-list" id="bracket-r1">
+                            <!-- Populated dynamically via official bracket API -->
+                        </div>
+                    </div>
+
+                    <!-- Quarter-Finals -->
+                    <div class="bracket-column">
+                        <div class="bracket-round-header">
+                            <h4>Quarter-Finals</h4>
+                            <span>4 Matchups · 8 Seeds</span>
+                        </div>
+                        <div class="bracket-matches-list" id="bracket-qf">
+                            <!-- Populated dynamically via official bracket API -->
+                        </div>
+                    </div>
+
+                    <!-- Semi-Finals -->
+                    <div class="bracket-column">
+                        <div class="bracket-round-header">
+                            <h4>Semi-Finals</h4>
+                            <span>2 Matchups · 4 Seeds</span>
+                        </div>
+                        <div class="bracket-matches-list" id="bracket-sf">
+                            <!-- Populated dynamically via official bracket API -->
+                        </div>
+                    </div>
+
+                    <!-- Championship Final -->
+                    <div class="bracket-column final-col">
+                        <div class="bracket-round-header">
+                            <h4>Grand Final</h4>
+                            <span>1 Matchup · The Decider</span>
+                        </div>
+                        <div class="bracket-matches-list" id="bracket-final">
+                            <!-- Populated dynamically via official bracket API -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cup-section" id="cup-matchday" aria-labelledby="matchday-title">
+            <div class="cup-section-heading">
+                <p class="eyebrow"><span class="eyebrow-line"></span> Match-day protocol</p>
+                <h2 id="matchday-title">Play clearly. Report fairly.</h2>
+                <p>Follow established competitive standards to ensure your match results are promptly verified by league officials.</p>
+            </div>
+            <div class="cup-guidance-grid">
+                <article class="cup-guidance-card">
+                    <span class="cup-guidance-icon" aria-hidden="true">01</span>
+                    <h3>Before kick-off</h3>
+                    <p>Confirm opponent identity, match room password, network connection, and standard 10-minute game settings inside the Match Centre.</p>
+                </article>
+                <article class="cup-guidance-card">
+                    <span class="cup-guidance-icon" aria-hidden="true">02</span>
+                    <h3>During the match</h3>
+                    <p>Play with sportsmanship. In the case of disconnections or technical issues, capture screenshot evidence immediately for admin review.</p>
+                </article>
+                <article class="cup-guidance-card">
+                    <span class="cup-guidance-icon" aria-hidden="true">03</span>
+                    <h3>After the match</h3>
+                    <p>Submit final scorelines with photo proof. Both players confirm accuracy before administrators publish official advancement.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="cup-section cup-fair-play" id="cup-rules" aria-labelledby="cup-rules-title">
+            <div class="cup-section-heading">
+                <p class="eyebrow"><span class="eyebrow-line"></span> Fair play &amp; preparation</p>
+                <h2 id="cup-rules-title">Official competition standards.</h2>
+                <p>Uncompromising integrity is the cornerstone of the Tim eFootball League.</p>
+            </div>
+            <div class="cup-rule-layout">
+                <div class="cup-rule-list">
+                    <article><span aria-hidden="true">✓</span><div><h3>Standardized Game Settings</h3><p>Regulation match length is 10 minutes with Extra Time and Penalties active. Custom squad rules conform to Season 04 guidelines.</p></div></article>
+                    <article><span aria-hidden="true">✓</span><div><h3>Scheduled Fixture Deadlines</h3><p>Matchups must be completed within the published round window. Contact an administrator early if opponent contact cannot be established.</p></div></article>
+                    <article><span aria-hidden="true">✓</span><div><h3>Verified Disconnection Resolution</h3><p>If network disconnects occur before halftime, the remaining minutes are replayed under original squad lineups upon admin verification.</p></div></article>
+                    <article><span aria-hidden="true">✓</span><div><h3>Strict Elo Record Protection</h3><p>Any result manipulation, duplicate reporting, or unsportsmanlike conduct results in immediate disqualification and Elo forfeiture.</p></div></article>
+                </div>
+                <aside class="cup-checklist">
+                    <span class="cup-card-kicker">Competitor Checklist</span>
+                    <h3>Ready for your fixture?</h3>
+                    <ul class="cup-check-list">
+                        <li>Check your assigned fixture deadline</li>
+                        <li>Update game client to latest patch</li>
+                        <li>Coordinate kickoff time in Match Centre</li>
+                        <li>Capture end-game screen for evidence</li>
+                        <li>Submit scores promptly for admin sign-off</li>
+                    </ul>
+                    <a href="matches.html">Go to Match Centre <span aria-hidden="true">↗</span></a>
+                </aside>
+            </div>
+        </section>
+
+        <section class="cup-faq-section" id="cup-faq" aria-labelledby="cup-faq-title">
+            <div class="cup-section-heading">
+                <p class="eyebrow"><span class="eyebrow-line"></span> Need to know</p>
+                <h2 id="cup-faq-title">League Cup questions.</h2>
+                <p>Everything you need to know about qualification, scheduling, advancement, and prizes.</p>
+            </div>
+            <div class="cup-faq-list">
+                <details>
+                    <summary>How do players qualify for the League Cup?<span aria-hidden="true">＋</span></summary>
+                    <p>Qualification is determined by verified Elo ratings on the global rankings leaderboard at the qualification cutoff. The top 32 players earn direct seeding into the championship bracket.</p>
+                </details>
+                <details>
+                    <summary>How are bracket advancements recorded?<span aria-hidden="true">＋</span></summary>
+                    <p>Match results are submitted by players through the Match Centre with scoreline screenshot verification. League administrators review and confirm the outcome, instantly updating the official knockout tree.</p>
+                </details>
+                <details>
+                    <summary>What platforms are supported?<span aria-hidden="true">＋</span></summary>
+                    <p>The League Cup supports cross-platform competition across Mobile, Console (PlayStation/Xbox), and PC. Match lobbies utilize the in-game friend match feature with standard competitive settings.</p>
+                </details>
+                <details>
+                    <summary>What rewards does the League Cup Champion receive?<span aria-hidden="true">＋</span></summary>
+                    <p>The champion receives the official Season 04 League Cup trophy badge on their verified profile, priority seeding for upcoming invitational majors, and peak Elo points towards season rankings.</p>
+                </details>
+            </div>
+        </section>
+
+        <section class="cup-bottom-cta" aria-labelledby="cup-more-title">
+            <div>
+                <p class="eyebrow"><span class="eyebrow-line"></span> Keep exploring</p>
+                <h2 id="cup-more-title">Check the live competition calendar.</h2>
+                <p>Browse open qualifiers, rookie ladders, and developmental leagues.</p>
+            </div>
+            <div class="cup-hero-actions">
+                <a class="tournament-primary-cta" href="tournaments.html">All tournaments <span aria-hidden="true">→</span></a>
+                <a class="cup-secondary-link" href="matches.html">Match Centre <span aria-hidden="true">↗</span></a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span class="brand-mark"><img src="favicon.png" alt=""></span>
+                <div><strong>Tim eFootball</strong><small>League</small></div>
+            </div>
+            <nav class="footer-nav" aria-label="Footer navigation">
+                <a href="index.html">Home</a>
+                <a href="tournaments.html">Tournaments</a>
+                <a href="rankings.html">Rankings</a>
+                <a href="matches.html">Matches</a>
+                <a href="play.html">How to play</a>
+                <a href="cup.html" aria-current="page">League Cup</a>
+            </nav>
+        </div>
+        <p class="footer-copy">© 2026 Tim eFootball League. Play fair. Respect your opponents.</p>
+    </footer>
+</body>
+</html>

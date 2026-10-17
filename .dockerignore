@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.env
+.env.local
+.git
+.gitignore
+.qodo
+*.log
+data/*.sqlite-wal
+data/*.sqlite-shm
+

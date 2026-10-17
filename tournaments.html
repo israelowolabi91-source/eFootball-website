@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="description" content="Discover Tim eFootball League tournaments, browse schedules, register player interest, and check competitive formats.">
+    <title>Tournaments &amp; Competitions | Tim eFootball League</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    <style>
+        /* ─── Tournaments Hub Custom Styles ─── */
+        .tourn-header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: rgba(244, 183, 47, 0.12);
+            border: 1px solid rgba(244, 183, 47, 0.3);
+            color: #f4b72f;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .tourn-controls-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 28px 0 20px;
+            padding: 14px 20px;
+            background: rgba(13, 31, 60, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+        }
+
+        .tourn-filter-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tourn-tab-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tourn-tab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .tourn-tab-btn.is-active {
+            background: linear-gradient(135deg, rgba(244, 183, 47, 0.2), rgba(244, 183, 47, 0.05));
+            border-color: rgba(244, 183, 47, 0.4);
+            color: #f4b72f;
+        }
+
+        .tourn-search-box {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 6px 12px;
+            min-width: 240px;
+        }
+
+        .tourn-search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 0.85rem;
+            width: 100%;
+            margin-left: 8px;
+        }
+
+        /* ─── Cards Grid ─── */
+        .tourn-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+            gap: 22px;
+            margin-bottom: 40px;
+        }
+
+        .tourn-card {
+            background: linear-gradient(165deg, #0e2243 0%, #09172f 100%);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 14px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tourn-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(244, 183, 47, 0.35);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .tourn-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .tourn-badge-pill {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(244, 183, 47, 0.15);
+            color: #f4b72f;
+            border: 1px solid rgba(244, 183, 47, 0.3);
+            letter-spacing: 0.05em;
+        }
+
+        .tourn-status-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tourn-status-pill.status-open {
+            background: rgba(74, 222, 128, 0.12);
+            border-color: rgba(74, 222, 128, 0.35);
+            color: #4ade80;
+        }
+
+        .tourn-status-pill.status-live {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.35);
+            color: #38bdf8;
+        }
+
+        .tourn-status-pill.status-upcoming {
+            background: rgba(251, 191, 36, 0.12);
+            border-color: rgba(251, 191, 36, 0.35);
+            color: #fbbf24;
+        }
+
+        .tourn-status-pill.status-completed {
+            background: rgba(148, 163, 184, 0.1);
+            border-color: rgba(148, 163, 184, 0.25);
+            color: #94a3b8;
+        }
+
+        .tourn-title-wrap h3 {
+            margin: 0 0 4px;
+            font-size: 1.2rem;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        .tourn-kicker {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .tourn-desc {
+            color: #cbd5e1;
+            font-size: 0.86rem;
+            line-height: 1.5;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .tourn-specs-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 12px;
+            padding: 12px 14px;
+            background: rgba(0, 0, 0, 0.22);
+            border-radius: 8px;
+            font-size: 0.78rem;
+            color: #94a3b8;
+        }
+
+        .tourn-specs-list strong {
+            color: #e2e8f0;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .tourn-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .tourn-reg-btn {
+            background: linear-gradient(135deg, #f4b72f, #e69920);
+            color: #07152d;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tourn-reg-btn:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .tourn-reg-btn.is-registered {
+            background: rgba(74, 222, 128, 0.15);
+            border: 1px solid rgba(74, 222, 128, 0.4);
+            color: #4ade80;
+        }
+
+        .tourn-interest-count {
+            font-size: 0.78rem;
+            color: #f4b72f;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ─── Event Opening Status Banners ─── */
+        .tourn-opening-banner {
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 6px 0;
+            font-size: 0.8rem;
+            border: 1px solid;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .tourn-opening-banner.is-open {
+            background: rgba(74, 222, 128, 0.08);
+            border-color: rgba(74, 222, 128, 0.35);
+            color: #cbd5e1;
+        }
+        .tourn-opening-banner.is-open strong {
+            color: #4ade80;
+        }
+        .tourn-opening-banner.coming-soon {
+            background: rgba(251, 191, 36, 0.08);
+            border-color: rgba(251, 191, 36, 0.35);
+            color: #cbd5e1;
+        }
+        .tourn-opening-banner.coming-soon strong {
+            color: #fbbf24;
+        }
+        .tourn-opening-banner.in-progress {
+            background: rgba(56, 189, 248, 0.08);
+            border-color: rgba(56, 189, 248, 0.35);
+            color: #cbd5e1;
+        }
+        .tourn-opening-banner.in-progress strong {
+            color: #38bdf8;
+        }
+        .tourn-opening-banner.completed {
+            background: rgba(148, 163, 184, 0.08);
+            border-color: rgba(148, 163, 184, 0.25);
+            color: #94a3b8;
+        }
+        .tob-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+        }
+        .tob-desc {
+            margin: 0;
+            font-size: 0.74rem;
+            line-height: 1.35;
+            color: #94a3b8;
+        }
+
+        .status-indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .status-indicator-dot.open {
+            background: #4ade80;
+            box-shadow: 0 0 8px #4ade80;
+        }
+        .status-indicator-dot.upcoming {
+            background: #fbbf24;
+            box-shadow: 0 0 8px #fbbf24;
+        }
+        .status-indicator-dot.live {
+            background: #38bdf8;
+            box-shadow: 0 0 8px #38bdf8;
+            animation: cupDotPulse 1.8s infinite;
+        }
+        .status-indicator-dot.done {
+            background: #94a3b8;
+        }
+
+        /* Event Opening Roadmap in Dialog */
+        .event-opening-roadmap {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 16px;
+            margin: 4px 0;
+        }
+        .roadmap-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .roadmap-header h4 {
+            margin: 0;
+            font-size: 0.88rem;
+            color: #f4b72f;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .roadmap-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 99px;
+            border: 1px solid;
+            text-transform: uppercase;
+        }
+        .roadmap-badge.open {
+            background: rgba(74, 222, 128, 0.15);
+            border-color: rgba(74, 222, 128, 0.4);
+            color: #4ade80;
+        }
+        .roadmap-badge.upcoming {
+            background: rgba(251, 191, 36, 0.15);
+            border-color: rgba(251, 191, 36, 0.4);
+            color: #fbbf24;
+        }
+        .roadmap-badge.live {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: rgba(56, 189, 248, 0.4);
+            color: #38bdf8;
+        }
+        .roadmap-badge.completed {
+            background: rgba(148, 163, 184, 0.15);
+            border-color: rgba(148, 163, 184, 0.3);
+            color: #94a3b8;
+        }
+        .roadmap-status-text {
+            font-size: 0.84rem;
+            color: #cbd5e1;
+            line-height: 1.45;
+            margin-bottom: 14px;
+        }
+        .roadmap-timeline {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .rm-step {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .rm-step.completed {
+            border-color: rgba(74, 222, 128, 0.3);
+            background: rgba(74, 222, 128, 0.05);
+        }
+        .rm-step.completed .rm-num {
+            background: #4ade80;
+            color: #050811;
+        }
+        .rm-step.active {
+            border-color: rgba(244, 183, 47, 0.4);
+            background: rgba(244, 183, 47, 0.08);
+        }
+        .rm-step.active .rm-num {
+            background: #f4b72f;
+            color: #050811;
+        }
+        .rm-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+        .rm-step strong {
+            display: block;
+            font-size: 0.76rem;
+            color: #fff;
+        }
+        .rm-step small {
+            display: block;
+            font-size: 0.68rem;
+            color: #94a3b8;
+        }
+        @media (max-width: 600px) {
+            .roadmap-timeline {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ─── Event Detail Interactive Modal ─── */
+        .event-detail-dialog {
+            background: rgba(7, 18, 38, 0.94);
+            border: 1px solid rgba(244, 183, 47, 0.35);
+            border-radius: 16px;
+            padding: 0;
+            max-width: 700px;
+            width: 92%;
+            color: #fff;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+        }
+        .event-detail-dialog::backdrop {
+            background: rgba(4, 10, 24, 0.85);
+            backdrop-filter: blur(4px);
+        }
+        .event-modal-content {
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .event-modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 16px;
+        }
+        .event-modal-header h2 {
+            margin: 6px 0 2px;
+            font-size: 1.45rem;
+            color: #fff;
+            line-height: 1.25;
+        }
+        .event-modal-close-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            font-size: 1.4rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+        .event-modal-close-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+        .event-stats-hero {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+        }
+        .event-stat-box {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 12px 14px;
+            text-align: center;
+        }
+        .event-stat-box span {
+            display: block;
+            font-size: 0.72rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        .event-stat-box strong {
+            font-size: 1.15rem;
+            color: #fff;
+        }
+        .event-stat-box.gold strong {
+            color: #f4b72f;
+        }
+        .event-participant-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .event-participant-table th, 
+        .event-participant-table td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .event-participant-table th {
+            color: #94a3b8;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .event-participant-table tr:hover {
+            background: rgba(244, 183, 47, 0.04);
+        }
+        .event-modal-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        /* ─── My Registered Events Section ─── */
+        .my-tournaments-panel {
+            background: linear-gradient(135deg, rgba(244, 183, 47, 0.07) 0%, rgba(13, 31, 60, 0.95) 100%);
+            border: 1px solid rgba(244, 183, 47, 0.25);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 36px;
+        }
+
+        .my-tournaments-panel h2 {
+            margin: 0 0 14px;
+            font-size: 1.15rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .my-tournaments-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .my-tourn-chip {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(244, 183, 47, 0.3);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #e2e8f0;
+            font-size: 0.82rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .my-tourn-chip strong {
+            color: #fff;
+        }
+
+        /* ─── Featured Hero ─── */
+        .tourn-featured-box {
+            background: radial-gradient(circle at top right, rgba(244, 183, 47, 0.15), transparent 70%), #0e2243;
+            border: 1px solid rgba(244, 183, 47, 0.3);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 24px;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .tourn-featured-box {
+                grid-template-columns: 1fr;
+            }
+            .tourn-controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .tourn-search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="tournaments-page">
+    <header class="site-header">
+        <div class="header-container">
+            <a class="brand" href="index.html" aria-label="Tim eFootball League home">
+                <span class="brand-mark"><img src="favicon.png" alt=""></span>
+                <span class="brand-copy">
+                    <span class="brand-name">Tim eFootball</span>
+                    <span class="brand-label">League <span>•</span> Est. 2024</span>
+                </span>
+            </a>
+
+            <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+                <span class="sr-only">Toggle navigation</span>
+                <span></span><span></span><span></span>
+            </button>
+
+            <nav class="navigation" id="primary-navigation" aria-label="Primary navigation">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a class="active" href="tournaments.html" aria-current="page">Tournaments</a></li>
+                    <li><a href="rankings.html">Rankings</a></li>
+                    <li><a href="play.html">How to play</a></li>
+                    <li><a href="matches.html">Matches</a></li>
+                    <li><a href="cup.html">League Cup</a></li>
+                    <li class="nav-auth-item"><a href="profile.html">My Profile</a></li>
+                    <li class="nav-auth-item"><a href="login.html">Sign in</a></li>
+                </ul>
+            </nav>
+
+            <div class="header-actions" id="header-actions">
+                <a class="header-sign-in" href="login.html">Sign in</a>
+                <a class="header-action" href="#tournament-grid">Explore events</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="tournament-shell">
+        <section class="tournament-hero" aria-labelledby="tournament-title">
+            <div class="tournament-hero-copy">
+                <span class="tourn-header-badge">⚡ Official League Calendar · Season 04</span>
+                <h1 id="tournament-title">Compete. Climb.<br><em>Lift the Cup.</em></h1>
+                <p>Browse active leagues, knockout cups, and development ladders. Register your player interest directly into the league database to secure your qualifying seed.</p>
+                <a class="tournament-primary-cta" href="#tournament-grid">Browse events <span aria-hidden="true">↓</span></a>
+            </div>
+
+            <aside class="featured-tournament" aria-label="Featured tournament">
+                <div class="featured-topline"><span class="featured-label">Premier Trophy</span><span class="event-status status-open"><i></i> Open Qualifier</span></div>
+                <div class="featured-emblem" aria-hidden="true">LC<span>04</span></div>
+                <p class="featured-kicker">Championship Bracket</p>
+                <h2>Tim League Cup 2026</h2>
+                <p class="featured-description">The pinnacle 32-player single-elimination knockout tournament. Live bracket progression and verified Elo calculations.</p>
+                <div class="featured-facts">
+                    <span><strong>32</strong><small>Bracket Seeds</small></span>
+                    <span><strong>1v1</strong><small>Single Elim</small></span>
+                    <span><strong>Nov 15</strong><small>Round 1 Kickoff</small></span>
+                </div>
+                <a class="featured-link" href="cup.html">Open Cup Bracket <span aria-hidden="true">↗</span></a>
+            </aside>
+        </section>
+
+        <!-- Dynamic User Section: My Registered Interests -->
+        <section class="my-tournaments-panel" id="my-tournaments-panel" hidden>
+            <h2>⭐ Your Registered Tournament Interests</h2>
+            <div class="my-tournaments-list" id="my-tournaments-list">
+                <!-- Injected via script -->
+            </div>
+        </section>
+
+        <!-- Events Control Bar -->
+        <section class="tournament-list-section" id="tournament-grid-section">
+            <div class="tournament-section-heading">
+                <div>
+                    <p class="eyebrow"><span class="eyebrow-line"></span> Live Competition Directory</p>
+                    <h2 id="events-title">Official Season 04 Tournaments</h2>
+                    <p class="section-description">Filter by entry status, review format requirements, and toggle your participation interest with one click.</p>
+                </div>
+            </div>
+
+            <div class="tourn-controls-bar">
+                <div class="tourn-filter-tabs" id="tourn-filter-tabs">
+                    <button type="button" class="tourn-tab-btn is-active" data-filter="all">All Events</button>
+                    <button type="button" class="tourn-tab-btn" data-filter="Registration Open">Registration Open</button>
+                    <button type="button" class="tourn-tab-btn" data-filter="Coming Soon">Coming Soon</button>
+                    <button type="button" class="tourn-tab-btn" data-filter="In Progress">In Progress</button>
+                    <button type="button" class="tourn-tab-btn" data-filter="Completed">Completed</button>
+                </div>
+
+                <div class="tourn-search-box">
+                    <span aria-hidden="true">🔍</span>
+                    <input type="search" id="tourn-search-input" placeholder="Search tournaments or formats..." autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Dynamic Tournaments Cards Grid -->
+            <div class="tourn-grid" id="tournament-grid">
+                <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">
+                    Loading live competitions from database…
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Guide -->
+        <section class="tournament-guide" aria-labelledby="guide-title">
+            <div class="guide-intro">
+                <p class="eyebrow"><span class="eyebrow-line"></span> Competitive Pathway</p>
+                <h2 id="guide-title">How to Enter &amp; Qualify</h2>
+                <p>Four clear steps from account verification to lifting your first official championship trophy.</p>
+            </div>
+            <div class="guide-steps">
+                <article><span>01</span><h3>Verify Profile</h3><p>Ensure your gamer tag and verified email are linked so organizers can confirm your Elo rating.</p></article>
+                <article><span>02</span><h3>Register Interest</h3><p>Click "Register Interest" on any open competition to secure a priority registration queue spot.</p></article>
+                <article><span>03</span><h3>Coordinate Match</h3><p>Access your private fixture link in the Match Centre to arrange kickoff times with your opponent.</p></article>
+                <article><span>04</span><h3>Report &amp; Ascend</h3><p>Upload your in-game scoreline screenshot for owner verification and instant Elo adjustments.</p></article>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="tournament-faq" aria-labelledby="faq-title">
+            <div class="faq-heading">
+                <p class="eyebrow"><span class="eyebrow-line"></span> League Operations</p>
+                <h2 id="faq-title">Tournament Rules &amp; FAQ</h2>
+            </div>
+            <div class="faq-list">
+                <details>
+                    <summary>How are tournament seeds determined?<span aria-hidden="true">＋</span></summary>
+                    <p>Tournament seeding directly reflects your verified Elo rating on the leaderboard at the qualification cutoff date. Top seeds receive favorable bracket placements.</p>
+                </details>
+                <details>
+                    <summary>What happens if my opponent disconnects or fails to show?<span aria-hidden="true">＋</span></summary>
+                    <p>Matches carry a 15-minute forfeit grace period. Take a screenshot showing your active lobby and message support through the Match Centre to request a walkover decision.</p>
+                </details>
+                <details>
+                    <summary>Are tournament fixtures ranked?<span aria-hidden="true">＋</span></summary>
+                    <p>Yes. All official tournament bracket fixtures utilize our verified K=32 Elo calculation engine, directly impacting your global player ranking.</p>
+                </details>
+                <details>
+                    <summary>Can I participate in multiple competitions concurrently?<span aria-hidden="true">＋</span></summary>
+                    <p>Yes, provided scheduled kickoff times do not conflict. You can track all your active commitments under your profile dashboard.</p>
+                </details>
+            </div>
+        </section>
+    </main>
+
+    <!-- INTERACTIVE EVENT DETAIL & PARTICIPANTS MODAL -->
+    <dialog class="event-detail-dialog" id="event-detail-dialog" aria-labelledby="modal-event-title">
+        <div class="event-modal-content">
+            <div class="event-modal-header">
+                <div>
+                    <span class="tourn-badge-pill" id="modal-event-badge">EVENT</span>
+                    <h2 id="modal-event-title">Tournament Name</h2>
+                    <div style="font-size: 0.85rem; color: #94a3b8;" id="modal-event-kicker">Tournament Subtitle</div>
+                </div>
+                <button type="button" class="event-modal-close-btn" id="modal-event-close-btn" aria-label="Close dialog">×</button>
+            </div>
+
+            <!-- Key metrics -->
+            <div class="event-stats-hero">
+                <div class="event-stat-box gold">
+                    <span>Status</span>
+                    <strong id="modal-event-status">Registration Open</strong>
+                </div>
+                <div class="event-stat-box">
+                    <span>Format</span>
+                    <strong id="modal-event-format">1v1 Knockout</strong>
+                </div>
+                <div class="event-stat-box">
+                    <span>Capacity</span>
+                    <strong id="modal-event-slots">32 Seeds</strong>
+                </div>
+                <div class="event-stat-box">
+                    <span>Prize / Honors</span>
+                    <strong id="modal-event-prize">League Cup Trophy</strong>
+                </div>
+            </div>
+
+            <!-- Event Overview Description -->
+            <div>
+                <h4 style="color: #f4b72f; margin: 0 0 8px; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.05em;">Competition Briefing</h4>
+                <p id="modal-event-desc" style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.55; margin: 0; background: rgba(0,0,0,0.2); padding: 14px; border-radius: 8px;">
+                    Event description goes here.
+                </p>
+            </div>
+
+            <!-- Live Registered Competitors / Seeding Table -->
+            <div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                    <h4 style="color: #fff; margin: 0; font-size: 0.95rem;">Registered Competitors &amp; Seeds</h4>
+                    <span style="font-size: 0.78rem; color: #f4b72f; font-weight: 700;" id="modal-event-count">0 Players</span>
+                </div>
+                <div style="max-height: 220px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;">
+                    <table class="event-participant-table">
+                        <thead>
+                            <tr>
+                                <th>Seed</th>
+                                <th>Player</th>
+                                <th>Elo Rating</th>
+                                <th>Signed Up</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-event-participants-body">
+                            <tr><td colspan="4" style="text-align: center; color: #64748b; padding: 20px;">No registered competitors yet. Be the first to register!</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Actions row -->
+            <div class="event-modal-actions">
+                <div>
+                    <span style="font-size: 0.8rem; color: #94a3b8;">Official Elo verification: <strong style="color: #4ade80;">Active (K=32)</strong></span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="tourn-reg-btn" id="modal-event-action-btn">
+                        ⚡ Register Interest Now
+                    </button>
+                    <a href="matches.html" class="header-action" style="padding: 9px 18px; font-size: 0.82rem; border-radius: 8px;">Match Centre →</a>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span class="brand-mark"><img src="favicon.png" alt=""></span>
+                <div><strong>Tim eFootball</strong><small>League</small></div>
+            </div>
+            <nav class="footer-nav" aria-label="Footer navigation">
+                <a href="index.html">Home</a>
+                <a href="tournaments.html" aria-current="page">Tournaments</a>
+                <a href="rankings.html">Rankings</a>
+                <a href="matches.html">Matches</a>
+                <a href="play.html">How to play</a>
+                <a href="cup.html">League Cup</a>
+                <a href="profile.html">My Profile</a>
+            </nav>
+        </div>
+        <p class="footer-copy">© 2026 Tim eFootball League. Play fair. Respect your opponents.</p>
+    </footer>
+
+    <!-- Client Script for Live Dynamic Tournament Sync -->
+    <script>
+    (() => {
+        let allTournaments = [];
+        let myInterestIds = new Set();
+        let currentFilter = 'all';
+        let searchQuery = '';
+        let currentActiveTournId = null;
+
+        const grid = document.getElementById('tournament-grid');
+        const searchInput = document.getElementById('tourn-search-input');
+        const filterTabs = document.querySelectorAll('#tourn-filter-tabs .tourn-tab-btn');
+        const myPanel = document.getElementById('my-tournaments-panel');
+        const myList = document.getElementById('my-tournaments-list');
+        const detailDialog = document.getElementById('event-detail-dialog');
+        const closeBtn = document.getElementById('modal-event-close-btn');
+
+        closeBtn?.addEventListener('click', () => detailDialog.close());
+        detailDialog?.addEventListener('click', (e) => {
+            if (e.target === detailDialog) detailDialog.close();
+        });
+
+        const loadData = async () => {
+            try {
+                // Fetch public tournaments & user interests in parallel
+                const [tournRes, myRes] = await Promise.all([
+                    fetch('/api/site/tournaments', { cache: 'no-store' }),
+                    fetch('/api/me/tournaments', { credentials: 'same-origin' }).catch(() => null)
+                ]);
+
+                if (tournRes.ok) {
+                    const data = await tournRes.json();
+                    allTournaments = data.tournaments || [];
+                }
+
+                if (myRes && myRes.ok) {
+                    const myData = await myRes.json();
+                    if (myData.ok && myData.interestIds) {
+                        myInterestIds = new Set(myData.interestIds);
+                        renderMyInterests(myData.tournaments || []);
+                    }
+                }
+
+                renderGrid();
+            } catch (err) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #f87171;">Could not load live tournaments. Please try again later.</div>';
+            }
+        };
+
+        const renderMyInterests = (tournaments) => {
+            if (!tournaments.length) {
+                myPanel.hidden = true;
+                return;
+            }
+            myPanel.hidden = false;
+            myList.innerHTML = tournaments.map(t => `
+                <div class="my-tourn-chip" style="cursor: pointer;" data-open-tid="${t.id}">
+                    <span>👑</span>
+                    <div>
+                        <strong>${t.title}</strong>
+                        <div style="font-size: 0.72rem; color: #94a3b8;">${t.dates || 'TBC'} · ${t.status}</div>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        const renderGrid = () => {
+            let filtered = allTournaments.filter(t => {
+                const matchesFilter = currentFilter === 'all' || t.status === currentFilter;
+                const matchesSearch = !searchQuery || 
+                    (t.title && t.title.toLowerCase().includes(searchQuery)) ||
+                    (t.format && t.format.toLowerCase().includes(searchQuery)) ||
+                    (t.desc && t.desc.toLowerCase().includes(searchQuery));
+                return matchesFilter && matchesSearch;
+            });
+
+            if (!filtered.length) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #64748b;">No tournaments found matching your criteria.</div>';
+                return;
+            }
+
+            grid.innerHTML = filtered.map(t => {
+                const isInterested = myInterestIds.has(t.id);
+                const statusCls = t.status === 'Registration Open' ? 'open' : t.status === 'In Progress' ? 'live' : t.status === 'Completed' ? 'completed' : 'upcoming';
+
+                return `
+                <article class="tourn-card" data-tid="${t.id}" style="cursor: pointer;">
+                    <div class="tourn-card-top">
+                        <span class="tourn-badge-pill">${t.badge || 'EVENT'}</span>
+                        <span class="tourn-status-pill status-${statusCls}">
+                            <i></i> ${t.status || 'Coming Soon'}
+                        </span>
+                    </div>
+
+                    <div class="tourn-title-wrap">
+                        <h3>${t.title}</h3>
+                        ${t.kicker ? `<div class="tourn-kicker">${t.kicker}</div>` : ''}
+                    </div>
+
+                    <p class="tourn-desc">${t.desc || 'Join the official league bracket and compete against registered players.'}</p>
+
+                    <div class="tourn-specs-list">
+                        <div><span>Format:</span> <strong>${t.format}</strong></div>
+                        <div><span>Capacity:</span> <strong>${t.slots || 'Unlimited'}</strong></div>
+                        <div><span>Schedule:</span> <strong>${t.dates || 'TBC'}</strong></div>
+                        <div><span>Prize / Glory:</span> <strong>${t.prizePool || 'Championship Elo'}</strong></div>
+                        ${t.minElo || t.maxElo ? `<div style="grid-column: 1/-1;"><span>Rating Requirement:</span> <strong>${t.minElo ? t.minElo + '+' : 'Any'} ${t.maxElo ? 'to ' + t.maxElo + ' Elo' : ''}</strong></div>` : ''}
+                    </div>
+
+                    <div class="tourn-card-footer" onclick="event.stopPropagation()">
+                        <button type="button" class="tourn-reg-btn ${isInterested ? 'is-registered' : ''}" data-register-btn="${t.id}">
+                            ${isInterested ? '✓ Interested' : '⚡ Register Interest'}
+                        </button>
+                        <button type="button" class="header-action" data-open-tid="${t.id}" style="padding: 6px 12px; font-size: 0.78rem; border-radius: 6px; cursor: pointer;">
+                            Enter Event →
+                        </button>
+                    </div>
+                </article>
+                `;
+            }).join('');
+        };
+
+        // Open Event Interactive Modal
+        const openEventModal = async (tournId) => {
+            currentActiveTournId = tournId;
+            const t = allTournaments.find(item => item.id === tournId);
+            if (!t) return;
+
+            document.getElementById('modal-event-badge').textContent = t.badge || 'EVENT';
+            document.getElementById('modal-event-title').textContent = t.title;
+            document.getElementById('modal-event-kicker').textContent = t.kicker || t.dates || 'Season 04 Tournament';
+            document.getElementById('modal-event-status').textContent = t.status || 'Active';
+            document.getElementById('modal-event-format').textContent = t.format || 'Standard';
+            document.getElementById('modal-event-slots').textContent = t.slots || 'Open Entry';
+            document.getElementById('modal-event-prize').textContent = t.prizePool || 'Official Elo + Seeds';
+            document.getElementById('modal-event-desc').textContent = t.desc || 'Full tournament details, bracket schedules, and official match rooms will be coordinated through the Match Centre.';
+
+            const isInterested = myInterestIds.has(tournId);
+            const actionBtn = document.getElementById('modal-event-action-btn');
+            actionBtn.className = `tourn-reg-btn ${isInterested ? 'is-registered' : ''}`;
+            actionBtn.textContent = isInterested ? '✓ You Are Registered' : '⚡ Register Interest Now';
+
+            // Fetch live participants
+            const tbody = document.getElementById('modal-event-participants-body');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#94a3b8;">Loading confirmed seeds…</td></tr>';
+            
+            detailDialog.showModal();
+
+            try {
+                const res = await fetch(`/api/site/tournaments/${encodeURIComponent(tournId)}`, { cache: 'no-store' });
+                if (res.ok) {
+                    const data = await res.json();
+                    const participants = data.participants || [];
+                    document.getElementById('modal-event-count').textContent = `${participants.length} Players Confirmed`;
+
+                    if (!participants.length) {
+                        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 20px;">No registered competitors yet. Click register below to claim Seed #1!</td></tr>';
+                    } else {
+                        tbody.innerHTML = participants.map((p, idx) => `
+                            <tr>
+                                <td><strong style="color: ${idx < 3 ? '#f4b72f' : '#94a3b8'};">#${idx + 1}</strong></td>
+                                <td><strong>${p.gamerTag}</strong> <small style="color: #64748b;">(${p.name})</small></td>
+                                <td><strong style="color: #38bdf8;">${Number(p.rating || 1000).toLocaleString()} Elo</strong></td>
+                                <td style="color: #64748b; font-size: 0.76rem;">${p.registeredAt ? new Date(p.registeredAt).toLocaleDateString() : 'Confirmed'}</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#f87171; padding:15px;">Could not load participants list.</td></tr>';
+            }
+        };
+
+        // Modal Action Button (Register from within modal)
+        document.getElementById('modal-event-action-btn')?.addEventListener('click', async () => {
+            if (!currentActiveTournId) return;
+            const actionBtn = document.getElementById('modal-event-action-btn');
+            actionBtn.disabled = true;
+            actionBtn.textContent = 'Updating…';
+
+            try {
+                const res = await fetch(`/api/tournaments/${encodeURIComponent(currentActiveTournId)}/register-interest`, {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+
+                if (res.status === 401) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const data = await res.json();
+                if (data.ok) {
+                    if (data.registered) {
+                        myInterestIds.add(currentActiveTournId);
+                    } else {
+                        myInterestIds.delete(currentActiveTournId);
+                    }
+                    await loadData();
+                    openEventModal(currentActiveTournId);
+                } else {
+                    alert(data.message || 'Could not update registration.');
+                }
+            } catch {
+                alert('Connection error. Please try again.');
+            } finally {
+                actionBtn.disabled = false;
+            }
+        });
+
+        // Filter clicks
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                filterTabs.forEach(t => t.classList.remove('is-active'));
+                tab.classList.add('is-active');
+                currentFilter = tab.dataset.filter;
+                renderGrid();
+            });
+        });
+
+        // Search input
+        searchInput?.addEventListener('input', (e) => {
+            searchQuery = e.target.value.trim().toLowerCase();
+            renderGrid();
+        });
+
+        // Grid delegation (clicking card or enter button opens modal)
+        grid.addEventListener('click', (e) => {
+            const regBtn = e.target.closest('[data-register-btn]');
+            if (regBtn) {
+                handleRegister(regBtn);
+                return;
+            }
+
+            const openBtn = e.target.closest('[data-open-tid]');
+            if (openBtn) {
+                openEventModal(openBtn.dataset.openTid);
+                return;
+            }
+
+            const card = e.target.closest('.tourn-card');
+            if (card) {
+                openEventModal(card.dataset.tid);
+            }
+        });
+
+        // My panel chips click
+        myPanel.addEventListener('click', (e) => {
+            const chip = e.target.closest('[data-open-tid]');
+            if (chip) openEventModal(chip.dataset.openTid);
+        });
+
+        const handleRegister = async (btn) => {
+            const tid = btn.dataset.registerBtn;
+            btn.disabled = true;
+            btn.textContent = 'Updating…';
+
+            try {
+                const res = await fetch(`/api/tournaments/${encodeURIComponent(tid)}/register-interest`, {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+
+                if (res.status === 401) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const data = await res.json();
+                if (data.ok) {
+                    if (data.registered) {
+                        myInterestIds.add(tid);
+                    } else {
+                        myInterestIds.delete(tid);
+                    }
+                    loadData();
+                } else {
+                    alert(data.message || 'Could not update registration interest.');
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Connection error. Please try again.');
+                btn.disabled = false;
+            }
+        };
+
+        loadData();
+    })();
+    </script>
+</body>
+</html>

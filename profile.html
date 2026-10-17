@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1220">
+    <title>My Profile | Tim eFootball League</title>
+    <meta name="description" content="Your personal eFootball League dashboard — stats, match history, Elo rating, rank, and account settings.">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    <style>
+        /* ─── Profile page layout ─── */
+        .profile-shell {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 20px 60px;
+            min-height: 80vh;
+        }
+        @media (max-width: 860px) {
+            .profile-shell { grid-template-columns: 1fr; }
+        }
+
+        /* ─── Sidebar ─── */
+        .profile-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .profile-card-main {
+            background: linear-gradient(160deg, #0f2347 0%, #0b1a33 100%);
+            border: 1px solid rgba(244,183,47,0.18);
+            border-radius: 16px;
+            padding: 28px 20px 22px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-card-main::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 140px; height: 140px;
+            background: radial-gradient(circle, rgba(244,183,47,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .profile-avatar-lg {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f4b72f, #e69920);
+            color: #07152d;
+            font-size: 2rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+            border: 3px solid rgba(244,183,47,0.4);
+            box-shadow: 0 0 24px rgba(244,183,47,0.25);
+            text-transform: uppercase;
+        }
+        .profile-display-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0 4px;
+        }
+        .profile-gamertag-lg {
+            font-size: 0.85rem;
+            color: #f4b72f;
+            margin: 0 0 12px;
+            font-weight: 600;
+        }
+        .profile-tier-chip {
+            display: inline-block;
+            background: rgba(244,183,47,0.12);
+            border: 1px solid rgba(244,183,47,0.3);
+            color: #f4b72f;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+        }
+        .profile-tier-chip.tier-elite { background: rgba(244,183,47,0.18); border-color: rgba(244,183,47,0.5); color: #f4b72f; }
+        .profile-tier-chip.tier-competitive { background: rgba(56,189,248,0.1); border-color: rgba(56,189,248,0.35); color: #38bdf8; }
+        .profile-tier-chip.tier-developing { background: rgba(134,239,172,0.1); border-color: rgba(134,239,172,0.3); color: #86efac; }
+        .profile-elo-display {
+            background: rgba(0,0,0,0.25);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-top: 4px;
+        }
+        .profile-elo-display small { display: block; font-size: 0.65rem; color: #94a3b8; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+        .profile-elo-display strong { font-size: 1.6rem; color: #fff; font-weight: 800; }
+        .profile-rank-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 12px;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        .profile-rank-badge strong { color: #f4b72f; font-size: 1.1rem; }
+        .profile-sidebar-nav {
+            background: #0d1f3c;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .profile-sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 18px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.15s, color 0.15s;
+        }
+        .profile-sidebar-nav a:last-child { border-bottom: none; }
+        .profile-sidebar-nav a:hover { background: rgba(244,183,47,0.07); color: #fff; }
+        .profile-sidebar-nav a.active { background: rgba(244,183,47,0.1); color: #f4b72f; border-left: 3px solid #f4b72f; }
+        .profile-sidebar-nav a .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+        .sidebar-logout-btn {
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: #f87171;
+            border-radius: 10px;
+            padding: 11px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.15s;
+        }
+        .sidebar-logout-btn:hover { background: rgba(239,68,68,0.15); }
+
+        /* ─── Main content area ─── */
+        .profile-main {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .profile-section-card {
+            background: #0d1f3c;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .profile-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .profile-section-header h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .profile-section-header a {
+            font-size: 0.78rem;
+            color: #f4b72f;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .profile-section-header a:hover { text-decoration: underline; }
+
+        /* ─── Stats grid ─── */
+        .profile-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+        }
+        .profile-stat-card {
+            background: rgba(0,0,0,0.25);
+            border-radius: 10px;
+            padding: 16px 14px;
+            text-align: center;
+        }
+        .profile-stat-card .stat-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #fff;
+            display: block;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .profile-stat-card .stat-lbl {
+            font-size: 0.72rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .profile-stat-card.wins-card .stat-val { color: #4ade80; }
+        .profile-stat-card.draws-card .stat-val { color: #fbbf24; }
+        .profile-stat-card.losses-card .stat-val { color: #f87171; }
+        .profile-stat-card.elo-card .stat-val { color: #38bdf8; }
+        .profile-stat-card.rate-card .stat-val { color: #a78bfa; }
+
+        /* ─── Match history table ─── */
+        .match-history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .match-history-row {
+            display: grid;
+            grid-template-columns: 44px 1fr auto auto;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 12px 14px;
+            transition: background 0.15s;
+        }
+        .match-history-row:hover { background: rgba(244,183,47,0.05); }
+        .match-outcome-badge {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.85rem;
+        }
+        .outcome-win { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+        .outcome-loss { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+        .outcome-draw { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+        .outcome-pending { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
+        .match-opp-info strong { display: block; font-size: 0.88rem; color: #e2e8f0; }
+        .match-opp-info small { font-size: 0.72rem; color: #64748b; }
+        .match-score-display { font-size: 1rem; font-weight: 700; color: #fff; text-align: right; }
+        .match-score-display small { display: block; font-size: 0.7rem; color: #64748b; font-weight: 400; }
+        .match-rating-change { font-size: 0.82rem; font-weight: 700; text-align: right; }
+        .rating-plus { color: #4ade80; }
+        .rating-minus { color: #f87171; }
+        .match-history-empty { text-align: center; color: #4a5568; padding: 40px; font-size: 0.9rem; }
+
+        /* ─── Edit profile form ─── */
+        .edit-profile-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media (max-width: 600px) { .edit-profile-form { grid-template-columns: 1fr; } }
+        .edit-field { display: flex; flex-direction: column; gap: 6px; }
+        .edit-field label { font-size: 0.78rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+        .edit-field input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px 13px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .edit-field input:focus { border-color: rgba(244,183,47,0.5); }
+        .edit-profile-actions { grid-column: 1/-1; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .save-profile-btn {
+            background: linear-gradient(135deg, #f4b72f, #e69920);
+            color: #07152d;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 22px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .save-profile-btn:hover { opacity: 0.9; }
+        .save-profile-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .profile-form-status { font-size: 0.82rem; font-weight: 600; }
+
+        /* ─── Progress bar ─── */
+        .elo-progress-track {
+            background: rgba(0,0,0,0.3);
+            border-radius: 100px;
+            height: 8px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .elo-progress-fill {
+            height: 100%;
+            border-radius: 100px;
+            background: linear-gradient(90deg, #f4b72f, #e69920);
+            transition: width 0.6s cubic-bezier(.4,0,.2,1);
+        }
+        .elo-progress-labels { display: flex; justify-content: space-between; font-size: 0.68rem; color: #475569; margin-top: 4px; }
+
+        /* ─── Loading skeleton ─── */
+        .profile-loading {
+            display: flex; align-items: center; justify-content: center;
+            min-height: 300px; color: #4a5568; font-size: 0.9rem;
+        }
+        .profile-loading::after { content: ''; display: inline-block; width: 24px; height: 24px; border: 2px solid rgba(244,183,47,0.3); border-top-color: #f4b72f; border-radius: 50%; animation: spin 0.7s linear infinite; margin-left: 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="records-page">
+    <header class="site-header">
+        <div class="header-container">
+            <a class="brand" href="index.html" aria-label="Tim eFootball League home">
+                <span class="brand-mark"><img src="favicon.png" alt=""></span>
+                <span class="brand-copy">
+                    <span class="brand-name">Tim eFootball</span>
+                    <span class="brand-label">League <span>•</span> Est. 2024</span>
+                </span>
+            </a>
+
+            <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+                <span class="sr-only">Toggle navigation</span>
+                <span></span><span></span><span></span>
+            </button>
+
+            <nav class="navigation" id="primary-navigation" aria-label="Primary navigation">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="tournaments.html">Tournaments</a></li>
+                    <li><a href="rankings.html">Rankings</a></li>
+                    <li><a href="play.html">How to play</a></li>
+                    <li><a href="matches.html">Matches</a></li>
+                    <li><a href="cup.html">League Cup</a></li>
+                    <li class="nav-auth-item"><a class="active" href="profile.html" aria-current="page">My Profile</a></li>
+                    <li class="nav-auth-item"><a href="login.html">Sign in</a></li>
+                </ul>
+            </nav>
+
+            <div class="header-actions" id="header-actions">
+                <a class="header-sign-in" href="login.html">Sign in</a>
+                <a class="header-action" href="records.html">My records</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="profile-shell" id="profile-shell">
+            <div class="profile-loading" id="profile-loading">Loading your profile</div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span class="brand-mark"><img src="favicon.png" alt=""></span>
+                <div><strong>Tim eFootball</strong><small>League</small></div>
+            </div>
+            <nav class="footer-nav" aria-label="Footer navigation">
+                <a href="index.html">Home</a>
+                <a href="tournaments.html">Tournaments</a>
+                <a href="rankings.html">Rankings</a>
+                <a href="matches.html">Matches</a>
+                <a href="play.html">How to play</a>
+                <a href="cup.html">League Cup</a>
+                <a href="records.html">My records</a>
+                <a href="profile.html" aria-current="page">My profile</a>
+            </nav>
+        </div>
+        <p class="footer-copy">© 2026 Tim eFootball League. Built for competitive play.</p>
+    </footer>
+
+    <script>
+    (() => {
+        const shell = document.getElementById('profile-shell');
+
+        const tierInfo = (rating) => {
+            if (rating >= 1800) return { name: 'Legend Tier', cls: 'tier-elite', icon: '👑' };
+            if (rating >= 1500) return { name: 'Premier Division', cls: 'tier-elite', icon: '⭐' };
+            if (rating >= 1200) return { name: 'Challenger Division', cls: 'tier-competitive', icon: '🏆' };
+            if (rating >= 1000) return { name: 'Rising Division', cls: 'tier-developing', icon: '📈' };
+            return { name: 'Academy Division', cls: 'tier-developing', icon: '🎮' };
+        };
+
+        const outcomeLabel = (outcome) => {
+            if (outcome === 'win') return '<span class="match-outcome-badge outcome-win">W</span>';
+            if (outcome === 'loss') return '<span class="match-outcome-badge outcome-loss">L</span>';
+            if (outcome === 'draw') return '<span class="match-outcome-badge outcome-draw">D</span>';
+            return '<span class="match-outcome-badge outcome-pending">–</span>';
+        };
+
+        const formatDate = (iso) => {
+            if (!iso) return '';
+            return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        };
+
+        const renderProfile = async () => {
+            try {
+                // Fetch all data in parallel
+                const [meRes, rankRes, matchRes] = await Promise.all([
+                    fetch('/api/me', { credentials: 'same-origin' }),
+                    fetch('/api/me/rank', { credentials: 'same-origin' }),
+                    fetch('/api/me/matches', { credentials: 'same-origin' })
+                ]);
+
+                if (!meRes.ok) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const me = await meRes.json();
+                if (!me.authenticated) { window.location.href = 'login.html'; return; }
+
+                const rankData = rankRes.ok ? await rankRes.json() : { rank: '–', total: '–', percentile: 50 };
+                const matchData = matchRes.ok ? await matchRes.json() : { matches: [] };
+
+                const wins = Number(me.wins || 0);
+                const draws = Number(me.draws || 0);
+                const losses = Number(me.losses || 0);
+                const total = wins + draws + losses;
+                const winRate = total ? Math.round((wins / total) * 100) : 0;
+                const rating = Number(me.rating || 1000);
+                const gamerTag = me.gamerTag || me.gamerName || 'Player';
+                const name = me.name || me.firstName || 'Player';
+                const tier = tierInfo(rating);
+                const eloPercent = Math.min(100, Math.max(5, Math.round(((rating - 500) / 2000) * 100)));
+
+                // Match history HTML
+                const matches = matchData.matches || [];
+                const matchHistoryHtml = matches.length === 0
+                    ? `<div class="match-history-empty">No matches found. <a href="matches.html">Challenge someone to get started →</a></div>`
+                    : matches.map(m => {
+                        const scoreText = m.myScore != null ? `${m.myScore} – ${m.oppScore}` : '–';
+                        const typeLabel = m.ranked ? 'Ranked' : 'Friendly';
+                        const statusLabel = m.status === 'pending' ? 'Pending' :
+                            m.status === 'accepted' ? 'Accepted' :
+                            m.status === 'declined' ? 'Declined' :
+                            m.status === 'pending-owner' ? 'Awaiting Review' :
+                            m.status === 'disputed' ? 'Disputed' :
+                            m.status === 'approved' ? 'Completed' :
+                            m.status || 'Unknown';
+                        const ratingChange = m.ratingChange != null
+                            ? `<span class="${m.ratingChange >= 0 ? 'rating-plus' : 'rating-minus'}">${m.ratingChange >= 0 ? '+' : ''}${m.ratingChange}</span>`
+                            : '<span style="color:#4a5568">—</span>';
+                        return `
+                            <div class="match-history-row">
+                                ${outcomeLabel(m.outcome)}
+                                <div class="match-opp-info">
+                                    <strong>vs ${m.opponent.gamerTag}</strong>
+                                    <small>${typeLabel} · ${formatDate(m.scheduledAt || m.createdAt)} · ${statusLabel}</small>
+                                </div>
+                                <div class="match-score-display">
+                                    ${scoreText}
+                                    <small>Score</small>
+                                </div>
+                                <div class="match-rating-change">
+                                    ${ratingChange}
+                                    <small style="color:#4a5568;font-weight:400">Elo</small>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                // Render the full layout
+                shell.innerHTML = `
+                    <aside class="profile-sidebar">
+                        <div class="profile-card-main">
+                            <div class="profile-avatar-lg" id="profile-avatar-lg">${gamerTag.charAt(0).toUpperCase()}</div>
+                            <h2 class="profile-display-name" id="profile-display-name">${name}</h2>
+                            <p class="profile-gamertag-lg">@${gamerTag}</p>
+                            <span class="profile-tier-chip ${tier.cls}">${tier.icon} ${tier.name}</span>
+                            <div class="profile-elo-display">
+                                <small>ELO RATING</small>
+                                <strong id="profile-elo">${rating.toLocaleString()}</strong>
+                            </div>
+                            <div class="profile-rank-badge">
+                                Global rank: <strong>#${rankData.rank}</strong> of ${rankData.total} players
+                            </div>
+                            <div class="elo-progress-track" style="margin-top:14px">
+                                <div class="elo-progress-fill" style="width:${eloPercent}%"></div>
+                            </div>
+                            <div class="elo-progress-labels"><span>500</span><span>1500</span><span>2500</span></div>
+                        </div>
+
+                        <nav class="profile-sidebar-nav">
+                            <a href="profile.html" class="active"><span class="nav-icon">👤</span> My Profile</a>
+                            <a href="records.html"><span class="nav-icon">📋</span> My Records</a>
+                            <a href="matches.html#challenges"><span class="nav-icon">⚔️</span> Match Centre</a>
+                            <a href="rankings.html"><span class="nav-icon">📊</span> Leaderboard</a>
+                            <a href="tournaments.html"><span class="nav-icon">🏆</span> Tournaments</a>
+                            ${me.isAdmin ? '<a href="admin.html"><span class="nav-icon">⚡</span> Admin Console</a>' : ''}
+                        </nav>
+
+                        <button type="button" class="sidebar-logout-btn" id="profile-logout-btn">Sign out</button>
+                    </aside>
+
+                    <div class="profile-main">
+                        <!-- Stats Overview -->
+                        <div class="profile-section-card">
+                            <div class="profile-section-header">
+                                <h2>📈 Season performance</h2>
+                                <a href="records.html">Update records →</a>
+                            </div>
+                            <div class="profile-stats-grid">
+                                <div class="profile-stat-card wins-card">
+                                    <span class="stat-val" id="ps-wins">${wins}</span>
+                                    <span class="stat-lbl">Wins</span>
+                                </div>
+                                <div class="profile-stat-card draws-card">
+                                    <span class="stat-val" id="ps-draws">${draws}</span>
+                                    <span class="stat-lbl">Draws</span>
+                                </div>
+                                <div class="profile-stat-card losses-card">
+                                    <span class="stat-val" id="ps-losses">${losses}</span>
+                                    <span class="stat-lbl">Losses</span>
+                                </div>
+                                <div class="profile-stat-card elo-card">
+                                    <span class="stat-val" id="ps-elo">${rating.toLocaleString()}</span>
+                                    <span class="stat-lbl">Elo Rating</span>
+                                </div>
+                                <div class="profile-stat-card rate-card">
+                                    <span class="stat-val" id="ps-winrate">${winRate}%</span>
+                                    <span class="stat-lbl">Win Rate</span>
+                                </div>
+                                <div class="profile-stat-card">
+                                    <span class="stat-val" id="ps-total">${total}</span>
+                                    <span class="stat-lbl">Played</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Match History -->
+                        <div class="profile-section-card">
+                            <div class="profile-section-header">
+                                <h2>⚔️ Match history <small style="font-size:0.75rem;color:#4a5568;font-weight:400">(last 50)</small></h2>
+                                <a href="matches.html">Find opponents →</a>
+                            </div>
+                            <div class="match-history-list" id="match-history-list">
+                                ${matchHistoryHtml}
+                            </div>
+                        </div>
+
+                        <!-- Edit Profile -->
+                        <div class="profile-section-card">
+                            <div class="profile-section-header">
+                                <h2>⚙️ Account settings</h2>
+                            </div>
+                            <form class="edit-profile-form" id="edit-profile-form" novalidate>
+                                <div class="edit-field">
+                                    <label for="edit-firstname">First name</label>
+                                    <input type="text" id="edit-firstname" name="firstName" value="${name}" minlength="2" maxlength="60" autocomplete="given-name">
+                                </div>
+                                <div class="edit-field">
+                                    <label for="edit-gamertag">Gamer tag</label>
+                                    <input type="text" id="edit-gamertag" name="gamerTag" value="${gamerTag}" minlength="3" maxlength="32" autocomplete="nickname">
+                                </div>
+                                <div class="edit-field" style="grid-column:1/-1">
+                                    <label>Email address</label>
+                                    <input type="email" value="${me.email}" disabled style="opacity:0.5;cursor:not-allowed">
+                                </div>
+                                <div class="edit-profile-actions">
+                                    <button type="submit" class="save-profile-btn" id="save-profile-btn">Save changes</button>
+                                    <span class="profile-form-status" id="profile-form-status" role="status"></span>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Quick actions -->
+                        <div class="profile-section-card" style="background:linear-gradient(135deg,rgba(244,183,47,0.06) 0%,rgba(13,31,60,1) 100%);">
+                            <div class="profile-section-header" style="margin-bottom:14px">
+                                <h2>🚀 Quick actions</h2>
+                            </div>
+                            <div class="quick-actions" style="flex-wrap:wrap;gap:10px">
+                                <a href="matches.html#challenges">⚔️ Challenge player</a>
+                                <a href="rankings.html">📊 View leaderboard</a>
+                                <a href="cup.html">👑 League Cup</a>
+                                <a href="tournaments.html">🏆 Tournaments</a>
+                                <a href="records.html">📋 Edit records</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Logout handler
+                document.getElementById('profile-logout-btn')?.addEventListener('click', async () => {
+                    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
+                    finally { window.location.href = 'login.html'; }
+                });
+
+                // Edit profile form
+                document.getElementById('edit-profile-form')?.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const btn = document.getElementById('save-profile-btn');
+                    const status = document.getElementById('profile-form-status');
+                    const firstName = document.getElementById('edit-firstname').value.trim();
+                    const gamerTag = document.getElementById('edit-gamertag').value.trim();
+                    if (firstName.length < 2) { status.textContent = 'Name must be at least 2 characters.'; status.style.color = '#f87171'; return; }
+                    if (gamerTag.length < 3) { status.textContent = 'Gamer tag must be at least 3 characters.'; status.style.color = '#f87171'; return; }
+                    btn.disabled = true;
+                    status.textContent = 'Saving…';
+                    status.style.color = '#fbbf24';
+                    try {
+                        const res = await fetch('/api/profile', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({ firstName, gamerTag })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.message || 'Could not save profile.');
+                        status.textContent = '✓ Profile updated!';
+                        status.style.color = '#4ade80';
+                        // Update displayed name/tag
+                        document.getElementById('profile-display-name').textContent = firstName;
+                        document.getElementById('profile-avatar-lg').textContent = gamerTag.charAt(0).toUpperCase();
+                    } catch (err) {
+                        status.textContent = err.message;
+                        status.style.color = '#f87171';
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+
+            } catch (err) {
+                shell.innerHTML = `<div class="profile-loading" style="color:#f87171">Failed to load profile. <a href="login.html" style="color:#f4b72f">Sign in again →</a></div>`;
+            }
+        };
+
+        renderProfile();
+    })();
+    </script>
+</body>
+</html>
+

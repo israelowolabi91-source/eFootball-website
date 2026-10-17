@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b2042">
+    <meta name="description" content="Challenge existing Tim eFootball League player profiles, schedule matches, report scores with screenshots, and track owner-approved rankings.">
+    <title>Match Centre | Tim eFootball League</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body class="matches-page">
+    <header class="site-header">
+        <div class="header-container">
+            <a class="brand" href="index.html" aria-label="Tim eFootball League home">
+                <span class="brand-mark"><img src="favicon.png" alt=""></span>
+                <span class="brand-copy">
+                    <span class="brand-name">Tim eFootball</span>
+                    <span class="brand-label">League <span>•</span> Est. 2024</span>
+                </span>
+            </a>
+
+            <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+                <span class="sr-only">Toggle navigation</span>
+                <span></span><span></span><span></span>
+            </button>
+
+            <nav class="navigation" id="primary-navigation" aria-label="Primary navigation">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="tournaments.html">Tournaments</a></li>
+                    <li><a href="rankings.html">Rankings</a></li>
+                    <li><a href="play.html">How to play</a></li>
+                    <li><a class="active" href="matches.html" aria-current="page">Matches</a></li>
+                    <li><a href="cup.html">League Cup</a></li>
+                    <li class="nav-auth-item"><a href="login.html">Sign in</a></li>
+                    <li class="nav-auth-item"><a href="signup.html">Create account</a></li>
+                </ul>
+            </nav>
+
+            <div class="header-actions" id="header-actions">
+                <a class="header-sign-in" href="login.html">Sign in</a>
+                <a class="header-action" href="#fixtures">Explore fixtures <span aria-hidden="true">↓</span></a>
+            </div>
+        </div>
+    </header>
+
+    <main class="matches-shell">
+        <section class="matches-hero" aria-labelledby="matches-title">
+            <div class="matches-hero-copy">
+                <p class="eyebrow"><span class="eyebrow-line"></span> The Match Centre</p>
+                <h1 id="matches-title">Every game has<br><em>a story.</em></h1>
+                <p>Find your next fixture, revisit the results, and get match-day ready. Everything you need to follow the action starts here.</p>
+                <div class="matches-hero-actions">
+                    <a class="matches-primary-action" href="#challenges">Challenge a player <span aria-hidden="true">↓</span></a>
+                    <a class="matches-text-action" href="#fixtures">Browse previews <span aria-hidden="true">↘</span></a>
+                    <a class="matches-text-action" href="play.html">Match-day guide <span aria-hidden="true">↗</span></a>
+                </div>
+                <p class="matches-preview-disclosure"><span aria-hidden="true">i</span> The challenge centre below uses real account data. Fixtures further down remain illustrative previews.</p>
+            </div>
+
+            <aside class="matches-featured" aria-labelledby="featured-match-title">
+                <div class="matches-featured-topline"><span class="matches-featured-label">UP NEXT · SAMPLE FIXTURE</span><span class="matches-featured-status"><i></i> Preview</span></div>
+                <div class="matches-featured-event"><span class="matches-mini-emblem">LC</span><span><strong>League Cup · Round of 16</strong><small>Season 04 match preview</small></span></div>
+                <div class="matches-featured-date"><span aria-hidden="true">◷</span> Friday, 2 October <b>·</b> 19:30 BST</div>
+                <div class="matches-featured-score" id="featured-match-title">
+                    <div><span class="matches-team-badge gold-badge">NB</span><strong>NovaBlade</strong><small>Home</small></div>
+                    <span class="matches-versus">VS</span>
+                    <div><span class="matches-team-badge blue-badge">RO</span><strong>Rex Orion</strong><small>Away</small></div>
+                </div>
+                <div class="matches-featured-footer"><span>Illustrative fixture only · BST display</span><a href="#fixture-lc-041">View fixture <span aria-hidden="true">→</span></a></div>
+            </aside>
+        </section>
+
+        <section class="matches-stats" aria-label="Match centre sample overview">
+            <div><span class="matches-stat-icon" aria-hidden="true">◷</span><span><strong>05</strong><small>Fixture previews</small></span></div>
+            <div><span class="matches-stat-icon result-stat-icon" aria-hidden="true">✓</span><span><strong>03</strong><small>Result examples</small></span></div>
+            <div><span class="matches-stat-icon" aria-hidden="true">◎</span><span><strong>03</strong><small>Competition formats</small></span></div>
+            <div><span class="matches-stat-icon" aria-hidden="true">✦</span><span><strong>01</strong><small>Season showcase</small></span></div>
+        </section>
+
+        <section class="challenge-centre" id="challenges" aria-labelledby="challenge-centre-title">
+            <div class="challenge-centre-heading">
+                <p class="eyebrow"><span class="eyebrow-line"></span> Player challenge centre</p>
+                <h2 id="challenge-centre-title">Make the next match yours.</h2>
+                <p>Challenge any existing player profile with a linked email, agree on a time, and submit matching score reports. Ranked results count only after the owner checks both screenshots.</p>
+            </div>
+
+            <div class="account-gate" id="match-account-gate">
+                <div class="account-gate-intro">
+                    <span class="account-gate-icon" aria-hidden="true">◎</span>
+                    <div>
+                        <h3>No player sign-in needed</h3>
+                        <p>Find a saved player profile and challenge directly. Private invitations go to the profile email addresses; email addresses are never shown in the directory.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="challenge-workspace" id="challenge-workspace">
+                <div class="challenge-status-message" id="challenge-status-message" role="status" aria-live="polite"></div>
+                <div class="challenge-workspace-heading">
+                    <div>
+                        <p class="eyebrow"><span class="eyebrow-line"></span> Player directory</p>
+                        <h3>Find your next opponent.</h3>
+                        <p>Browse saved player profiles with linked email addresses, filter by rating and approved ranked-match experience, then challenge a player from their card.</p>
+                    </div>
+                    <div class="directory-header-actions">
+                        <span class="directory-updated" id="directory-updated"></span>
+                        <button class="challenge-secondary-button" id="refresh-challenges" type="button">Refresh players</button>
+                    </div>
+                </div>
+
+                <div class="directory-stats" aria-label="Player directory overview">
+                    <div><span class="directory-stat-icon" aria-hidden="true">♙</span><span><strong id="directory-total-players">—</strong><small>Invite-ready profiles</small></span></div>
+                    <div><span class="directory-stat-icon" aria-hidden="true">↗</span><span><strong id="directory-ranked-players">—</strong><small>With ranked records</small></span></div>
+                    <div><span class="directory-stat-icon" aria-hidden="true">✦</span><span><strong id="directory-top-rating">—</strong><small>Top saved Elo</small></span></div>
+                </div>
+
+                <div class="directory-quick-filters" role="group" aria-label="Quick player filters">
+                    <span>Quick find</span>
+                    <button type="button" data-directory-filter="all" aria-pressed="true">All players</button>
+                    <button type="button" data-directory-filter="elite" aria-pressed="false">Elite</button>
+                    <button type="button" data-directory-filter="played" aria-pressed="false">Ranked experience</button>
+                    <button type="button" data-directory-filter="new" aria-pressed="false">New to ranked</button>
+                </div>
+
+                <div class="player-directory-toolbar" aria-label="Player directory filters">
+                    <label class="player-search-field">
+                        <span aria-hidden="true">⌕</span>
+                        <span class="sr-only">Search players by gamer tag</span>
+                        <input id="player-search" type="search" placeholder="Search gamer tags..." autocomplete="off" maxlength="50">
+                    </label>
+                    <label>Rating
+                        <select id="player-rating-filter">
+                            <option value="all">Any rating</option>
+                            <option value="elite">Elite · 1400+</option>
+                            <option value="competitive">Competitive · 1100–1399</option>
+                            <option value="developing">Developing · under 1100</option>
+                        </select>
+                    </label>
+                    <label>Experience
+                        <select id="player-experience-filter">
+                            <option value="all">Any experience</option>
+                            <option value="played">Has ranked matches</option>
+                            <option value="new">New to ranked</option>
+                        </select>
+                    </label>
+                    <label>Sort
+                        <select id="player-sort">
+                            <option value="rating">Highest Elo</option>
+                            <option value="matches">Most experienced</option>
+                            <option value="wins">Most ranked wins</option>
+                            <option value="name">Gamer tag A–Z</option>
+                        </select>
+                    </label>
+                    <button class="directory-reset-button" id="reset-player-filters" type="button">Reset filters</button>
+                </div>
+
+                <div class="player-directory-summary">
+                    <p id="challenge-player-count" aria-live="polite">Loading saved player profiles…</p>
+                    <span>Player email addresses are always private.</span>
+                </div>
+                <div class="player-directory-grid" id="player-directory" aria-live="polite">
+                    <p class="challenge-list-empty">Loading player directory…</p>
+                </div>
+
+                <dialog class="challenge-dialog" id="challenge-dialog" aria-labelledby="challenge-dialog-title">
+                    <div class="challenge-dialog-heading">
+                        <div>
+                            <p class="eyebrow"><span class="eyebrow-line"></span> Private email invitation</p>
+                            <h3 id="challenge-dialog-title">Challenge this player</h3>
+                            <p id="challenge-dialog-player-summary"></p>
+                        </div>
+                        <button class="challenge-dialog-close" type="button" data-close-challenge aria-label="Close challenge setup">×</button>
+                    </div>
+                    <form class="challenge-create-form" id="challenge-create-form">
+                        <input name="opponentId" id="challenge-opponent" type="hidden" required>
+                        <label>Your player profile
+                            <select name="challengerId" id="challenge-challenger" required>
+                                <option value="">Loading player profiles…</option>
+                            </select>
+                            <span class="challenge-form-hint">Select the profile that will send this invitation. Your profile email stays private.</span>
+                        </label>
+                        <label>Kick-off time <span class="field-hint">Your local time</span>
+                            <input name="scheduledAt" type="datetime-local" required>
+                        </label>
+                        <label>Reminder for both players
+                            <select name="reminderMinutes">
+                                <option value="15">15 minutes before</option>
+                                <option value="30">30 minutes before</option>
+                                <option value="60" selected>1 hour before</option>
+                                <option value="1440">24 hours before</option>
+                            </select>
+                        </label>
+                        <label class="ranked-choice"><input name="ranked" type="checkbox"><span><strong>Ranked match</strong><small id="ranked-match-help">Only an owner-approved score changes Elo ratings.</small></span></label>
+                        <p class="challenge-dialog-note">Both players receive private match links at their saved email addresses. Email addresses are never displayed. A reminder will be sent at the time selected above.</p>
+                        <div class="challenge-dialog-actions">
+                            <button class="challenge-secondary-button" type="button" data-close-challenge>Cancel</button>
+                            <button class="matches-primary-action" type="submit">Send challenge <span aria-hidden="true">→</span></button>
+                        </div>
+                    </form>
+                </dialog>
+
+                <section class="challenge-panel my-matches-panel" aria-labelledby="my-matches-title">
+                    <div class="my-matches-heading">
+                        <div><p class="eyebrow"><span class="eyebrow-line"></span> Private match links</p><h4 id="my-matches-title">Invitations &amp; scheduled matches</h4></div>
+                    </div>
+                    <div class="my-matches-list" id="my-matches-list"><p class="challenge-list-empty">Matches appear here when you open a private link sent to a selected player profile’s email. This keeps match details available without a sign-in or exposing email addresses.</p></div>
+                </section>
+
+                <section class="challenge-panel owner-review-panel" id="owner-review-panel" aria-labelledby="owner-review-title" hidden>
+                    <div class="my-matches-heading">
+                        <div><p class="eyebrow"><span class="eyebrow-line"></span> Restricted owner tools</p><h4 id="owner-review-title">Score evidence awaiting review</h4></div>
+                        <span class="owner-review-badge">Owner only</span>
+                    </div>
+                    <div class="owner-review-list" id="owner-review-list"><p class="challenge-list-empty">No result reports are waiting for review.</p></div>
+                </section>
+
+            </div>
+        </section>
+
+        <section class="matches-list-section" id="fixtures" aria-labelledby="fixtures-title">
+            <div class="matches-list-heading">
+                <div>
+                    <p class="eyebrow"><span class="eyebrow-line"></span> Fixtures &amp; results</p>
+                    <h2 id="fixtures-title">Follow every match.</h2>
+                    <p class="matches-list-intro">Search the illustrative schedule, narrow it by competition, or save a preview on this device for quick reference.</p>
+                    <p class="matches-data-note">All entries below are sample content. No match is live, scheduled, confirmed, or officially recorded by this page.</p>
+                </div>
+                <label class="matches-search">
+                    <span aria-hidden="true">⌕</span>
+                    <span class="sr-only">Search fixtures, players, or competitions</span>
+                    <input id="match-search" type="search" placeholder="Search fixtures..." autocomplete="off">
+                </label>
+            </div>
+
+            <div class="matches-toolbar">
+                <div class="matches-filter-group" role="group" aria-label="Filter fixtures">
+                    <button class="matches-filter is-selected" type="button" data-match-filter="all" aria-pressed="true">All <span>08</span></button>
+                    <button class="matches-filter" type="button" data-match-filter="upcoming" aria-pressed="false">Fixtures <span>05</span></button>
+                    <button class="matches-filter" type="button" data-match-filter="results" aria-pressed="false">Results <span>03</span></button>
+                    <button class="matches-filter" type="button" data-match-filter="saved" aria-pressed="false">Saved <span id="saved-match-count">00</span></button>
+                </div>
+                <div class="matches-selects">
+                    <label>Competition
+                        <select id="match-competition">
+                            <option value="all">All competitions</option>
+                            <option value="cup">League Cup</option>
+                            <option value="open">Open Series</option>
+                            <option value="rookie">Rookie Ladder</option>
+                        </select>
+                    </label>
+                    <label>Sort
+                        <select id="match-sort">
+                            <option value="upcoming">Upcoming first</option>
+                            <option value="latest">Newest date first</option>
+                            <option value="competition">Competition name</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <div class="matches-result-summary"><p id="match-count" aria-live="polite">Showing 8 sample matches</p><span>Times shown in BST · previews only</span></div>
+
+            <div class="matches-list" id="matches-list">
+                <article class="match-list-card upcoming-match" id="fixture-lc-041" data-match-card data-match-id="lc-041" data-status="upcoming" data-competition="cup" data-date="2026-10-02T19:30:00+01:00" data-search="league cup novaBlade rex orion round of 16">
+                    <div class="match-list-date"><span>FRI</span><strong>02</strong><small>OCT · 19:30</small></div>
+                    <div class="match-list-main">
+                        <div class="match-list-meta"><span class="match-competition-tag cup-tag">LEAGUE CUP</span><span class="match-round">Round of 16 · Season 04</span><span class="match-preview-tag">PREVIEW</span></div>
+                        <div class="match-list-teams"><div class="match-list-team"><span class="matches-team-badge gold-badge">NB</span><strong>NovaBlade</strong></div><span class="match-list-vs">VS</span><div class="match-list-team away-team"><span class="matches-team-badge blue-badge">RO</span><strong>Rex Orion</strong></div></div>
+                        <details class="match-detail">
+                            <summary>Fixture details <span aria-hidden="true">＋</span></summary>
+                            <div class="match-detail-body"><p><strong>Illustrative window:</strong> Friday 2 October, 19:30 BST.</p><p><strong>Format preview:</strong> 1v1 knockout example. The organiser must confirm match settings, connection method, and event rules before play.</p><a href="play.html">Review the match-day guide <span aria-hidden="true">→</span></a></div>
+                        </details>
+                    </div>
+                    <button class="match-save-button" type="button" data-match-save aria-pressed="false" aria-label="Save NovaBlade versus Rex Orion fixture"><span aria-hidden="true">☆</span><span class="save-button-label">Save</span></button>
+                </article>
+
+                <article class="match-list-card upcoming-match" data-match-card data-match-id="os-018" data-status="upcoming" data-competition="open" data-date="2026-10-03T18:00:00+01:00" data-search="open series blueStrike falcons matchday 8">
+                    <div class="match-list-date"><span>SAT</span><strong>03</strong><small>OCT · 18:00</small></div>
+                    <div class="match-list-main">
+                        <div class="match-list-meta"><span class="match-competition-tag open-tag">OPEN SERIES</span><span class="match-round">Matchday 8 · Season 04</span><span class="match-preview-tag">PREVIEW</span></div>
+                        <div class="match-list-teams"><div class="match-list-team"><span class="matches-team-badge violet-badge">BS</span><strong>BlueStrike</strong></div><span class="match-list-vs">VS</span><div class="match-list-team away-team"><span class="matches-team-badge green-badge">FK</span><strong>Falcons</strong></div></div>
+                        <details class="match-detail">
+                            <summary>Fixture details <span aria-hidden="true">＋</span></summary>
+                            <div class="match-detail-body"><p><strong>Illustrative window:</strong> Saturday 3 October, 18:00 BST.</p><p><strong>Format preview:</strong> League match example. Confirm platform, settings, and the reporting deadline with the event organiser.</p><a href="play.html">Review the match-day guide <span aria-hidden="true">→</span></a></div>
+                        </details>
+                    </div>
+                    <button class="match-save-button" type="button" data-match-save aria-pressed="false" aria-label="Save BlueStrike versus Falcons fixture"><span aria-hidden="true">☆</span><span class="save-button-label">Save</span></button>
+                </article>
+
+                <article class="match-list-card upcoming-match" data-match-card data-match-id="rl-012" data-status="upcoming" data-competition="rookie" data-date="2026-10-04T16:00:00+01:00" data-search="rookie ladder pixelPilot orbit academy">
+                    <div class="match-list-date"><span>SUN</span><strong>04</strong><small>OCT · 16:00</small></div>
+                    <div class="match-list-main">
+                        <div class="match-list-meta"><span class="match-competition-tag rookie-tag">ROOKIE LADDER</span><span class="match-round">Ladder match · Season 04</span><span class="match-preview-tag">PREVIEW</span></div>
+                        <div class="match-list-teams"><div class="match-list-team"><span class="matches-team-badge green-badge">PP</span><strong>PixelPilot</strong></div><span class="match-list-vs">VS</span><div class="match-list-team away-team"><span class="matches-team-badge orange-badge">OR</span><strong>Orbit</strong></div></div>
+                        <details class="match-detail">
+                            <summary>Fixture details <span aria-hidden="true">＋</span></summary>
+                            <div class="match-detail-body"><p><strong>Illustrative window:</strong> Sunday 4 October, 16:00 BST.</p><p><strong>Format preview:</strong> Beginner-friendly 1v1 example. Ask the organiser how ladder points and result confirmations work for the real event.</p><a href="play.html">Review the match-day guide <span aria-hidden="true">→</span></a></div>
+                        </details>
+                    </div>
+                    <button class="match-save-button" type="button" data-match-save aria-pressed="false" aria-label="Save PixelPilot versus Orbit fixture"><span aria-hidden="true">☆</span><span class="save-button-label">Save</span></button>
+                </article>
+
+                <article class="match-list-card upcoming-match" data-match-card data-match-id="os-019" data-status="upcoming" data-competition="open" data-date="2026-10-06T20:00:00+01:00" data-search="open series rex orion nova fc matchday 8">
+                    <div class="match-list-date"><span>TUE</span><strong>06</strong><small>OCT · 20:00</small></div>
+                    <div class="match-list-main">
+                        <div class="match-list-meta"><span class="match-competition-tag open-tag">OPEN SERIES</span><span class="match-round">Matchday 8 · Season 04</span><span class="match-preview-tag">PREVIEW</span></div>
+                        <div class="match-list-teams"><div class="match-list-team"><span class="matches-team-badge blue-badge">RO</span><strong>Rex Orion</strong></div><span class="match-list-vs">VS</span><div class="match-list-team away-team"><span class="matches-team-badge gold-badge">NF</span><strong>Nova FC</strong></div></div>
+                        <details class="match-detail">
+                            <summary>Fixture details <span aria-hidden="true">＋</span></summary>
+                            <div class="match-detail-body"><p><strong>Illustrative window:</strong> Tuesday 6 October, 20:00 BST.</p><p><strong>Format preview:</strong> League match example. This pairing and time are not an official schedule.</p><a href="play.html">Review the match-day guide <span aria-hidden="true">→</span></a></div>
+                        </details>
+                    </div>
+                    <button class="match-save-button" type="button" data-match-save aria-pressed="false" aria-label="Save Rex Orion versus Nova FC fixture"><span aria-hidden="true">☆</span><span class="save-button-label">Save</span></button>
+                </article>
+
+                <article class="match-list-card upcoming-match" data-match-card data-match-id="lc-042" data-status="upcoming" data-competition="cup" data-date="2026-10-08T19:00:00+01:00" data-search="league cup nova fc blueStrike quarter final">
+                    <div class="match-list-date"><span>THU</span><strong>08</strong><small>OCT · 19:00</small></div>
+                    <div class="match-list-main">
+                        <div class="match-list-meta"><span class="match-competition-tag cup-tag">LEAGUE CUP</span><span class="match-round">Quarter-final example · Season 04</span><span class="match-preview-tag">PREVIEW</span></div>
+                        <div class="match-list-teams"><div class="match-list-team"><span class="matches-team-badge gold-badge">NF</span><strong>Nova FC</strong></div><span class="match-list-vs">VS</span><div class="match-list-team away-team"><span class="matches-team-badge violet-badge">BS</span><strong>BlueStrike</strong></div></div>
+                        <details class="match-detail">
+                            <summary>Fixture details <span aria-hidden="true">＋</span></summary>
+                            <div class="match-detail-body"><p><strong>Illustrative window:</strong> Thursday 8 October, 19:00 BST.</p><p><strong>Format preview:</strong> Knockout example. Progression, tie-breaks, and match settings must be provided by the organiser.</p><a href="play.html">Review the match-day guide <span aria-hidden="true">→</span></a></div>
+                        </details>
+                    </div>
+                    <button class="match-save-button" type="button" data-match-save aria-pressed="false" aria-label="Save Nova FC versus BlueStrike fixture"><span aria-hidden="true">☆</span><span class="save-button-label">Save</span></button>
+                </article>
+
+                <article class="match-list-card result-match" data-match-card data-match-id="os-014" data-status="results" data-competition="open" data-date="2026-09-30T19:00:00+01:00" data-search="open series falcons orbit 2 1 result">
+                    <div class="match-list-date result-date"><span>WED</span><strong>30</strong><small>SEP · SAMPLE</small></div>
+                    <div class="match-list-main">
+                        <div class="match-list-meta"><span class="match-competition-tag open-tag">OPEN SERIES</span><span class="match-round">Matchday 7 · Example result</span><span class="match-result-tag">FINAL · SAMPLE</span></div>
+                        <div class="match-list-teams result-teams"><div class="match-list-team"><span class="matches-team-badge green-badge">FK</span><strong>Falcons</strong></div><span class="match-score"><b>2</b><i>—</i><b>1</b></span><div class="match-list-team away-team"><span class="matches-team-badge orange-badge">OR</span><strong>Orbit</strong></div></div>
+                        <details class="match-detail">
+                            <summary>Result details <span aria-hidden="true">＋</span></summary>
+                            <div class="match-detail-body"><p><strong>Example score:</strong> Falcons 2–1 Orbit.</p><p>This is sample content and is not an official or player-submitted result.</p><a href="rankings.html">Explore sample rankings <span aria-hidden="true">→</span></a></div>
+                        </details>
+                    </div>
+                    <span class="result-verified-label"><span aria-hidden="true">✓</span> Example</span>
+                </article>
+
+                <article class="match-list-card result-match" data-match-card data-match-id="rl-009" data-status="results" data-competition="rookie" data-date="2026-09-28T16:00:00+01:00" data-search="rookie ladder pixelpilot nova fc 3 2 result">
+                    <div class="match-list-date result-date"><span>MON</span><strong>28</strong><small>SEP · SAMPLE</small></div>
+                    <div class="match-list-main">
+                        <div class="match-list-meta"><span class="match-competition-tag rookie-tag">ROOKIE LADDER</span><span class="match-round">Ladder match · Example result</span><span class="match-result-tag">FINAL · SAMPLE</span></div>
+                        <div class="match-list-teams result-teams"><div class="match-list-team"><span class="matches-team-badge green-badge">PP</span><strong>PixelPilot</strong></div><span class="match-score"><b>3</b><i>—</i><b>2</b></span><div class="match-list-team away-team"><span class="matches-team-badge gold-badge">NF</span><strong>Nova FC</strong></div></div>
+                        <details class="match-detail">
+                            <summary>Result details <span aria-hidden="true">＋</span></summary>
+                            <div class="match-detail-body"><p><strong>Example score:</strong> PixelPilot 3–2 Nova FC.</p><p>This is sample content and is not an official or player-submitted result.</p><a href="rankings.html">Explore sample rankings <span aria-hidden="true">→</span></a></div>
+                        </details>
+                    </div>
+                    <span class="result-verified-label"><span aria-hidden="true">✓</span> Example</span>
+                </article>
+
+                <article class="match-list-card result-match" data-match-card data-match-id="lc-036" data-status="results" data-competition="cup" data-date="2026-09-27T18:30:00+01:00" data-search="league cup novaBlade pixelpilot 1 0 result">
+                    <div class="match-list-date result-date"><span>SUN</span><strong>27</strong><small>SEP · SAMPLE</small></div>
+                    <div class="match-list-main">
+                        <div class="match-list-meta"><span class="match-competition-tag cup-tag">LEAGUE CUP</span><span class="match-round">Round of 32 · Example result</span><span class="match-result-tag">FINAL · SAMPLE</span></div>
+                        <div class="match-list-teams result-teams"><div class="match-list-team"><span class="matches-team-badge gold-badge">NB</span><strong>NovaBlade</strong></div><span class="match-score"><b>1</b><i>—</i><b>0</b></span><div class="match-list-team away-team"><span class="matches-team-badge green-badge">PP</span><strong>PixelPilot</strong></div></div>
+                        <details class="match-detail">
+                            <summary>Result details <span aria-hidden="true">＋</span></summary>
+                            <div class="match-detail-body"><p><strong>Example score:</strong> NovaBlade 1–0 PixelPilot.</p><p>This is sample content and is not an official or player-submitted result.</p><a href="rankings.html">Explore sample rankings <span aria-hidden="true">→</span></a></div>
+                        </details>
+                    </div>
+                    <span class="result-verified-label"><span aria-hidden="true">✓</span> Example</span>
+                </article>
+            </div>
+
+            <div class="matches-empty-state" id="matches-empty" hidden>
+                <span aria-hidden="true">⌕</span>
+                <h3>No matches found.</h3>
+                <p>Try another search, competition, or filter to see more of the match preview.</p>
+                <button type="button" id="reset-match-filters">Reset filters</button>
+            </div>
+            <p class="matches-save-status" id="matches-save-status" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="h2h-predictor-section" id="h2h-predictor" aria-labelledby="h2h-title">
+            <div class="h2h-header">
+                <p class="eyebrow"><span class="eyebrow-line"></span> Match analytics</p>
+                <h2 id="h2h-title">Head-to-Head Match Predictor.</h2>
+                <p>Compare any two league competitors or clubs. Our predictive engine computes win probabilities from official Elo rating dynamics and simulates realistic tactical outcomes.</p>
+            </div>
+
+            <div class="h2h-card">
+                <div class="h2h-selectors">
+                    <div class="h2h-side h2h-home">
+                        <label for="h2h-select-a">Side A (Home advantage)</label>
+                        <select id="h2h-select-a" class="h2h-select" aria-label="Select Side A competitor"></select>
+                        <div class="h2h-profile" id="h2h-profile-a">
+                            <span class="h2h-badge-avatar" id="h2h-avatar-a">NB</span>
+                            <div>
+                                <strong class="h2h-name" id="h2h-name-a">NovaBlade</strong>
+                                <small class="h2h-elo" id="h2h-elo-a">1,864 Elo · Elite</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="h2h-mid">
+                        <span class="h2h-vs-badge" aria-hidden="true">VS</span>
+                        <button type="button" class="h2h-swap-btn" id="h2h-swap-btn" title="Swap Home and Away" aria-label="Swap Home and Away">⇄</button>
+                    </div>
+
+                    <div class="h2h-side h2h-away">
+                        <label for="h2h-select-b">Side B (Away)</label>
+                        <select id="h2h-select-b" class="h2h-select" aria-label="Select Side B competitor"></select>
+                        <div class="h2h-profile" id="h2h-profile-b">
+                            <span class="h2h-badge-avatar away" id="h2h-avatar-b">RO</span>
+                            <div>
+                                <strong class="h2h-name" id="h2h-name-b">Rex Orion</strong>
+                                <small class="h2h-elo" id="h2h-elo-b">1,842 Elo · Elite</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h2h-probability-container">
+                    <div class="h2h-prob-header">
+                        <span id="h2h-prob-label-a">NovaBlade 48%</span>
+                        <span id="h2h-prob-label-draw">Draw 26%</span>
+                        <span id="h2h-prob-label-b">Rex Orion 26%</span>
+                    </div>
+                    <div class="h2h-prob-bar" role="progressbar" aria-label="Match outcome win probability">
+                        <div class="h2h-prob-fill home" id="h2h-fill-a" style="width: 48%;"></div>
+                        <div class="h2h-prob-fill draw" id="h2h-fill-draw" style="width: 26%;"></div>
+                        <div class="h2h-prob-fill away" id="h2h-fill-b" style="width: 26%;"></div>
+                    </div>
+                    <div class="h2h-prob-legend">
+                        <span><i class="legend-dot home"></i> Home Win</span>
+                        <span><i class="legend-dot draw"></i> Draw</span>
+                        <span><i class="legend-dot away"></i> Away Win</span>
+                    </div>
+                </div>
+
+                <div class="h2h-metrics-grid">
+                    <div class="h2h-metric-row">
+                        <span class="metric-val-a" id="metric-att-a">92</span>
+                        <div class="metric-center">
+                            <span class="metric-label">Attack Form</span>
+                            <div class="metric-dual-bar">
+                                <div class="metric-fill-a" id="bar-att-a" style="width: 51%"></div>
+                                <div class="metric-fill-b" id="bar-att-b" style="width: 49%"></div>
+                            </div>
+                        </div>
+                        <span class="metric-val-b" id="metric-att-b">89</span>
+                    </div>
+                    <div class="h2h-metric-row">
+                        <span class="metric-val-a" id="metric-def-a">88</span>
+                        <div class="metric-center">
+                            <span class="metric-label">Defensive Stability</span>
+                            <div class="metric-dual-bar">
+                                <div class="metric-fill-a" id="bar-def-a" style="width: 49%"></div>
+                                <div class="metric-fill-b" id="bar-def-b" style="width: 51%"></div>
+                            </div>
+                        </div>
+                        <span class="metric-val-b" id="metric-def-b">90</span>
+                    </div>
+                    <div class="h2h-metric-row">
+                        <span class="metric-val-a" id="metric-form-a">96</span>
+                        <div class="metric-center">
+                            <span class="metric-label">Recent Momentum</span>
+                            <div class="metric-dual-bar">
+                                <div class="metric-fill-a" id="bar-form-a" style="width: 52%"></div>
+                                <div class="metric-fill-b" id="bar-form-b" style="width: 48%"></div>
+                            </div>
+                        </div>
+                        <span class="metric-val-b" id="metric-form-b">88</span>
+                    </div>
+                    <div class="h2h-metric-row">
+                        <span class="metric-val-a" id="metric-exp-a">28</span>
+                        <div class="metric-center">
+                            <span class="metric-label">Ranked Matches Played</span>
+                            <div class="metric-dual-bar">
+                                <div class="metric-fill-a" id="bar-exp-a" style="width: 51%"></div>
+                                <div class="metric-fill-b" id="bar-exp-b" style="width: 49%"></div>
+                            </div>
+                        </div>
+                        <span class="metric-val-b" id="metric-exp-b">27</span>
+                    </div>
+                </div>
+
+                <div class="h2h-simulation-box">
+                    <div class="simulation-actions">
+                        <button type="button" class="simulation-btn" id="simulate-match-btn">
+                            <span class="sim-icon">⚡</span> Run Tactical Match Simulation
+                        </button>
+                    </div>
+                    <div class="simulation-result" id="simulation-result" hidden>
+                        <div class="sim-scoreline">
+                            <div class="sim-team sim-home">
+                                <strong id="sim-team-a">NovaBlade</strong>
+                                <span class="sim-goals" id="sim-score-a">2</span>
+                            </div>
+                            <span class="sim-divider">—</span>
+                            <div class="sim-team sim-away">
+                                <span class="sim-goals" id="sim-score-b">1</span>
+                                <strong id="sim-team-b">Rex Orion</strong>
+                            </div>
+                        </div>
+                        <div class="sim-status" id="sim-status">Full-time outcome generated based on rating probability distribution</div>
+                        <div class="sim-timeline" id="sim-timeline"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="match-day-prep" aria-labelledby="match-day-prep-title">
+            <div class="match-day-prep-copy">
+                <p class="eyebrow"><span class="eyebrow-line"></span> Before you kick off</p>
+                <h2 id="match-day-prep-title">Good matches start before the whistle.</h2>
+                <p>Confirm the details together, understand the event rules, and know how to report the score before you enter the lobby.</p>
+                <a href="play.html">Open the full How to Play guide <span aria-hidden="true">↗</span></a>
+            </div>
+            <div class="match-day-prep-list">
+                <div><span>01</span><span><strong>Confirm time &amp; opponent</strong><small>Use the organiser-approved contact channel.</small></span></div>
+                <div><span>02</span><span><strong>Agree match settings</strong><small>Follow the rules for your specific event.</small></span></div>
+                <div><span>03</span><span><strong>Know the result process</strong><small>Report only a match you actually played.</small></span></div>
+            </div>
+        </section>
+
+        <section class="matches-faq-section" aria-labelledby="matches-faq-title">
+            <div class="matches-faq-heading">
+                <p class="eyebrow"><span class="eyebrow-line"></span> Match-day support</p>
+                <h2 id="matches-faq-title">A few things worth knowing.</h2>
+                <p>These pages are a preview centre, not a live fixture or score-reporting service.</p>
+            </div>
+            <div class="matches-faq-list">
+                <details><summary>Are these fixtures and results real?<span aria-hidden="true">＋</span></summary><p>No. Match names, dates, pairings, times, and scores here are illustrative preview content. They are not connected to live league data and should not be used to plan or report an actual match.</p></details>
+                <details><summary>How do I find my official fixture?<span aria-hidden="true">＋</span></summary><p>Check the information supplied by your tournament or league organiser and confirm the time and details directly through the official channel they provide. The fixture list on this page is not an official schedule.</p></details>
+                <details><summary>Does “Save” send me a reminder?<span aria-hidden="true">＋</span></summary><p>No. Save keeps an example fixture in this browser on this device only. Real accepted challenges in your player profile can send a reminder email to both players before kick-off.</p></details>
+                <details><summary>How are challenge scores and rankings handled?<span aria-hidden="true">＋</span></summary><p>Both players submit the score and a screenshot. The owner reviews both reports and evidence before approving the result. Only approved ranked matches update the Elo leaderboard; friendly results do not change ratings.</p></details>
+                <details><summary>What if my opponent does not show up or the game disconnects?<span aria-hidden="true">＋</span></summary><p>Keep communication respectful, note what happened, and contact the organiser promptly. Do not award yourself a result or replay a fixture unless the relevant competition rules tell you what to do.</p></details>
+            </div>
+        </section>
+
+        <section class="matches-final-cta" aria-labelledby="matches-next-title">
+            <div><p class="eyebrow"><span class="eyebrow-line"></span> Stay match-ready</p><h2 id="matches-next-title">Pick your next competition.</h2><p>Discover the formats, check the event details, and get prepared before match day.</p></div>
+            <div><a href="tournaments.html">Browse tournaments <span aria-hidden="true">↗</span></a><a href="rankings.html">View rankings <span aria-hidden="true">↗</span></a></div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span class="brand-mark"><img src="favicon.png" alt=""></span>
+                <div><strong>Tim eFootball</strong><small>League</small></div>
+            </div>
+            <nav class="footer-nav" aria-label="Footer navigation">
+                <a href="index.html">Home</a>
+                <a href="tournaments.html">Tournaments</a>
+                <a href="rankings.html">Rankings</a>
+                <a href="matches.html" aria-current="page">Matches</a>
+                <a href="play.html">How to play</a>
+                <a href="cup.html">League Cup</a>
+            </nav>
+        </div>
+        <p class="footer-copy">© 2026 Tim eFootball League. Play fair. Respect your opponents.</p>
+    </footer>
+</body>
+</html>

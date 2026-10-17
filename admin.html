@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Operations Console | Tim eFootball League</title>
+    <meta name="description" content="Master administrative management console for Tim eFootball League. Live control over player accounts, matches, Elo ratings, tournaments, and broadcast announcements.">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-page">
+    <!-- Top Announcement Bar (Preview / Live) -->
+    <div id="live-announcement-bar-preview"></div>
+
+    <!-- Admin Master Header -->
+    <header class="admin-header">
+        <div class="admin-header-inner">
+            <div class="admin-brand">
+                <a href="index.html" class="admin-brand-link" title="Return to website">
+                    <img src="favicon.png" alt="Tim eFootball League" class="admin-brand-icon">
+                    <div>
+                        <span class="admin-brand-title">Tim eFootball League</span>
+                        <span class="admin-brand-subtitle">Master Operations Console</span>
+                    </div>
+                </a>
+                <span class="admin-status-pill online" id="admin-status-indicator">
+                    <i class="status-dot"></i> Live Database · WAL Mode
+                </span>
+            </div>
+
+            <div class="admin-header-actions">
+                <a href="index.html" class="admin-link-btn" target="_blank" rel="noopener">
+                    <span aria-hidden="true">↗</span> View Live Site
+                </a>
+                <div class="admin-user-profile" id="admin-profile-pill">
+                    <span class="admin-user-avatar" id="admin-avatar">A</span>
+                    <span class="admin-user-tag" id="admin-tag">Admin</span>
+                </div>
+                <button type="button" class="admin-btn-logout" id="admin-logout-btn" title="Sign Out">Sign out</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Authentication Modal (Displayed if unauthorized) -->
+    <dialog class="admin-auth-dialog" id="admin-auth-dialog">
+        <div class="admin-auth-card">
+            <div class="admin-auth-header">
+                <span class="admin-lock-icon" aria-hidden="true">🔒</span>
+                <h2>Admin Access Required</h2>
+                <p>Authenticate with your Master Key or Administrator Credentials to manage the live website.</p>
+            </div>
+
+            <div class="admin-auth-tabs">
+                <button type="button" class="admin-auth-tab is-active" data-auth-mode="key">Master Secret Key</button>
+                <button type="button" class="admin-auth-tab" data-auth-mode="password">Email &amp; Password</button>
+            </div>
+
+            <form id="admin-key-form" class="admin-auth-form">
+                <label for="admin-master-key">Master Secret Password or Key
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" id="admin-master-key" placeholder="Enter secret password e.g. admin123" required autocomplete="current-password" style="padding-right: 42px; width: 100%;">
+                        <button type="button" class="btn-toggle-pw" data-target="admin-master-key" style="position: absolute; right: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: 4px;" title="Show/Hide Password">👁️</button>
+                    </div>
+                    <small style="color: #94a3b8; font-size: 0.76rem; display: block; margin-top: 5px;">Configured in <code>.env</code> as <strong>ADMIN_KEY</strong> (default: <code>admin123</code>)</small>
+                </label>
+                <button type="submit" class="admin-submit-btn">Unlock Admin Console →</button>
+            </form>
+
+            <form id="admin-password-form" class="admin-auth-form" hidden>
+                <label for="admin-email">Admin Email
+                    <input type="email" id="admin-email" placeholder="owolabimichael704@gmail.com" value="owolabimichael704@gmail.com" required autocomplete="email">
+                </label>
+                <label for="admin-password">Password
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" id="admin-password" placeholder="Account password or admin secret" required autocomplete="current-password" style="padding-right: 42px; width: 100%;">
+                        <button type="button" class="btn-toggle-pw" data-target="admin-password" style="position: absolute; right: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: 4px;" title="Show/Hide Password">👁️</button>
+                    </div>
+                    <small style="color: #94a3b8; font-size: 0.76rem; display: block; margin-top: 5px;">Accepts account password or master secret (<code>admin123</code>)</small>
+                </label>
+                <button type="submit" class="admin-submit-btn">Sign in as Administrator →</button>
+            </form>
+
+            <p class="admin-auth-message" id="admin-auth-message" role="alert"></p>
+        </div>
+    </dialog>
+
+    <!-- Main Admin Workspace -->
+    <main class="admin-main">
+        <div class="admin-container">
+            <!-- Navigation Tabs Bar -->
+            <nav class="admin-tabs-nav" aria-label="Admin Navigation Tabs">
+                <button type="button" class="admin-tab is-active" data-tab="overview">
+                    <span class="tab-icon">📊</span> Overview
+                </button>
+                <button type="button" class="admin-tab" data-tab="users">
+                    <span class="tab-icon">👥</span> Players &amp; Accounts
+                </button>
+                <button type="button" class="admin-tab" data-tab="matches">
+                    <span class="tab-icon">⚔️</span> Matches &amp; Scores
+                </button>
+                <button type="button" class="admin-tab" data-tab="broadcast">
+                    <span class="tab-icon">📢</span> Live Broadcast Banner
+                </button>
+                <button type="button" class="admin-tab" data-tab="tournaments">
+                    <span class="tab-icon">🏆</span> Tournaments &amp; Events
+                </button>
+                <button type="button" class="admin-tab" data-tab="clubs">
+                    <span class="tab-icon">🛡️</span> Club Standings
+                </button>
+                <button type="button" class="admin-tab" data-tab="bracket">
+                    <span class="tab-icon">👑</span> League Cup Bracket
+                </button>
+            </nav>
+
+            <!-- TAB 1: OVERVIEW -->
+            <section class="admin-tab-pane is-active" id="pane-overview">
+                <div class="admin-pane-header">
+                    <div>
+                        <h2>System Command &amp; Live Stats</h2>
+                        <p>Real-time metrics from the live platform. All changes made in this console persist immediately to the database.</p>
+                    </div>
+                    <div class="admin-quick-actions">
+                        <button type="button" class="admin-action-btn primary" id="btn-quick-new-user">+ Add Player</button>
+                        <button type="button" class="admin-action-btn secondary" id="btn-quick-new-match">+ New Fixture</button>
+                        <button type="button" class="admin-action-btn secondary" id="btn-recalculate-rankings">↺ Refresh Standings</button>
+                    </div>
+                </div>
+
+                <div class="admin-stats-grid">
+                    <article class="admin-stat-card">
+                        <span class="stat-icon-wrap users">👥</span>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Players</span>
+                            <strong class="stat-value" id="stat-total-users">—</strong>
+                            <small class="stat-sub" id="stat-verified-users">— verified accounts</small>
+                        </div>
+                    </article>
+
+                    <article class="admin-stat-card">
+                        <span class="stat-icon-wrap matches">⚔️</span>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Matches</span>
+                            <strong class="stat-value" id="stat-total-matches">—</strong>
+                            <small class="stat-sub" id="stat-approved-matches">— verified &amp; approved</small>
+                        </div>
+                    </article>
+
+                    <article class="admin-stat-card">
+                        <span class="stat-icon-wrap pending">⏳</span>
+                        <div class="stat-info">
+                            <span class="stat-label">Pending Reviews</span>
+                            <strong class="stat-value warning" id="stat-pending-reviews">—</strong>
+                            <small class="stat-sub">Require score approval</small>
+                        </div>
+                    </article>
+
+                    <article class="admin-stat-card">
+                        <span class="stat-icon-wrap elo">👑</span>
+                        <div class="stat-info">
+                            <span class="stat-label">Season Leader</span>
+                            <strong class="stat-value gold" id="stat-top-player">—</strong>
+                            <small class="stat-sub" id="stat-top-player-elo">—</small>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="admin-overview-columns">
+                    <div class="admin-overview-card">
+                        <div class="card-title-row">
+                            <h3>⚡ Quick Platform Controls</h3>
+                        </div>
+                        <ul class="admin-controls-list">
+                            <li>
+                                <div>
+                                    <strong>Sitewide Broadcast Banner</strong>
+                                    <p>Display real-time notification alerts at the top of all pages.</p>
+                                </div>
+                                <button type="button" class="admin-btn-sm" id="btn-goto-broadcast">Manage Banner →</button>
+                            </li>
+                            <li>
+                                <div>
+                                    <strong>Player Directory &amp; Elo Standings</strong>
+                                    <p>Live edit any player's Elo rating, wins, draws, losses, or verification status.</p>
+                                </div>
+                                <button type="button" class="admin-btn-sm" id="btn-goto-users">Edit Players →</button>
+                            </li>
+                            <li>
+                                <div>
+                                    <strong>Match Result Decisions</strong>
+                                    <p>Approve submitted screenshots or settle disputed matches with instant rating updates.</p>
+                                </div>
+                                <button type="button" class="admin-btn-sm" id="btn-goto-matches">Review Matches →</button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="admin-overview-card">
+                        <div class="card-title-row">
+                            <h3>🔍 Server &amp; Environment Diagnostics</h3>
+                        </div>
+                        <div class="diagnostics-list">
+                            <div class="diag-item">
+                                <span>Database Engine</span>
+                                <strong>SQLite 3 (WAL mode enabled)</strong>
+                            </div>
+                            <div class="diag-item">
+                                <span>Owner Email</span>
+                                <strong id="diag-owner-email">owolabimichael704@gmail.com</strong>
+                            </div>
+                            <div class="diag-item">
+                                <span>Admin Key Protection</span>
+                                <strong class="text-success">Active (32+ bytes SHA-256)</strong>
+                            </div>
+                            <div class="diag-item">
+                                <span>Email Delivery (SMTP)</span>
+                                <strong id="diag-email-status">Configured</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: PLAYERS & USERS (LIVE CRUD) -->
+            <section class="admin-tab-pane" id="pane-users">
+                <div class="admin-pane-header">
+                    <div>
+                        <h2>Player Profiles &amp; Accounts</h2>
+                        <p>Live management of all registered players. You can edit gamer tags, adjust Elo ratings, change records, grant admin access, or reset passwords.</p>
+                    </div>
+                    <button type="button" class="admin-action-btn primary" id="btn-open-create-user">+ Add New Player</button>
+                </div>
+
+                <div class="admin-toolbar">
+                    <label class="admin-search-field">
+                        <span aria-hidden="true">⌕</span>
+                        <input type="search" id="user-search-input" placeholder="Search by gamer tag, name, or email...">
+                    </label>
+                    <div class="admin-filter-group">
+                        <select id="user-filter-role">
+                            <option value="all">All Roles</option>
+                            <option value="admin">Admins only</option>
+                            <option value="user">Regular players</option>
+                        </select>
+                        <select id="user-filter-verified">
+                            <option value="all">All Verification</option>
+                            <option value="verified">Verified only</option>
+                            <option value="unverified">Unverified only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin-table-container">
+                    <table class="admin-table" id="users-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Email</th>
+                                <th>Rating (Elo)</th>
+                                <th>Record (W–D–L)</th>
+                                <th>Status</th>
+                                <th>Role</th>
+                                <th class="text-right">Live Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <tr><td colspan="7" class="table-loading">Loading player records…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 3: MATCHES & SCORES (LIVE CRUD) -->
+            <section class="admin-tab-pane" id="pane-matches">
+                <div class="admin-pane-header">
+                    <div>
+                        <h2>Matches, Challenges &amp; Results</h2>
+                        <p>Live oversight of all fixtures. Settle scores, approve evidence screenshots, edit match results, or create official tournament pairings.</p>
+                    </div>
+                    <button type="button" class="admin-action-btn primary" id="btn-open-create-match">+ Schedule Fixture</button>
+                </div>
+
+                <div class="admin-toolbar">
+                    <div class="admin-filter-tabs" id="match-status-tabs">
+                        <button type="button" class="filter-tab is-active" data-status="all">All Matches</button>
+                        <button type="button" class="filter-tab" data-status="pending-owner">Pending Review</button>
+                        <button type="button" class="filter-tab" data-status="disputed">Disputed</button>
+                        <button type="button" class="filter-tab" data-status="accepted">Upcoming / Active</button>
+                        <button type="button" class="filter-tab" data-status="approved">Approved &amp; Sched</button>
+                    </div>
+                </div>
+
+                <div class="admin-table-container">
+                    <table class="admin-table" id="matches-table">
+                        <thead>
+                            <tr>
+                                <th>Match ID / Comp</th>
+                                <th>Challenger vs Opponent</th>
+                                <th>Scheduled Time</th>
+                                <th>Current Score</th>
+                                <th>Status</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matches-tbody">
+                            <tr><td colspan="6" class="table-loading">Loading match data…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 4: LIVE BROADCAST BANNER -->
+            <section class="admin-tab-pane" id="pane-broadcast">
+                <div class="admin-pane-header">
+                    <div>
+                        <h2>Live Broadcast &amp; Sitewide Banner</h2>
+                        <p>Publish breaking tournament news, registration calls, or important announcements instantly across every page of the website.</p>
+                    </div>
+                </div>
+
+                <div class="admin-broadcast-editor">
+                    <div class="broadcast-form-col">
+                        <form id="broadcast-form">
+                            <div class="form-field-switch">
+                                <label class="switch-label" for="broadcast-active">
+                                    <input type="checkbox" id="broadcast-active" checked>
+                                    <span class="switch-slider"></span>
+                                    <strong>Enable Broadcast Banner</strong>
+                                </label>
+                                <small>When active, this banner appears at the very top of all website pages.</small>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="broadcast-text">Announcement Message
+                                    <input type="text" id="broadcast-text" placeholder="e.g. Season 04 League Cup registration is now open!" required maxlength="250">
+                                </label>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label for="broadcast-link-text">Action Button Text (Optional)
+                                        <input type="text" id="broadcast-link-text" placeholder="e.g. Join Bracket →" maxlength="50">
+                                    </label>
+                                </div>
+                                <div class="form-field">
+                                    <label for="broadcast-link-url">Target URL
+                                        <input type="text" id="broadcast-link-url" placeholder="e.g. cup.html or #challenges" maxlength="150">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-field">
+                                <span class="field-title">Visual Color Theme</span>
+                                <div class="theme-picker" role="radiogroup" aria-label="Banner Color Theme">
+                                    <label class="theme-option gold">
+                                        <input type="radio" name="broadcast-theme" value="gold" checked>
+                                        <span>Gold / Championship</span>
+                                    </label>
+                                    <label class="theme-option cyan">
+                                        <input type="radio" name="broadcast-theme" value="cyan">
+                                        <span>Cyan / Notice</span>
+                                    </label>
+                                    <label class="theme-option emerald">
+                                        <input type="radio" name="broadcast-theme" value="emerald">
+                                        <span>Emerald / Success</span>
+                                    </label>
+                                    <label class="theme-option rose">
+                                        <input type="radio" name="broadcast-theme" value="rose">
+                                        <span>Rose / Alert</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="admin-submit-btn primary" id="btn-save-broadcast">Publish Announcement Live →</button>
+                            <span class="form-feedback" id="broadcast-feedback" role="status"></span>
+                        </form>
+                    </div>
+
+                    <div class="broadcast-preview-col">
+                        <h3>Live Visitor Preview</h3>
+                        <p class="preview-note">This is exactly how visitors will see the announcement on the website:</p>
+                        <div class="banner-preview-box" id="banner-preview-box">
+                            <div class="site-announcement-bar announcement-gold" id="preview-bar">
+                                <div class="announcement-content">
+                                    <span class="announcement-badge">LEAGUE NOTICE</span>
+                                    <span class="announcement-text" id="preview-text">Season 04 League Cup registrations are live! Enter the 32-player knockout bracket.</span>
+                                    <a href="cup.html" class="announcement-link" id="preview-link">View League Cup →</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: TOURNAMENTS & EVENTS -->
+            <section class="admin-tab-pane" id="pane-tournaments">
+                <div class="admin-pane-header">
+                    <div>
+                        <h2>Tournaments &amp; Competition Content</h2>
+                        <p>Manage the tournament cards, eligibility rules, and registration windows displayed on tournaments.html.</p>
+                    </div>
+                    <button type="button" class="admin-action-btn primary" id="btn-add-tournament">+ Add Tournament</button>
+                </div>
+
+                <div class="admin-cards-grid" id="tournaments-cards-grid">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+            <!-- TAB 6: CLUBS & STANDINGS -->
+            <section class="admin-tab-pane" id="pane-clubs">
+                <div class="admin-pane-header">
+                    <div>
+                        <h2>Club League Standings (Clubs Tab)</h2>
+                        <p>Live management of the official club leaderboard shown on rankings.html.</p>
+                    </div>
+                    <button type="button" class="admin-action-btn primary" id="btn-add-club">+ Add Club</button>
+                </div>
+
+                <div class="admin-table-container">
+                    <table class="admin-table" id="clubs-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Club Name</th>
+                                <th>Captain</th>
+                                <th>Division</th>
+                                <th>Club Points</th>
+                                <th>Record W–D–L</th>
+                                <th>Matches</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clubs-tbody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 7: CUP BRACKET MASTER -->
+            <section class="admin-tab-pane" id="pane-bracket">
+                <div class="admin-pane-header">
+                    <div>
+                        <h2>Official League Cup Knockout Bracket</h2>
+                        <p>Control the 16-seed knockout bracket displayed on cup.html. Advance winners, adjust matchup pairings, or crown the official champion.</p>
+                    </div>
+                    <div class="admin-quick-actions">
+                        <button type="button" class="admin-action-btn primary" id="btn-save-bracket-live">Publish Bracket to cup.html</button>
+                        <button type="button" class="admin-action-btn secondary" id="btn-reset-bracket-default">Reset Seeds</button>
+                    </div>
+                </div>
+
+                <div class="admin-bracket-wrapper" id="admin-bracket-tree">
+                    <!-- Bracket editor rendered via script -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- MODAL: EDIT USER -->
+    <dialog class="admin-modal" id="modal-edit-user">
+        <div class="admin-modal-card">
+            <div class="admin-modal-header">
+                <h3>Edit Player Profile</h3>
+                <button type="button" class="modal-close" data-close-modal>×</button>
+            </div>
+            <form id="form-edit-user">
+                <input type="hidden" id="edit-user-original-email">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="edit-user-tag">Gamer Tag
+                            <input type="text" id="edit-user-tag" required>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="edit-user-name">First / Full Name
+                            <input type="text" id="edit-user-name" required>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="edit-user-email">Email Address
+                            <input type="email" id="edit-user-email" required>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="edit-user-rating">Elo Rating
+                            <input type="number" id="edit-user-rating" min="100" max="3500" required>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row form-row-3">
+                    <div class="form-field">
+                        <label for="edit-user-wins">Wins
+                            <input type="number" id="edit-user-wins" min="0" required>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="edit-user-draws">Draws
+                            <input type="number" id="edit-user-draws" min="0" required>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="edit-user-losses">Losses
+                            <input type="number" id="edit-user-losses" min="0" required>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="edit-user-role">Role
+                            <select id="edit-user-role">
+                                <option value="user">Regular Player</option>
+                                <option value="admin">Administrator / Owner</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="edit-user-verified">Email Verification Status
+                            <select id="edit-user-verified">
+                                <option value="true">Verified (Can play &amp; challenge)</option>
+                                <option value="false">Unverified</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="admin-submit-btn primary">Save Changes Live</button>
+                    <button type="button" class="admin-cancel-btn" data-close-modal>Cancel</button>
+                </div>
+                <p class="modal-feedback" id="edit-user-feedback"></p>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- MODAL: CREATE USER -->
+    <dialog class="admin-modal" id="modal-create-user">
+        <div class="admin-modal-card">
+            <div class="admin-modal-header">
+                <h3>Create New Player Account</h3>
+                <button type="button" class="modal-close" data-close-modal>×</button>
+            </div>
+            <form id="form-create-user">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="create-user-tag">Gamer Tag
+                            <input type="text" id="create-user-tag" placeholder="e.g. ApexTitan" required>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="create-user-name">First / Full Name
+                            <input type="text" id="create-user-name" placeholder="e.g. Alex" required>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="create-user-email">Email Address
+                            <input type="email" id="create-user-email" placeholder="alex@gmail.com" required>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="create-user-password">Initial Password (Optional)
+                            <input type="text" id="create-user-password" placeholder="Defaults to password123">
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row form-row-3">
+                    <div class="form-field">
+                        <label for="create-user-rating">Starting Elo
+                            <input type="number" id="create-user-rating" value="1200" required>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="create-user-role">Role
+                            <select id="create-user-role">
+                                <option value="user">Player</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="create-user-verified">Verification
+                            <select id="create-user-verified">
+                                <option value="true">Verified</option>
+                                <option value="false">Unverified</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="admin-submit-btn primary">Create Account Live</button>
+                    <button type="button" class="admin-cancel-btn" data-close-modal>Cancel</button>
+                </div>
+                <p class="modal-feedback" id="create-user-feedback"></p>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- MODAL: EDIT / FORCE SETTLE MATCH -->
+    <dialog class="admin-modal" id="modal-edit-match">
+        <div class="admin-modal-card">
+            <div class="admin-modal-header">
+                <h3>Match Review &amp; Score Management</h3>
+                <button type="button" class="modal-close" data-close-modal>×</button>
+            </div>
+            <form id="form-edit-match">
+                <input type="hidden" id="edit-match-id">
+                <div class="match-modal-participants" id="match-modal-participants">
+                    <!-- Challenger vs Opponent -->
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="edit-match-challenger-score">Challenger Final Score
+                            <input type="number" id="edit-match-challenger-score" min="0" max="99" required>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="edit-match-opponent-score">Opponent Final Score
+                            <input type="number" id="edit-match-opponent-score" min="0" max="99" required>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="edit-match-status">Match Status
+                            <select id="edit-match-status">
+                                <option value="approved">Approved &amp; Settle Elo</option>
+                                <option value="pending-owner">Pending Owner Review</option>
+                                <option value="disputed">Disputed</option>
+                                <option value="accepted">Accepted / Upcoming</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="edit-match-ranked">Ranked Status
+                            <select id="edit-match-ranked">
+                                <option value="true">Ranked (Updates Elo Rating)</option>
+                                <option value="false">Friendly (No Elo impact)</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label for="edit-match-note">Administrative Review Note
+                        <input type="text" id="edit-match-note" placeholder="e.g. Settle approved after review.">
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="admin-submit-btn primary">Apply Changes &amp; Settle</button>
+                    <button type="button" class="admin-cancel-btn" data-close-modal>Cancel</button>
+                </div>
+                <p class="modal-feedback" id="edit-match-feedback"></p>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- MODAL: SCHEDULE NEW FIXTURE -->
+    <dialog class="admin-modal" id="modal-create-match">
+        <div class="admin-modal-card">
+            <div class="admin-modal-header">
+                <h3>Schedule Official League Match</h3>
+                <button type="button" class="modal-close" data-close-modal>×</button>
+            </div>
+            <form id="form-create-match">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="create-match-challenger">Challenger Player
+                            <select id="create-match-challenger" required></select>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="create-match-opponent">Opponent Player
+                            <select id="create-match-opponent" required></select>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="create-match-comp">Competition
+                            <select id="create-match-comp">
+                                <option value="cup">League Cup Knockout</option>
+                                <option value="open">Open Series</option>
+                                <option value="rookie">Rookie Ladder</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="create-match-date">Date &amp; Time (UTC)
+                            <input type="datetime-local" id="create-match-date" required>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label for="create-match-ranked">Match Type
+                        <select id="create-match-ranked">
+                            <option value="true">Official Ranked (Elo Rating at stake)</option>
+                            <option value="false">Friendly Showcase</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="admin-submit-btn primary">Schedule Match Live</button>
+                    <button type="button" class="admin-cancel-btn" data-close-modal>Cancel</button>
+                </div>
+                <p class="modal-feedback" id="create-match-feedback"></p>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- MODAL: CREATE / EDIT TOURNAMENT -->
+    <dialog class="admin-modal" id="modal-tournament">
+        <div class="admin-modal-card" style="max-width: 640px;">
+            <div class="admin-modal-header">
+                <h3 id="modal-tournament-title">Add Tournament</h3>
+                <button type="button" class="modal-close" data-close-modal>×</button>
+            </div>
+            <form id="form-tournament">
+                <input type="hidden" id="tournament-edit-id">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="t-title">Tournament Title <span style="color:#f87171">*</span>
+                            <input type="text" id="t-title" placeholder="e.g. Tim League Cup Season 04" required maxlength="80">
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="t-badge">Badge Code
+                            <input type="text" id="t-badge" placeholder="e.g. LC04" maxlength="20">
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="t-kicker">Kicker / Tagline
+                            <input type="text" id="t-kicker" placeholder="e.g. Season 04 Championship" maxlength="80">
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="t-status">Status
+                            <select id="t-status">
+                                <option value="Registration Open">Registration Open</option>
+                                <option value="Coming Soon">Coming Soon</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="t-format">Format <span style="color:#f87171">*</span>
+                            <input type="text" id="t-format" placeholder="e.g. 32-Player Single Elimination" required maxlength="100">
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="t-slots">Slots
+                            <input type="text" id="t-slots" placeholder="e.g. 32 players" maxlength="50">
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="t-dates">Dates / Schedule
+                            <input type="text" id="t-dates" placeholder="e.g. Starts Nov 15 · 19:30 BST" maxlength="100">
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="t-prize">Prize Pool / Trophy (optional)
+                            <input type="text" id="t-prize" placeholder="e.g. League Cup Trophy & Top Seed" maxlength="100">
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="t-min-elo">Min Elo (optional)
+                            <input type="number" id="t-min-elo" placeholder="e.g. 1000" min="0" max="3000">
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label for="t-max-elo">Max Elo (optional)
+                            <input type="number" id="t-max-elo" placeholder="e.g. 1400" min="0" max="3000">
+                        </label>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label for="t-entry-link">Entry / Rules Link (optional)
+                        <input type="text" id="t-entry-link" placeholder="e.g. cup.html or #rules" maxlength="200">
+                    </label>
+                </div>
+                <div class="form-field">
+                    <label for="t-desc">Description
+                        <textarea id="t-desc" rows="3" placeholder="Full tournament description visible to players..." maxlength="500" style="resize:vertical;min-height:75px"></textarea>
+                    </label>
+                </div>
+                <div class="form-field-switch">
+                    <label class="switch-label" for="t-reg-open">
+                        <input type="checkbox" id="t-reg-open">
+                        <span class="switch-slider"></span>
+                        <strong>Registration is actively open</strong>
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="admin-submit-btn primary" id="tournament-submit-btn">Save Tournament</button>
+                    <button type="button" class="admin-cancel-btn" data-close-modal>Cancel</button>
+                </div>
+                <p class="modal-feedback" id="tournament-feedback"></p>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- MODAL: TOURNAMENT PARTICIPANTS & SEEDS ROSTER -->
+    <dialog class="admin-modal" id="modal-tournament-roster">
+        <div class="admin-modal-card" style="max-width: 720px;">
+            <div class="admin-modal-header">
+                <div>
+                    <h3 id="roster-tournament-title">Tournament Competitors Roster</h3>
+                    <small style="color: #94a3b8;" id="roster-tournament-subtitle">Manage seeds and registrations</small>
+                </div>
+                <button type="button" class="modal-close" data-close-modal>×</button>
+            </div>
+            <div style="padding: 18px 24px;">
+                <div class="admin-table-container" style="max-height: 380px; overflow-y: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Seed</th>
+                                <th>Gamer Tag</th>
+                                <th>Email</th>
+                                <th>Elo</th>
+                                <th>Record</th>
+                                <th class="text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roster-tbody">
+                            <tr><td colspan="6" class="table-loading">Loading registered players…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-actions" style="padding: 0 24px 20px;">
+                <button type="button" class="admin-cancel-btn" data-close-modal>Close Roster</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Toast Notification Overlay -->
+    <div class="admin-toast-container" id="admin-toast-container" aria-live="polite"></div>
+
+    <script src="admin.js" defer></script>
+</body>
+</html>
+
