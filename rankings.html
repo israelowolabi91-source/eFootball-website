@@ -8,8 +8,9 @@
     <title>Rankings | Tim eFootball League</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="style.css?v=44">
+    <script src="site-config.js"></script>
+    <script src="script.js?v=44" defer></script>
 </head>
 <body class="rankings-page">
     <header class="site-header">
@@ -50,41 +51,18 @@
     <main class="rankings-shell">
         <section class="rankings-hero" aria-labelledby="rankings-title">
             <div class="rankings-hero-copy">
-                <p class="eyebrow"><span class="eyebrow-line"></span> The climb is on</p>
-                <h1 id="rankings-title">Every match<br>moves <em>you.</em></h1>
-                <p>Follow the players and clubs setting the pace this season. Find your place, watch the form guide, and see who is making a move.</p>
+                <p class="eyebrow"><span class="eyebrow-line"></span> Verified player records</p>
+                <h1 id="rankings-title">Player <em>rankings.</em></h1>
+                <p>Ratings and records are loaded from verified player accounts. Only approved ranked match results count toward the leaderboard.</p>
                 <a class="rankings-hero-link" href="#leaderboard">Explore the rankings <span aria-hidden="true">↓</span></a>
             </div>
-            <aside class="season-scoreboard" aria-label="Illustrative season four ranking preview">
-                <div class="scoreboard-topline"><span>Preview</span><span class="snapshot-tag"><i></i> Illustrative snapshot</span></div>
-                <p class="scoreboard-label">The race to number one</p>
-                <div class="scoreboard-champion"><span class="champion-crown" aria-hidden="true">♛</span><span><small>PLAYER IN FIRST</small><strong>NovaBlade</strong><em>1,864 rating</em></span><b>#01</b></div>
-                <div class="scoreboard-race"><span>Next challenger</span><strong>Rex Orion <b>1,842</b></strong><small>22 points off the lead</small></div>
-                <div class="season-scoreboard-footer"><span>Players ranked <strong>128</strong></span><span>Season matches <strong>1,406</strong></span></div>
+            <aside class="season-scoreboard" aria-label="Live leaderboard summary">
+                <div class="scoreboard-topline"><span>Live standings</span><span class="snapshot-tag"><i></i> Database</span></div>
+                <p class="scoreboard-label">Highest rated player</p>
+                <div class="scoreboard-champion"><span class="champion-crown" aria-hidden="true">♛</span><span><small>TOP PLAYER</small><strong id="rank-top-player">Loading…</strong><em id="rank-top-rating">— Elo</em></span><b id="rank-top-position">—</b></div>
+                <div class="scoreboard-race"><span>Verified accounts</span><strong id="rank-player-total">—</strong><small>Player account records</small></div>
+                <div class="season-scoreboard-footer"><span>Approved ranked matches <strong id="rank-match-total">—</strong></span></div>
             </aside>
-        </section>
-
-        <p class="rank-data-note">The season snapshot, summary metrics, and featured stories on this page are illustrative previews. The player table below loads saved player profiles and approved ranked-match Elo.</p>
-        <section class="ranking-metrics" aria-label="Illustrative season preview metrics">
-            <div><span class="metric-glyph">↗</span><span><strong>128</strong><small>Ranked players</small></span></div>
-            <div><span class="metric-glyph">◎</span><span><strong>32</strong><small>Active clubs</small></span></div>
-            <div><span class="metric-glyph">⚡</span><span><strong>1,406</strong><small>Matches recorded</small></span></div>
-            <div><span class="metric-glyph">✦</span><span><strong>04</strong><small>Season in progress</small></span></div>
-        </section>
-
-        <section class="rank-feature-row" aria-label="Illustrative featured ranking previews">
-            <article class="rank-feature rank-feature-mover">
-                <span class="rank-feature-icon" aria-hidden="true">↗</span>
-                <div><p>Biggest climber</p><h2>BlueStrike <span>▲ 12 places</span></h2><small>Five straight wins. A serious run at the top 10.</small></div>
-            </article>
-            <article class="rank-feature rank-feature-form">
-                <span class="rank-feature-icon" aria-hidden="true">✦</span>
-                <div><p>On fire right now</p><h2>NovaBlade <span>WWWWW</span></h2><small>Five played. Five won. First place is holding—for now.</small></div>
-            </article>
-            <article class="rank-feature rank-feature-club">
-                <span class="rank-feature-icon" aria-hidden="true">♜</span>
-                <div><p>Club to watch</p><h2>Nova FC <span>#01</span></h2><small>1,986 club points · leading the team table.</small></div>
-            </article>
         </section>
 
         <section class="leaderboard-section" id="leaderboard" aria-labelledby="leaderboard-title">
@@ -92,30 +70,24 @@
                 <div>
                     <p class="eyebrow"><span class="eyebrow-line"></span> The leaderboard</p>
                     <h2 id="leaderboard-title">Season standings.</h2>
-                    <p class="rank-data-note" id="rank-data-note" aria-live="polite">Loading live Elo standings. Only owner-approved ranked match results affect these ratings. Club standings remain illustrative previews.</p>
+                    <p class="rank-data-note" id="rank-data-note" aria-live="polite">Loading verified player records…</p>
+                    <button class="quiet-link" id="rankings-retry" type="button" hidden>Retry loading rankings</button>
                 </div>
                 <label class="leaderboard-search">
                     <span aria-hidden="true">⌕</span>
-                    <span class="sr-only">Search players and clubs</span>
-                    <input id="ranking-search" type="search" placeholder="Find a player or club..." autocomplete="off">
+                    <span class="sr-only">Search players</span>
+                    <input id="ranking-search" type="search" placeholder="Find a player..." autocomplete="off">
                 </label>
             </div>
 
             <div class="leaderboard-toolbar">
                 <div class="leaderboard-tabs" role="tablist" aria-label="Rankings category">
                     <button class="leaderboard-tab is-active" id="players-tab" type="button" role="tab" aria-selected="true" aria-controls="players-panel" data-ranking-view="players">Players</button>
-                    <button class="leaderboard-tab" id="clubs-tab" type="button" role="tab" aria-selected="false" aria-controls="clubs-panel" data-ranking-view="clubs">Clubs</button>
                 </div>
                 <div class="leaderboard-selects">
                     <label>Division / Tier
                         <select id="ranking-division">
-                            <option value="all">All divisions &amp; tiers</option>
-                            <option value="elite">Elite · 1400+</option>
-                            <option value="competitive">Competitive · 1100–1399</option>
-                            <option value="developing">Developing · under 1100</option>
-                            <option value="premier">Premier League (Clubs)</option>
-                            <option value="challenger">Challenger League (Clubs)</option>
-                            <option value="academy">Academy League (Clubs)</option>
+                            <option value="all">All players</option>
                         </select>
                     </label>
                     <label>Order by
@@ -134,72 +106,38 @@
                     <table class="leaderboard-table">
                         <thead id="leaderboard-thead"><tr><th scope="col" id="col-rank">Rank</th><th scope="col" id="col-subject">Player</th><th scope="col" id="col-rating">Elo rating</th><th scope="col" id="col-record">Ranked W–D–L</th><th scope="col" id="col-matches">Ranked matches</th></tr></thead>
                         <tbody id="player-rankings">
-                            <tr data-name="novablade nova fc" data-division="elite" data-rating="1864" data-wins="24" data-winrate="86">
-                                <td><span class="rank-position rank-gold">01</span></td><td><span class="rank-player"><span class="rank-avatar avatar-violet">N</span><span><strong>NovaBlade</strong><small>Nova FC · Captain</small></span><span class="rank-badge" title="Season leader">✦</span></span></td><td><strong>1,864</strong><small class="rating-change">+42 this week</small></td><td>24–3–1</td><td>28</td>
-                            </tr>
-                            <tr data-name="rex orion orbit xi" data-division="elite" data-rating="1842" data-wins="22" data-winrate="81">
-                                <td><span class="rank-position rank-silver">02</span></td><td><span class="rank-player"><span class="rank-avatar avatar-blue">R</span><span><strong>Rex Orion</strong><small>Orbit XI · Captain</small></span></span></td><td><strong>1,842</strong><small class="rating-change">+18 this week</small></td><td>22–4–1</td><td>27</td>
-                            </tr>
-                            <tr data-name="bluestrike falcon city" data-division="elite" data-rating="1805" data-wins="20" data-winrate="77">
-                                <td><span class="rank-position rank-bronze">03</span></td><td><span class="rank-player"><span class="rank-avatar avatar-teal">B</span><span><strong>BlueStrike</strong><small>Falcon City</small></span><span class="rank-badge badge-climber" title="Biggest climber">↗</span></span></td><td><strong>1,805</strong><small class="rating-change">+76 this week</small></td><td>20–4–2</td><td>26</td>
-                            </tr>
-                            <tr data-name="tim united tim" data-division="elite" data-rating="1784" data-wins="18" data-winrate="72">
-                                <td><span class="rank-position">04</span></td><td><span class="rank-player"><span class="rank-avatar avatar-gold">T</span><span><strong>Tim</strong><small>Tim United</small></span><span class="rank-badge" title="League founder">★</span></span></td><td><strong>1,784</strong><small class="rating-change">+24 this week</small></td><td>18–3–4</td><td>25</td>
-                            </tr>
-                            <tr data-name="ace phantom atlas" data-division="elite" data-rating="1761" data-wins="17" data-winrate="68">
-                                <td><span class="rank-position">05</span></td><td><span class="rank-player"><span class="rank-avatar avatar-red">A</span><span><strong>Ace Phantom</strong><small>Atlas United</small></span></span></td><td><strong>1,761</strong><small class="rating-change">−8 this week</small></td><td>17–4–4</td><td>25</td>
-                            </tr>
-                            <tr data-name="king kai rovers" data-division="competitive" data-rating="1698" data-wins="16" data-winrate="64">
-                                <td><span class="rank-position">06</span></td><td><span class="rank-player"><span class="rank-avatar avatar-orange">K</span><span><strong>King Kai</strong><small>Rovers FC</small></span></span></td><td><strong>1,698</strong><small class="rating-change">+35 this week</small></td><td>16–4–5</td><td>25</td>
-                            </tr>
-                            <tr data-name="madridista delta fc" data-division="competitive" data-rating="1644" data-wins="14" data-winrate="58">
-                                <td><span class="rank-position">07</span></td><td><span class="rank-player"><span class="rank-avatar avatar-pink">M</span><span><strong>Madridista</strong><small>Delta FC</small></span></span></td><td><strong>1,644</strong><small class="rating-change">+11 this week</small></td><td>14–4–6</td><td>24</td>
-                            </tr>
-                            <tr data-name="shadow striker kings xi" data-division="competitive" data-rating="1592" data-wins="13" data-winrate="54">
-                                <td><span class="rank-position">08</span></td><td><span class="rank-player"><span class="rank-avatar avatar-slate">S</span><span><strong>Shadow Striker</strong><small>Kings XI</small></span></span></td><td><strong>1,592</strong><small class="rating-change">+6 this week</small></td><td>13–4–7</td><td>24</td>
-                            </tr>
-                            <tr data-name="pixel press academy united" data-division="developing" data-rating="1487" data-wins="11" data-winrate="50">
-                                <td><span class="rank-position">09</span></td><td><span class="rank-player"><span class="rank-avatar avatar-lime">P</span><span><strong>Pixel Press</strong><small>Academy United</small></span></span></td><td><strong>1,487</strong><small class="rating-change">+29 this week</small></td><td>11–3–8</td><td>22</td>
-                            </tr>
-                            <tr data-name="juno blaze orbit academy" data-division="developing" data-rating="1421" data-wins="9" data-winrate="45">
-                                <td><span class="rank-position">10</span></td><td><span class="rank-player"><span class="rank-avatar avatar-coral">J</span><span><strong>Juno Blaze</strong><small>Orbit Academy</small></span></span></td><td><strong>1,421</strong><small class="rating-change">−3 this week</small></td><td>9–3–8</td><td>20</td>
-                            </tr>
-                        </tbody>
-                        <tbody id="club-rankings" hidden>
-                            <tr data-name="nova fc novablade" data-division="premier" data-rating="1986" data-wins="23" data-winrate="82">
-                                <td><span class="rank-position rank-gold">01</span></td><td><span class="rank-player"><span class="rank-avatar avatar-violet">N</span><span><strong>Nova FC</strong><small>Captain: NovaBlade</small></span><span class="rank-badge">✦</span></span></td><td><strong>1,986</strong><small class="rating-change">+58 this week</small></td><td>23–3–2</td><td>28</td>
-                            </tr>
-                            <tr data-name="orbit xi rex orion" data-division="premier" data-rating="1942" data-wins="21" data-winrate="81">
-                                <td><span class="rank-position rank-silver">02</span></td><td><span class="rank-player"><span class="rank-avatar avatar-blue">O</span><span><strong>Orbit XI</strong><small>Captain: Rex Orion</small></span></span></td><td><strong>1,942</strong><small class="rating-change">+31 this week</small></td><td>21–4–1</td><td>26</td>
-                            </tr>
-                            <tr data-name="falcon city bluestrike" data-division="premier" data-rating="1901" data-wins="18" data-winrate="75">
-                                <td><span class="rank-position rank-bronze">03</span></td><td><span class="rank-player"><span class="rank-avatar avatar-teal">F</span><span><strong>Falcon City</strong><small>Captain: BlueStrike</small></span></span></td><td><strong>1,901</strong><small class="rating-change">+44 this week</small></td><td>18–4–2</td><td>24</td>
-                            </tr>
-                            <tr data-name="tim united tim" data-division="premier" data-rating="1872" data-wins="16" data-winrate="72">
-                                <td><span class="rank-position">04</span></td><td><span class="rank-player"><span class="rank-avatar avatar-gold">T</span><span><strong>Tim United</strong><small>Founder: Tim</small></span></span></td><td><strong>1,872</strong><small class="rating-change">+17 this week</small></td><td>16–5–4</td><td>25</td>
-                            </tr>
-                            <tr data-name="atlas united ace phantom" data-division="challenger" data-rating="1810" data-wins="15" data-winrate="68">
-                                <td><span class="rank-position">05</span></td><td><span class="rank-player"><span class="rank-avatar avatar-red">A</span><span><strong>Atlas United</strong><small>Captain: Ace Phantom</small></span></span></td><td><strong>1,810</strong><small class="rating-change">−12 this week</small></td><td>15–4–3</td><td>22</td>
-                            </tr>
-                            <tr data-name="rovers fc king kai" data-division="challenger" data-rating="1774" data-wins="14" data-winrate="64">
-                                <td><span class="rank-position">06</span></td><td><span class="rank-player"><span class="rank-avatar avatar-orange">R</span><span><strong>Rovers FC</strong><small>Captain: King Kai</small></span></span></td><td><strong>1,774</strong><small class="rating-change">+29 this week</small></td><td>14–4–4</td><td>22</td>
-                            </tr>
+                            <tr><td colspan="5">Loading verified player records…</td></tr>
                         </tbody>
                     </table>
                 </div>
                 <p class="leaderboard-empty" id="leaderboard-empty" hidden>No rankings match those filters. Try another name or division.</p>
-                <div class="leaderboard-footer"><span id="leaderboard-count">Loading player profiles…</span><span>Player Elo is live · Club standings are illustrative</span></div>
+                <div class="leaderboard-footer"><span id="leaderboard-count">Loading player profiles…</span><span>Verified accounts · approved ranked results</span></div>
             </div>
 
             <div class="rankings-legend"><span><i class="legend-up">▲</i> Climbed</span><span><i class="legend-down">▼</i> Dropped</span><span><i class="legend-same">—</i> No change</span><span><i class="form-win">W</i> Win</span><span><i class="form-draw">D</i> Draw</span><span><i class="form-loss">L</i> Loss</span></div>
         </section>
 
+        <section class="club-standings-section" id="clubs" aria-labelledby="club-standings-title">
+            <div class="leaderboard-heading">
+                <div>
+                    <p class="eyebrow"><span class="eyebrow-line"></span> Verified club rosters</p>
+                    <h2 id="club-standings-title">Clubs from player profiles.</h2>
+                    <p id="club-standings-status" class="rank-data-note" role="status" aria-live="polite">Loading verified club records…</p>
+                    <button class="quiet-link" id="club-standings-retry" type="button" hidden>Retry loading clubs</button>
+                </div>
+            </div>
+            <div class="club-record-grid" id="ranked-clubs-grid" aria-live="polite">
+                <p class="club-record-empty">Loading verified club records…</p>
+            </div>
+        </section>
+
         <section class="division-section" aria-labelledby="division-title">
             <div class="division-heading"><div><p class="eyebrow"><span class="eyebrow-line"></span> The road up</p><h2 id="division-title">Earn your next badge.</h2><p>Play consistently, climb through the divisions, and make your move toward the top flight.</p></div><a href="play.html">How rankings work <span aria-hidden="true">↗</span></a></div>
             <div class="division-cards">
-                <article class="division-card division-premier"><span class="division-crest">Ⅰ</span><p>Top flight</p><h3>Premier</h3><span class="division-range">1,750+ rating</span><div class="division-meter"><i style="width:92%"></i></div><small>Elite players. Every point matters.</small></article>
-                <article class="division-card division-challenger"><span class="division-crest">Ⅱ</span><p>Promotion race</p><h3>Challenger</h3><span class="division-range">1,500–1,749 rating</span><div class="division-meter"><i style="width:67%"></i></div><small>One hot streak can change everything.</small></article>
-                <article class="division-card division-academy"><span class="division-crest">Ⅲ</span><p>Build your game</p><h3>Academy</h3><span class="division-range">Below 1,500 rating</span><div class="division-meter"><i style="width:38%"></i></div><small>Find your rhythm and rise together.</small></article>
+                <article class="division-card division-academy" data-tier-card="developing"><span class="division-crest">Ⅰ</span><p>Build your game</p><h3 data-tier-name>Developing</h3><span class="division-range" data-tier-range>Below 1,100 rating</span><div class="division-meter"><i style="width:38%"></i></div><small>Find your rhythm and rise together.</small></article>
+                <article class="division-card division-challenger" data-tier-card="competitive"><span class="division-crest">Ⅱ</span><p>Promotion race</p><h3 data-tier-name>Competitive</h3><span class="division-range" data-tier-range>1,100–1,399 rating</span><div class="division-meter"><i style="width:52%"></i></div><small>Build consistency and challenge the next tier.</small></article>
+                <article class="division-card division-elite" data-tier-card="elite"><span class="division-crest">Ⅲ</span><p>Contend for the top</p><h3 data-tier-name>Elite</h3><span class="division-range" data-tier-range>1,400–1,749 rating</span><div class="division-meter"><i style="width:72%"></i></div><small>Strong results put the top flight in reach.</small></article>
+                <article class="division-card division-premier" data-tier-card="premier"><span class="division-crest">Ⅳ</span><p>Top flight</p><h3 data-tier-name>Premier</h3><span class="division-range" data-tier-range>1,750+ rating</span><div class="division-meter"><i style="width:92%"></i></div><small>Elite players. Every point matters.</small></article>
             </div>
         </section>
 
@@ -207,7 +145,7 @@
             <div class="calc-header">
                 <p class="eyebrow"><span class="eyebrow-line"></span> Rating simulator</p>
                 <h2 id="calculator-title">Interactive Elo Calculator &amp; Tier Simulator.</h2>
-                <p>Estimate rating changes and tier progress before you step onto the pitch. Uses the official league rating equation (K = 32) with live division thresholds.</p>
+                <p>Estimate rating changes and tier progress with the official league rating equation and shared tier thresholds.</p>
             </div>
 
             <div class="calc-card">
@@ -215,14 +153,14 @@
                     <div class="calc-inputs">
                         <div class="calc-field">
                             <label for="calc-user-rating">Your Current Elo Rating
-                                <input type="number" id="calc-user-rating" min="500" max="3000" value="1200" step="1">
+                                <input type="number" id="calc-user-rating" min="100" max="3000" value="1000" step="1">
                             </label>
                             <small class="field-hint">Defaults to your profile Elo when logged in.</small>
                         </div>
 
                         <div class="calc-field">
                             <label for="calc-opponent-rating">Opponent Elo Rating
-                                <input type="number" id="calc-opponent-rating" min="500" max="3000" value="1350" step="1">
+                                <input type="number" id="calc-opponent-rating" min="100" max="3000" value="1000" step="1">
                             </label>
                             <div class="calc-quick-pick">
                                 <span>Or select rival:</span>
@@ -235,9 +173,9 @@
                         <div class="calc-field">
                             <label for="calc-k-factor">Match Competition Multiplier (K-Factor)
                                 <select id="calc-k-factor">
-                                    <option value="32">Standard Ranked Match (K = 32)</option>
-                                    <option value="40">League Cup / Tournament Knockout (K = 40)</option>
-                                    <option value="16">Placement / Provisional Match (K = 16)</option>
+                                    <option value="32" data-league-k="ranked">Standard Ranked Match</option>
+                                    <option value="32" data-league-k="cup">League Cup / Tournament Knockout</option>
+                                    <option value="16" data-league-k="placement">Placement / Provisional Match</option>
                                 </select>
                             </label>
                         </div>
@@ -255,29 +193,29 @@
                     <div class="calc-results-display">
                         <div class="calc-delta-box">
                             <span class="calc-delta-label">PROJECTED RATING CHANGE</span>
-                            <strong class="calc-delta-val positive" id="calc-delta">+22</strong>
-                            <span class="calc-projected-rating" id="calc-projected-rating">New Rating: 1,222 Elo</span>
+                            <strong class="calc-delta-val" id="calc-delta">—</strong>
+                            <span class="calc-projected-rating" id="calc-projected-rating">Enter ratings to calculate.</span>
                         </div>
 
                         <div class="calc-tier-breakdown">
                             <div class="calc-tier-status">
-                                <span class="calc-tier-badge tier-competitive" id="calc-tier-badge">Competitive Tier</span>
-                                <span class="calc-tier-next" id="calc-tier-next">178 pts to Elite (1,400+)</span>
+                                <span class="calc-tier-badge" id="calc-tier-badge">—</span>
+                                <span class="calc-tier-next" id="calc-tier-next">Tier progress appears after calculation.</span>
                             </div>
                             <div class="calc-tier-meter-track" role="progressbar" aria-label="Tier progress">
-                                <div class="calc-tier-meter-fill" id="calc-tier-meter-fill" style="width: 48%;"></div>
+                                <div class="calc-tier-meter-fill" id="calc-tier-meter-fill" style="width: 0%;"></div>
                             </div>
                             <div class="calc-tier-benchmarks">
-                                <span>Developing (&lt;1,100)</span>
-                                <span>Competitive (1,100)</span>
-                                <span>Elite (1,400)</span>
-                                <span>Premier (1,750)</span>
+                                <span data-tier-benchmark="developing">Developing (&lt;1,100)</span>
+                                <span data-tier-benchmark="competitive">Competitive (1,100)</span>
+                                <span data-tier-benchmark="elite">Elite (1,400)</span>
+                                <span data-tier-benchmark="premier">Premier (1,750)</span>
                             </div>
                         </div>
 
                         <div class="calc-insight" id="calc-insight">
                             <span class="insight-icon" aria-hidden="true">💡</span>
-                            <p id="calc-insight-text">You are the underdog in this matchup. Securing a win yields a substantial +22 Elo boost, accelerating your climb toward the Elite Tier.</p>
+                            <p id="calc-insight-text">Rating changes depend on both players’ ratings, the match outcome, and the competition’s K-factor.</p>
                         </div>
                     </div>
                 </div>

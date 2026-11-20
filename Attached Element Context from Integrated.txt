@@ -1,0 +1,88 @@
+Attached Element Context from Integrated Browser
+
+Element: a
+
+URL: http://localhost:3000/index.html
+
+HTML Path: header.site-header > div.header-container > nav#primary-navigation.navigation > ul > li > a
+
+Outer HTML:
+```html
+<a href="tournaments.html">Tournaments</a>
+```
+
+Dimensions:
+- top: 25px
+- left: 297px
+- width: 99px
+- height: 37px
+
+CSS:
+```css
+* { box-sizing: border-box; }
+.navigation a { position: relative;
+	display: block;
+	padding: 12px 11px;
+	color: var(--muted);
+	font-size: 0.78rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-decoration: none;
+	text-transform: uppercase;
+	transition: color 180ms ease; }
+.navigation a { padding-right: 7px;
+		padding-left: 7px;
+		font-size: 0.7rem; }
+.navigation a:hover, .navigation a:focus-visible, .navigation a.active { color: var(--ink); }
+
+/* Pseudo-elements */
+.navigation a::after { position: absolute;
+	right: 11px;
+	bottom: 2px;
+	left: 11px;
+	height: 2px;
+	background: var(--gold);
+	content: "";
+	opacity: 0;
+	transform: scaleX(0.3);
+	transition: opacity 180ms ease, transform 180ms ease; }
+.navigation a::after { right: 7px;
+		left: 7px; }
+.navigation a:hover::after, .navigation a:focus-visible::after, .navigation a.active::after { opacity: 1;
+	transform: scaleX(1); }
+
+/* Inherited */
+.navigation ul { list-style: none }
+body { color: var(--ink); font-family: "Trebuchet MS", "Segoe UI", sans-serif }
+
+/* Resolved values */
+padding: 12px 7px;
+text-decoration: rgb(247, 248, 251);
+transition: color 0.18s;
+bottom: 0px;
+box-sizing: border-box;
+color: rgb(247, 248, 251);
+content: normal;
+cursor: pointer /*UA*/;
+display: block;
+font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+font-size: 11.2px;
+font-weight: 700;
+height: 37.3333px;
+left: 0px;
+letter-spacing: 0.672px;
+list-style-image: none;
+list-style-position: outside;
+list-style-type: none;
+opacity: 1;
+position: relative;
+right: 0px;
+text-transform: uppercase;
+transform: none;
+width: 99.1771px;
+
+/* CSS variables */
+--gold: #f4b72f;
+--muted: #9baac1;
+--ink: #f7f8fb;
+```

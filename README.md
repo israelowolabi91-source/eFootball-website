@@ -2,31 +2,27 @@
 
 ## Run the website
 
-Use Node.js 22 or newer:
+Install Node.js 18 or newer, then run these commands from this folder:
 
 ```powershell
 npm install
 npm start
 ```
 
-Open `http://localhost:3000`. The root page opens sign-in first. Account creation is on a separate `/signup.html` page; `/register.html` remains an alias. Do not open the pages directly as `file://` URLs: authentication and records use the server API.
+Open `http://localhost:3000` in the browser. Do not open pages directly as `file://` URLs; the site loads account and match data from the server. Create an account and verify its email before signing in. The Match Centre uses the signed-in account as the challenger; profile selection is never trusted from the browser.
 
-## Authentication and account data
+## Configure match challenges
 
-Accounts, verification-token hashes, session-token hashes, and W-D-L records are stored in SQLite at `data/efootball.sqlite` by default. The server imports the legacy `data/users.json` once when it initializes a new database. Passwords for new accounts are bcrypt hashes. Legacy scrypt hashes are upgraded to bcrypt after the account successfully signs in.
+Copy `.env.example` to `.env` and configure SMTP with a verified sender. For Gmail SMTP, use a Google App Password, never your normal Gmail password. Set `BASE_URL` to the public HTTPS origin when deploying; invitation and private match links use this value.
 
-Only `@gmail.com` addresses are accepted for account creation. Verification links are random, single-use tokens that expire after 24 hours; only their SHA-256 hashes are stored. Sign-in is blocked until verification. Authenticated sessions use an HttpOnly, SameSite=Lax cookie with a seven-day lifetime; `Secure` is enabled in production or for HTTPS requests.
+The Match Centre player directory and Rankings player table load player names, Elo, and ranked W–D–L records from server-side profile data. Challenge creation and score reporting require the verified account that owns the player profile. Public player data does not include email addresses.
 
-`GET /api/me` returns the signed-in user's name, email, gamer name, and records. `POST /api/records` accepts validated `wins`, `draws`, and `losses` for the signed-in account. `POST /api/auth/logout` revokes the active session and clears its cookie. Login and account creation have IP-based rate limits.
+Participants receive private, expiring email links to view their match. Sign in with the verified account associated with the player profile to accept invitations, report scores, or manage a match. Do not forward private links. The server stores only hashed participant link tokens. Keep SMTP enabled and the server online for delivery.
 
-## Configuration
+For owner review, set `OWNER_EMAIL` to the owner’s email address and `OWNER_REVIEW_TOKEN` to a unique random secret of at least 32 characters. Generate one with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. The owner receives private review links by email; rotating this token revokes old owner links. Without both settings, ranked results cannot be approved.
 
-Copy `.env.example` to `.env`. Configure a verified SMTP sender to deliver verification and match emails. For Gmail SMTP, use a Google App Password, not your regular Gmail password. Set `BASE_URL` to the public HTTPS origin when deploying. Keep `.env`, the SQLite database, match data, and evidence private; use persistent protected storage in production.
+Keep `.env`, user data, and screenshots private; use persistent protected storage in production. Only authorized administrators can retrieve evidence. Configure `ADMIN_KEY` and `ADMIN_PASSWORD` with unique secrets in the hosting environment; the server has no built-in administrator credentials.
 
-`DATABASE_FILE` optionally sets the SQLite database path. `USERS_FILE` optionally points to the legacy JSON file used for the one-time import. `MATCHES_FILE` and `MATCH_EVIDENCE_DIR` configure match storage.
+Live player rankings use verified player profiles (Elo K=32; new profiles start at 1000). Only owner-approved ranked results change ratings and ranked W-D-L records; friendly matches do not. Homepage league totals, recent results, club standings, and personal season summaries are calculated from saved player profiles, approved match records, and administrator-published events. Empty states are shown when the database has no matching records.
 
-For owner review, set `OWNER_EMAIL` and a unique `OWNER_REVIEW_TOKEN` of at least 32 characters. Generate one with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Without both settings, ranked results cannot be approved.
-
-## Matches and rankings
-
-The Match Centre and live Rankings use the same saved player profiles and approved ranked W-D-L records. Ranked-match totals equal wins + draws + losses. Ranked results change ratings only after owner approval; friendly matches do not. Illustrative fixtures and season previews are not live results.
+Administrators manage tournaments in the Tournaments & Events panel. Each event can define its type, format, platform, schedule, capacity, eligibility, prize breakdown, and event-specific rules. Drafts remain private until published; only published events appear in the public directory and accept registrations.

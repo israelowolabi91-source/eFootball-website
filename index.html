@@ -44,8 +44,9 @@
 
     
     <!-- Main assets -->
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="style.css?v=43">
+    <script src="site-config.js"></script>
+    <script src="script.js?v=43" defer></script>
 
     <!-- Website structured data -->
     <script type="application/ld+json">
@@ -103,22 +104,43 @@
         </div>
     </header>
 
-    <main class="app-shell">
-        <section class="welcome-panel" aria-labelledby="welcome-title">
-            <p class="eyebrow"><span class="eyebrow-line"></span> Competitive eFootball</p>
-            <h1 id="welcome-title">Your next match<br><em>starts here.</em></h1>
-            <p class="welcome-copy">Track your rank, enter tournaments, and stay connected to every fixture from one league app.</p>
+    <main class="app-shell home-shell">
+        <section class="welcome-panel home-hero" aria-labelledby="welcome-title">
+            <div class="home-hero-copy">
+                <p class="eyebrow"><span class="eyebrow-line"></span> Tim eFootball League</p>
+                <h1 id="welcome-title">Make your<br><em>next move.</em></h1>
+                <p class="welcome-copy">Find your next competition, challenge a player, and build your record one match at a time.</p>
 
-            <a class="league-status" href="cup.html" aria-label="League status">
-                <span class="status-icon">⚡</span>
-                <span><strong>Season 04 League Cup is live</strong><small>32-player knockout bracket • Play or simulate</small></span>
-                <span class="status-arrow">&#8594;</span>
-            </a>
+                <a class="league-status" id="home-announcement" href="tournaments.html" aria-label="League announcement" hidden>
+                    <span class="status-icon">⚡</span>
+                    <span><strong id="home-announcement-text"></strong><small id="home-announcement-link"></small></span>
+                    <span class="status-arrow">&#8594;</span>
+                </a>
 
-            <div class="welcome-stats" aria-label="League statistics">
-                <span><strong id="hero-stat-players">128</strong><small>Players</small></span>
-                <span><strong id="hero-stat-matches">24</strong><small>Matches scheduled</small></span>
-                <span><strong id="hero-stat-cups">08</strong><small>Open cups</small></span>
+                <div class="home-hero-actions">
+                    <a class="home-primary-action" href="tournaments.html">Find your tournament <span aria-hidden="true">↗</span></a>
+                    <a class="home-secondary-action" href="matches.html">Challenge a player</a>
+                </div>
+
+                <div class="welcome-stats" aria-label="Live league totals">
+                    <span><strong id="hero-stat-players">—</strong><small>Verified players</small></span>
+                    <span><strong id="hero-stat-matches">—</strong><small>Approved results</small></span>
+                    <span><strong id="hero-stat-cups">—</strong><small>Open events</small></span>
+                </div>
+            </div>
+
+            <div class="home-hero-visual" aria-label="Tim eFootball League crest on the pitch">
+                <div class="hero-pitch-lines" aria-hidden="true"></div>
+                <span class="hero-orbit hero-orbit-one" aria-hidden="true"></span>
+                <span class="hero-orbit hero-orbit-two" aria-hidden="true"></span>
+                <div class="hero-crest-wrap">
+                    <span class="hero-crest-glow" aria-hidden="true"></span>
+                    <img class="hero-crest" src="favicon.png" alt="Tim eFootball League crest">
+                    <span class="hero-crest-star" aria-hidden="true">✦</span>
+                </div>
+                <p class="hero-visual-kicker">YOUR SEASON STARTS HERE</p>
+                <p class="hero-visual-copy">Real players. Real matches.<br><strong>Your story on the leaderboard.</strong></p>
+                <a class="hero-visual-link" href="rankings.html">See the verified rankings <span aria-hidden="true">→</span></a>
             </div>
         </section>
 
@@ -127,7 +149,7 @@
                 <div>
                     <p class="eyebrow"><span class="eyebrow-line"></span> League dashboard</p>
                     <h1 id="dashboard-title">Your competitive overview.</h1>
-                    <p class="dashboard-subtitle">Explore tournaments, rankings, and match information for Season 04.</p>
+                    <p class="dashboard-subtitle">Your account activity and verified league information.</p>
                 </div>
                 <div class="dashboard-tools">
                     <button class="icon-button notification-button" id="notifications-toggle" type="button" aria-expanded="false" aria-controls="notifications-panel" aria-label="Open notifications">
@@ -136,59 +158,55 @@
                 </div>
             </div>
 
-            <p class="dashboard-data-note"><span aria-hidden="true">⚡</span> Live competitive esports hub. Connect with opponents, track Elo ratings, and climb the leaderboards.</p>
+            <p class="dashboard-data-note" id="home-dashboard-status" role="status" aria-live="polite"><span aria-hidden="true">⚡</span> Loading verified league records…</p>
+            <button type="button" class="quiet-link" id="home-dashboard-retry" hidden>Retry loading league data</button>
 
             <div class="notifications-panel" id="notifications-panel" hidden>
-                <div class="notifications-heading"><strong>League updates</strong><span>Live</span></div>
-                <a href="matches.html"><span class="notification-icon gold-notification">!</span><span><strong>Check your next fixture</strong><small>Visit the match centre for your schedule and match-room details.</small></span></a>
-                <a href="cup.html"><span class="notification-icon gold-notification">👑</span><span><strong>League Cup is open</strong><small>32-player knockout bracket with real-time progression.</small></span></a>
-                <a href="tournaments.html"><span class="notification-icon blue-notification">+</span><span><strong>Find your next event</strong><small>Browse tournament formats and event information.</small></span></a>
+                <div class="notifications-heading"><strong>League updates</strong><span>Admin updates</span></div>
+                <div id="home-notifications-list"><p>No current updates.</p></div>
             </div>
 
             <div class="dashboard-summary" aria-label="Season summary">
-                <div><span class="summary-icon">&#9679;</span><span><strong id="dash-stat-matches">18</strong><small>Matches played</small></span></div>
-                <div><span class="summary-icon win-summary">&#10003;</span><span><strong id="dash-stat-record">13 - 5</strong><small>Win / loss record</small></span></div>
-                <div><span class="summary-icon">%</span><span><strong id="dash-stat-winrate">72%</strong><small>Win rate</small></span></div>
-                <div><span class="summary-icon streak-summary">&#9733;</span><span><strong id="dash-stat-streak">5 wins</strong><small>Current streak</small></span></div>
+                <div><span class="summary-icon">&#9679;</span><span><strong id="dash-stat-matches">—</strong><small>Ranked matches</small></span></div>
+                <div><span class="summary-icon win-summary">&#10003;</span><span><strong id="dash-stat-record">—</strong><small>Win / draw / loss</small></span></div>
+                <div><span class="summary-icon">%</span><span><strong id="dash-stat-winrate">—</strong><small>Win rate</small></span></div>
+                <div><span class="summary-icon streak-summary">&#9733;</span><span><strong id="dash-stat-streak">—</strong><small>Current streak</small></span></div>
             </div>
 
             <div class="dashboard-grid">
                 <article class="next-match-card dashboard-card" id="home-next-match-card">
-                    <div class="card-topline"><span class="card-label">Next match</span><span class="match-live-label" id="home-match-badge">Fixture preview</span></div>
-                    <div class="match-meta"><span id="home-match-comp">Season 04 <b>•</b> Matchday 7</span><span id="home-match-type">Ranked fixture</span></div>
+                    <div class="card-topline"><span class="card-label">Next match</span><span class="match-live-label" id="home-match-badge">No match scheduled</span></div>
+                    <div class="match-meta"><span id="home-match-comp">Your confirmed fixtures</span><span id="home-match-type">Sign in required</span></div>
                     <div class="match-versus">
-                        <div class="team"><span class="team-badge team-badge-gold" id="team-initial">T</span><strong id="team-name">Tim United</strong><small>Home</small></div>
+                        <div class="team"><span class="team-badge team-badge-gold" id="team-initial">Y</span><strong id="team-name">You</strong><small>Player</small></div>
                         <div class="versus">VS</div>
-                        <div class="team"><span class="team-badge team-badge-blue" id="opponent-initial">NX</span><strong id="opponent-name">NX Legends</strong><small>Away</small></div>
+                        <div class="team"><span class="team-badge team-badge-blue" id="opponent-initial">—</span><strong id="opponent-name">No opponent yet</strong><small>Opponent</small></div>
                     </div>
-                    <div class="match-footer"><span id="home-match-schedule">Check match centre for schedule</span><a href="matches.html" id="home-match-link">View match room <span aria-hidden="true">&#8594;</span></a></div>
+                    <div class="match-footer"><span id="home-match-schedule">Sign in to view your fixtures</span><a href="matches.html" id="home-match-link">Open Match Centre <span aria-hidden="true">&#8594;</span></a></div>
                 </article>
 
                 <article class="rank-card dashboard-card">
-                    <div class="card-topline"><span class="card-label">Your performance</span><span class="trend-up" id="dash-user-trend">+4.8%</span></div>
-                    <div class="rank-number" id="dash-user-rank">#08</div>
-                    <p class="rank-caption" id="dash-user-caption">Global league ranking</p>
-                    <div class="rank-bar"><span id="dash-user-bar" style="width: 78%;"></span></div>
-                    <div class="rank-footer"><span id="dash-user-rating">1,284 Elo</span><span id="dash-user-tier">Competitive Tier</span></div>
+                    <div class="card-topline"><span class="card-label">Your performance</span><span id="dash-user-trend"></span></div>
+                    <div class="rank-number" id="dash-user-rank">—</div>
+                    <p class="rank-caption" id="dash-user-caption">Sign in to view your ranking</p>
+                    <div class="rank-bar"><span id="dash-user-bar" style="width: 0%;"></span></div>
+                    <div class="rank-footer"><span id="dash-user-rating">— Elo</span><span id="dash-user-tier">—</span></div>
                 </article>
 
                 <article class="dashboard-card live-card">
-                    <div class="card-topline"><span class="card-label">Live now</span><span class="live-pill"><i></i> 04 matches</span></div>
-                    <div class="live-match-row"><span class="mini-time">19:42</span><strong>Falcons <b>2</b> - <b>1</b> Orbit</strong><span class="watch-action">Watch &#8594;</span></div>
-                    <div class="live-match-row"><span class="mini-time">19:30</span><strong>Rovers <b>0</b> - <b>0</b> Atlas</strong><span class="watch-action">Watch &#8594;</span></div>
-                    <a class="panel-link" href="matches.html">Open match centre <span aria-hidden="true">&#8594;</span></a>
+                    <div class="card-topline"><span class="card-label">Verified match activity</span><span class="live-pill" id="home-approved-count">— results</span></div>
+                    <div id="home-live-results"><p>No approved results have been recorded yet.</p></div>
+                    <a class="panel-link" href="matches.html">Open Match Centre <span aria-hidden="true">&#8594;</span></a>
                 </article>
 
                 <article class="dashboard-card tournament-card">
-                    <div class="card-topline"><span class="card-label">Your tournaments</span><a href="tournaments.html" class="quiet-link">See all</a></div>
-                    <div class="tournament-row"><span class="tournament-icon">LC</span><span><strong>League Cup 04</strong><small>Knockout bracket <b>•</b> 32 seeds</small></span><a class="join-link" href="cup.html">Enter</a></div>
-                    <div class="tournament-row"><span class="tournament-icon muted-icon">OP</span><span><strong>Open Series</strong><small>Explore event format and entry info</small></span><a class="join-link" href="tournaments.html">View</a></div>
+                    <div class="card-topline"><span class="card-label">Open events</span><a href="tournaments.html" class="quiet-link">See all</a></div>
+                    <div id="home-event-list"><p>No open events are published.</p></div>
                 </article>
 
                 <article class="dashboard-card results-card">
                     <div class="card-topline"><span class="card-label">Recent results</span><a href="matches.html" class="quiet-link">View history</a></div>
-                    <div class="result-row"><span class="result-mark win">W</span><span><strong>Tim United 3 - 1 Delta FC</strong><small>Matchday 6 <b>•</b> 18 Sep</small></span><span class="result-rating">+26</span></div>
-                    <div class="result-row"><span class="result-mark win">W</span><span><strong>Tim United 2 - 0 Kings XI</strong><small>Matchday 5 <b>•</b> 15 Sep</small></span><span class="result-rating">+18</span></div>
+                    <div id="home-recent-results"><p>No approved results have been recorded yet.</p></div>
                 </article>
             </div>
 
@@ -201,62 +219,23 @@
             </div>
         </section>
 
-        <!-- Interactive League Tools Showcase -->
-        <section class="tools-suite-section" aria-labelledby="suite-title">
+        <section class="clubs-showcase" aria-labelledby="clubs-showcase-title">
             <div class="section-head">
-                <p class="eyebrow"><span class="eyebrow-line"></span> Competitive Suite</p>
-                <h2 id="suite-title">Interactive tools built for match winners.</h2>
-                <a class="home-section-link" href="play.html">View all game modes <span aria-hidden="true">&#8594;</span></a>
+                <p class="eyebrow"><span class="eyebrow-line"></span> Player communities</p>
+                <h2 id="clubs-showcase-title">Clubs built from real player records.</h2>
+                <a class="home-section-link" href="rankings.html#clubs">Explore club standings <span aria-hidden="true">&#8594;</span></a>
             </div>
-
-            <div class="tools-suite-grid">
-                <a href="matches.html#h2h-predictor" class="tool-card">
-                    <div class="tool-card-icon gold">⚔️</div>
-                    <div class="tool-card-content">
-                        <span class="tool-tag">Interactive Predictor</span>
-                        <h3>Head-to-Head (H2H) Match Engine</h3>
-                        <p>Calculate statistical win, draw, and loss probabilities between any two competitors with live commentary simulation.</p>
-                        <span class="tool-cta">Try H2H Predictor <span aria-hidden="true">&#8594;</span></span>
-                    </div>
-                </a>
-
-                <a href="rankings.html#elo-calculator" class="tool-card">
-                    <div class="tool-card-icon cyan">📊</div>
-                    <div class="tool-card-content">
-                        <span class="tool-tag">Rating Simulator</span>
-                        <h3>Elo Calculator &amp; Tier Simulator</h3>
-                        <p>Simulate projected Elo rating swings before your match. Test K-factors (K=32/40/16) and view tier progression.</p>
-                        <span class="tool-cta">Calculate Elo Swings <span aria-hidden="true">&#8594;</span></span>
-                    </div>
-                </a>
-
-                <a href="cup.html#cup-interactive-bracket" class="tool-card">
-                    <div class="tool-card-icon purple">👑</div>
-                    <div class="tool-card-content">
-                        <span class="tool-tag">Tournament Bracket</span>
-                        <h3>32-Player Knockout Cup Bracket</h3>
-                        <p>Follow single-elimination tournament pathways. Click seeds to advance winners match-by-match or run a simulation.</p>
-                        <span class="tool-cta">Open League Cup <span aria-hidden="true">&#8594;</span></span>
-                    </div>
-                </a>
-
-                <a href="play.html#pitch-builder" class="tool-card">
-                    <div class="tool-card-icon emerald">⚽</div>
-                    <div class="tool-card-content">
-                        <span class="tool-tag">Tactics &amp; Lineups</span>
-                        <h3>Tactical Pitch &amp; Formation Board</h3>
-                        <p>Test 5 competitive meta formations (4-3-3, 4-2-1-3), inspect player tactical traits, and dial in pressing playstyles.</p>
-                        <span class="tool-cta">Build Squad Tactics <span aria-hidden="true">&#8594;</span></span>
-                    </div>
-                </a>
+            <p class="clubs-showcase-intro">Club membership and standings are calculated from verified player profiles and their saved records. Administrators manage membership from player profiles.</p>
+            <div class="club-record-grid" id="home-club-grid" aria-live="polite">
+                <p class="club-record-empty">Loading verified club records…</p>
             </div>
         </section>
 
     </main>
 
     <button class="onboarding-help-button" id="onboarding-help" type="button" aria-haspopup="dialog">
-        <span class="onboarding-help-icon" aria-hidden="true">?</span>
-        <span>Need a guide?</span>
+        <span class="onboarding-help-icon"><img src="favicon.png" alt=""></span>
+        <span>Ask Kicki</span>
     </button>
 
     <dialog class="onboarding-dialog" id="onboarding-dialog" aria-labelledby="onboarding-title" aria-describedby="onboarding-description">
@@ -279,14 +258,17 @@
                         <path d="M101 137h18v31h-18z" fill="#173965"/>
                         <circle cx="110" cy="93" r="48" fill="#fffdf7" stroke="#d9e1ec" stroke-width="3"/>
                         <path d="m110 77 13 9-5 15h-16l-5-15zm-13 9-14-3-9 12 8 13 17-7m29-15 15-3 10 12-9 13-17-7m-28 3-8 14 7 13h16l7-13-8-14m-3 29v15m-40-32-12 6m94-6 12 6" fill="#0d2546" stroke="#0d2546" stroke-linejoin="round" stroke-width="3"/>
-                        <ellipse cx="95" cy="91" rx="4" ry="6" fill="#0d2546"/>
-                        <ellipse cx="125" cy="91" rx="4" ry="6" fill="#0d2546"/>
+                        <g class="mascot-eyes">
+                            <ellipse cx="95" cy="91" rx="4" ry="6" fill="#0d2546"/>
+                            <ellipse cx="125" cy="91" rx="4" ry="6" fill="#0d2546"/>
+                        </g>
                         <path d="M99 108q11 10 22 0" fill="none" stroke="#0d2546" stroke-linecap="round" stroke-width="3"/>
                         <path d="M86 73q9-7 18 0m14 0q9-7 18 0" fill="none" stroke="#0d2546" stroke-linecap="round" stroke-width="3"/>
                     </svg>
-                    <span class="mascot-speech-mark" aria-hidden="true">!</span>
+                    <span class="mascot-crest"><img src="favicon.png" alt=""></span>
+                    <span class="mascot-speech-mark" aria-hidden="true">✦</span>
                 </div>
-                <p class="mascot-stage-caption">YOUR LEAGUE SIDEKICK</p>
+                <p class="mascot-stage-caption">KICKI <span>·</span> YOUR LEAGUE GUIDE</p>
             </div>
             <div class="onboarding-copy">
                 <div class="onboarding-topline">
@@ -306,53 +288,25 @@
                     <button class="onboarding-skip" id="onboarding-skip" type="button">Skip tour</button>
                     <button class="onboarding-next" id="onboarding-next" type="button">Show me around <span aria-hidden="true">→</span></button>
                 </div>
-                <p class="onboarding-persistence-note">You can reopen this guide any time from the <strong>Need a guide?</strong> button.</p>
+                <p class="onboarding-persistence-note">You can ask Kicki for a page-specific tip any time.</p>
             </div>
         </div>
     </dialog>
 
-    <p class="home-preview-note"><span aria-hidden="true">i</span> Competition, ranking, match, and news content on this home preview is illustrative. Confirm official schedules and standings on their dedicated pages.</p>
-
     <section class="content-showcase" aria-labelledby="featured-title">
         <div class="section-head">
-            <p class="eyebrow"><span class="eyebrow-line"></span> Featured competitions</p>
-            <h2 id="featured-title">The league is moving fast.</h2>
+            <p class="eyebrow"><span class="eyebrow-line"></span> Published events</p>
+            <h2 id="featured-title">Events open to players.</h2>
             <a class="home-section-link" href="tournaments.html">Explore all tournaments <span aria-hidden="true">&#8594;</span></a>
         </div>
 
-        <div class="showcase-grid">
-            <article class="showcase-card spotlight">
-                <span class="showcase-tag">Championship</span>
-                <h3>League Cup 04</h3>
-                <p>The headline single-elimination tournament. 32 seeds, official competitive rules, and live bracket progression.</p>
-                <ul>
-                    <li>32-player interactive knockout bracket</li>
-                    <li>Official 1v1 competitive rules</li>
-                    <li>Live seed advancement &amp; simulation</li>
-                </ul>
-                <a href="cup.html">Enter League Cup</a>
-            </article>
-
-            <article class="showcase-card">
-                <span class="showcase-tag">Open entry</span>
-                <h3>Open Series</h3>
-                <p>New players can join ranked qualifiers and climb the ladder without waiting for a full season cycle.</p>
-                <a href="tournaments.html">View bracket</a>
-            </article>
-
-            <article class="showcase-card">
-                <span class="showcase-tag">Live now</span>
-                <h3>Weekend Clash</h3>
-                <p>Weekend matches are heating up with breakout teams upsetting the top of the rankings table.</p>
-                <a href="matches.html">See fixtures</a>
-            </article>
-        </div>
+        <div class="showcase-grid" id="home-featured-events"><p>Loading published events…</p></div>
     </section>
 
     <section class="standings-section" aria-labelledby="standings-title">
         <div class="section-head narrow">
             <p class="eyebrow"><span class="eyebrow-line"></span> Rankings</p>
-            <h2 id="standings-title">Top performers this week.</h2>
+            <h2 id="standings-title">Highest rated verified players.</h2>
             <a class="home-section-link" href="rankings.html">Open full rankings <span aria-hidden="true">&#8594;</span></a>
         </div>
 
@@ -372,45 +326,17 @@
                         </tr>
                     </thead>
                     <tbody id="home-player-rankings">
-                        <tr>
-                            <td>1</td>
-                            <td>NovaBlade</td>
-                            <td>1,864</td>
-                            <td>24–3–1</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Rex Orion</td>
-                            <td>1,842</td>
-                            <td>22–4–1</td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>BlueStrike</td>
-                            <td>1,805</td>
-                            <td>20–4–2</td>
-                        </tr>
-                        <tr>
-                            <td>4</td>
-                            <td>Tim United</td>
-                            <td>1,784</td>
-                            <td>18–3–4</td>
-                        </tr>
+                        <tr><td colspan="4">Loading verified player records…</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="table-panel">
                 <div class="panel-header-row">
-                    <h3>Teams</h3>
-                    <span class="live-sync-pill"><i class="status-dot"></i> Premier League</span>
+                    <h3>Administrator announcements</h3>
+                    <span class="live-sync-pill"><i class="status-dot"></i> Published</span>
                 </div>
-                <ul class="team-list" id="home-team-rankings">
-                    <li><span>1</span><strong>Nova FC</strong><small>1,986 pts</small></li>
-                    <li><span>2</span><strong>Orbit XI</strong><small>1,942 pts</small></li>
-                    <li><span>3</span><strong>Falcon City</strong><small>1,901 pts</small></li>
-                    <li><span>4</span><strong>Tim United</strong><small>1,872 pts</small></li>
-                </ul>
+                <ul class="team-list" id="home-announcement-list"><li>Loading published updates…</li></ul>
             </div>
         </div>
     </section>
@@ -418,30 +344,11 @@
     <section class="news-section" aria-labelledby="news-title">
         <div class="section-head">
             <p class="eyebrow"><span class="eyebrow-line"></span> Latest updates</p>
-            <h2 id="news-title">Fresh from the schedule board.</h2>
-            <a class="home-section-link" href="matches.html">Go to the match centre <span aria-hidden="true">&#8594;</span></a>
+            <h2 id="news-title">League news &amp; active events.</h2>
+            <a class="home-section-link" href="tournaments.html">Browse tournaments <span aria-hidden="true">&#8594;</span></a>
         </div>
 
-        <div class="news-grid">
-            <article>
-                <span class="news-date">Tournament guide</span>
-                <h3>Registration wave opens for the new champions cup.</h3>
-                <p>Teams are now signing up for the next city series with live seedings and automatic bracket balancing.</p>
-                <a href="tournaments.html">Explore events <span aria-hidden="true">&#8594;</span></a>
-            </article>
-            <article>
-                <span class="news-date">Ranking watch</span>
-                <h3>Rating adjustments could shake up the top 8.</h3>
-                <p>Recent form changes mean several clubs can leap forward before the final matchday this weekend.</p>
-                <a href="rankings.html">See the rankings <span aria-hidden="true">&#8594;</span></a>
-            </article>
-            <article>
-                <span class="news-date">New player guide</span>
-                <h3>New community tournament announced for beginners.</h3>
-                <p>Entry is free and designed to help new players learn the format while competing in a friendly league.</p>
-                <a href="play.html">Learn how to play <span aria-hidden="true">&#8594;</span></a>
-            </article>
-        </div>
+        <div class="news-grid" id="home-news-list"><p>Loading published league updates…</p></div>
     </section>
 
     <section class="callout-panel" aria-label="League call to action">
@@ -469,7 +376,7 @@
                 <a href="matches.html">Matches</a>
                 <a href="play.html">How to play</a>
                 <a href="cup.html">League Cup</a>
-                <a href="records.html">Records</a>
+                <a href="profile.html#records">Records</a>
             </nav>
 
             <div class="footer-cta">

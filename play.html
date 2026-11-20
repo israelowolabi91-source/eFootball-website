@@ -8,8 +8,9 @@
     <title>How to Play | Tim eFootball League</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="style.css?v=43">
+    <script src="site-config.js"></script>
+    <script src="script.js?v=43" defer></script>
 </head>
 <body class="how-to-page">
     <header class="site-header">
@@ -82,6 +83,7 @@
             <a href="#match-day">Match day</a>
             <a href="#league-rules">Fair play</a>
             <a href="#after-match">After the match</a>
+            <a href="#ratings">Ratings &amp; tiers</a>
             <a href="#help">FAQs &amp; help</a>
         </nav>
 
@@ -304,7 +306,7 @@
             <div class="how-to-report-copy">
                 <p class="eyebrow"><span class="eyebrow-line"></span> After the match</p>
                 <h2 id="after-match-title">Make the result official.</h2>
-                <p>Before reporting, compare the final score with your opponent and follow the event’s instructions. Keep a screenshot or other proof only if your organiser requests it.</p>
+                <p>Before reporting, compare the final score with your opponent and follow the event’s instructions. A screenshot of the in-game scoreline is required with each report.</p>
                 <ol class="how-to-report-steps">
                     <li><span>1</span><span><strong>Confirm the score</strong><small>Make sure both players agree on the final result.</small></span></li>
                     <li><span>2</span><span><strong>Submit it the right way</strong><small>Use the reporting channel named in your event rules.</small></span></li>
@@ -315,9 +317,36 @@
                 <span class="how-to-report-icon" aria-hidden="true">↗</span>
                 <p class="how-to-report-kicker">PLEASE NOTE</p>
                 <h3>Check your event for the official process.</h3>
-                <p>This website preview does not submit scores, schedule opponents, or resolve disputes. Use the instructions from your event organiser.</p>
+                <p>Report your score and upload its screenshot in the Match Centre. Matching reports with evidence are approved automatically; reports that do not match are sent for review.</p>
                 <a href="tournaments.html">Review event details <span aria-hidden="true">→</span></a>
             </aside>
+        </section>
+
+        <section class="how-to-ratings-section" id="ratings" aria-labelledby="ratings-title">
+            <div class="how-to-ratings-heading">
+                <p class="eyebrow"><span class="eyebrow-line"></span> Ratings and divisions</p>
+                <h2 id="ratings-title">How Elo and tiers work.</h2>
+                <p>Only approved ranked results affect player ratings and records. Wins, draws, and losses move Elo according to the players’ ratings and the competition’s K-factor; friendly matches do not count toward rankings.</p>
+                <p>New profiles start at <strong data-initial-elo>—</strong> Elo.</p>
+                <a class="how-to-inline-link" href="rankings.html">See current rankings <span aria-hidden="true">↗</span></a>
+            </div>
+            <div class="how-to-ratings-grid">
+                <article class="how-to-rating-card">
+                    <h3>Rating changes</h3>
+                    <p>The league uses the Elo formula: expected result is compared with the actual result, then multiplied by the competition’s K-factor.</p>
+                    <ul class="how-to-k-factors">
+                        <li><span>Ranked match</span><strong>K=<span data-elo-k="ranked">—</span></strong></li>
+                        <li><span>Cup or tournament knockout</span><strong>K=<span data-elo-k="cup">—</span></strong></li>
+                        <li><span>Placement match</span><strong>K=<span data-elo-k="placement">—</span></strong></li>
+                    </ul>
+                    <a href="rankings.html#elo-calculator">Try the Elo calculator <span aria-hidden="true">→</span></a>
+                </article>
+                <article class="how-to-rating-card">
+                    <h3>League tiers</h3>
+                    <p>Your current rating determines your tier. The thresholds below are shared with the live leaderboard.</p>
+                    <ol class="how-to-tier-list" data-play-tier-list></ol>
+                </article>
+            </div>
         </section>
 
         <section class="how-to-help-section" id="help" aria-labelledby="help-title">
@@ -349,7 +378,7 @@
                 </details>
                 <details>
                     <summary>How do I join a tournament or see my ranking?<span aria-hidden="true">＋</span></summary>
-                    <p>Browse the tournament page for event information and use the rankings page to explore the leaderboard preview. Listings and rankings shown on this website are illustrative unless an organiser confirms they are live.</p>
+                    <p>Browse published tournaments for event information and use the rankings page to see current standings based on verified player profiles and approved ranked results.</p>
                 </details>
             </div>
         </section>

@@ -2,7 +2,9 @@
 (function() {
     'use strict';
 
-    let currentAdminKey = sessionStorage.getItem('tim_admin_key') || localStorage.getItem('tim_admin_key') || '';
+    let currentAdminKey = '';
+    sessionStorage.removeItem('tim_admin_key');
+    localStorage.removeItem('tim_admin_key');
     let adminUser = null;
     let cachedUsers = [];
     let cachedMatches = [];
@@ -11,13 +13,21 @@
     const toastContainer = document.getElementById('admin-toast-container');
     const authDialog = document.getElementById('admin-auth-dialog');
     const authMessage = document.getElementById('admin-auth-message');
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[character]);
 
     // Show toast message
     const showToast = (message, type = 'success') => {
         if (!toastContainer) return;
         const toast = document.createElement('div');
         toast.className = `admin-toast toast-${type}`;
-        toast.innerHTML = `<span class="toast-icon">${type === 'success' ? '✓' : '⚠️'}</span> <span>${message}</span>`;
+        toast.innerHTML = `<span class="toast-icon">${type === 'success' ? '✓' : '⚠️'}</span> <span></span>`;
+        toast.lastElementChild.textContent = message;
         toastContainer.appendChild(toast);
         setTimeout(() => {
             toast.classList.add('fade-out');
@@ -98,9 +108,7 @@
             const data = await result.json();
             if (!result.ok) throw new Error(data.message || 'Invalid master key.');
 
-            currentAdminKey = key;
-            sessionStorage.setItem('tim_admin_key', key);
-            localStorage.setItem('tim_admin_key', key);
+            document.getElementById('admin-master-key').value = '';
             adminUser = data.user;
             hideAuthDialog();
             showToast('Authenticated as Administrator!');
@@ -129,11 +137,6 @@
             const data = await result.json();
             if (!result.ok) throw new Error(data.message || 'Invalid administrator credentials.');
 
-            if (data.token) {
-                currentAdminKey = data.token;
-                sessionStorage.setItem('tim_admin_key', data.token);
-                localStorage.setItem('tim_admin_key', data.token);
-            }
             adminUser = data.user;
             hideAuthDialog();
             showToast('Signed in successfully.');
@@ -182,6 +185,48 @@
         window.location.href = 'index.html';
     });
 
+    const loadPlayerReports = async () => {
+        const tbody = document.getElementById('player-reports-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="6" class="table-loading">Loading private player reports…</td></tr>';
+        try {
+            const data = await adminFetch('/api/admin/player-reports');
+            const reports = data.reports || [];
+            tbody.innerHTML = reports.length ? reports.map((report) => `
+                <tr>
+                    <td>${escapeHtml(new Date(report.createdAt).toLocaleString())}</td>
+                    <td>${escapeHtml(report.reporter)}</td>
+                    <td>${escapeHtml(report.reported)}</td>
+                    <td><strong>${escapeHtml(report.reason.replace(/-/g, ' '))}</strong><br>${escapeHtml(report.details || 'No additional details')}</td>
+                    <td>${escapeHtml(report.status)}</td>
+                    <td class="text-right">${report.status === 'open' ? `
+                        <button type="button" class="btn-action edit" data-report-id="${escapeHtml(report.id)}" data-report-status="reviewed">Mark reviewed</button>
+                        <button type="button" class="btn-action delete" data-report-id="${escapeHtml(report.id)}" data-report-status="dismissed">Dismiss</button>
+                    ` : '—'}</td>
+                </tr>
+            `).join('') : '<tr><td colspan="6" class="table-empty">No player reports have been submitted.</td></tr>';
+        } catch (error) {
+            tbody.innerHTML = `<tr><td colspan="6" class="table-error">Could not load reports: ${escapeHtml(error.message)}</td></tr>`;
+        }
+    };
+
+    document.getElementById('player-reports-tbody')?.addEventListener('click', async (event) => {
+        const button = event.target.closest('[data-report-id]');
+        if (!button) return;
+        button.disabled = true;
+        try {
+            const result = await adminFetch(`/api/admin/player-reports/${encodeURIComponent(button.dataset.reportId)}`, {
+                method: 'PUT',
+                body: JSON.stringify({ status: button.dataset.reportStatus })
+            });
+            showToast(result.message || 'Player report updated.');
+            await loadPlayerReports();
+        } catch (error) {
+            button.disabled = false;
+            showToast(error.message, 'error');
+        }
+    });
+
     // Tab Navigation
     document.querySelectorAll('.admin-tab').forEach((tab) => {
         tab.addEventListener('click', () => {
@@ -192,7 +237,10 @@
             if (targetPane) targetPane.classList.add('is-active');
 
             if (tab.dataset.tab === 'users') loadUsers();
-            if (tab.dataset.tab === 'matches') loadMatches();
+            if (tab.dataset.tab === 'matches') {
+                loadMatches();
+                loadPlayerReports();
+            }
             if (tab.dataset.tab === 'broadcast') loadBroadcastContent();
             if (tab.dataset.tab === 'tournaments') loadTournaments();
             if (tab.dataset.tab === 'clubs') loadClubs();
@@ -255,8 +303,7 @@
 
         const filtered = cachedUsers.filter((u) => {
             const matchSearch = (u.gamerTag || '').toLowerCase().includes(search) ||
-                                (u.name || '').toLowerCase().includes(search) ||
-                                (u.email || '').toLowerCase().includes(search);
+                                (u.name || '').toLowerCase().includes(search);
             const matchRole = roleFilter === 'all' || u.role === roleFilter;
             const matchVerified = verifiedFilter === 'all' ||
                                   (verifiedFilter === 'verified' && u.verified) ||
@@ -275,12 +322,12 @@
                     <div class="table-player-cell">
                         <span class="user-avatar-badge">${(u.gamerTag || 'P').charAt(0).toUpperCase()}</span>
                         <div>
-                            <strong>${u.gamerTag}</strong>
-                            <small>${u.name}</small>
+                            <strong>${escapeHtml(u.gamerTag)}</strong>
+                                <small>${escapeHtml(u.name)}</small>
                         </div>
                     </div>
                 </td>
-                <td><span class="text-email">${u.email}</span></td>
+                <td><span class="text-email">Private</span></td>
                 <td><strong class="user-elo-val">${u.rating.toLocaleString()}</strong></td>
                 <td><span class="user-record-pill">${u.wins}W - ${u.draws}D - ${u.losses}L</span></td>
                 <td>
@@ -295,9 +342,9 @@
                 </td>
                 <td class="text-right">
                     <div class="row-actions">
-                        <button type="button" class="btn-action edit" data-user-email="${encodeURIComponent(u.email)}" title="Edit Player">✏️ Edit</button>
-                        <button type="button" class="btn-action password" data-user-email="${encodeURIComponent(u.email)}" title="Set Password">🔑 Pass</button>
-                        <button type="button" class="btn-action delete" data-user-email="${encodeURIComponent(u.email)}" title="Delete Account">🗑️</button>
+                        <button type="button" class="btn-action edit" data-user-id="${encodeURIComponent(u.id)}" title="Edit Player">✏️ Edit</button>
+                        <button type="button" class="btn-action password" data-user-id="${encodeURIComponent(u.id)}" data-player-tag="${escapeHtml(u.gamerTag)}" title="Set Password">🔑 Pass</button>
+                        <button type="button" class="btn-action delete" data-user-id="${encodeURIComponent(u.id)}" data-player-tag="${escapeHtml(u.gamerTag)}" title="Delete Account">🗑️</button>
                     </div>
                 </td>
             </tr>
@@ -316,34 +363,37 @@
         const btnDel = e.target.closest('.btn-action.delete');
 
         if (btnEdit) {
-            const email = decodeURIComponent(btnEdit.dataset.userEmail);
-            const user = cachedUsers.find(u => u.email === email);
+            const userId = decodeURIComponent(btnEdit.dataset.userId);
+            const user = cachedUsers.find(u => u.id === userId);
             if (!user) return;
 
-            document.getElementById('edit-user-original-email').value = user.email;
+            document.getElementById('edit-user-original-id').value = user.id;
             document.getElementById('edit-user-tag').value = user.gamerTag;
             document.getElementById('edit-user-name').value = user.name;
-            document.getElementById('edit-user-email').value = user.email;
+            document.getElementById('edit-user-email').value = '';
             document.getElementById('edit-user-rating').value = user.rating;
-            document.getElementById('edit-user-wins').value = user.wins;
-            document.getElementById('edit-user-draws').value = user.draws;
-            document.getElementById('edit-user-losses').value = user.losses;
+            document.getElementById('edit-user-record').textContent = `${user.wins}W – ${user.draws}D – ${user.losses}L`;
             document.getElementById('edit-user-role').value = user.role || 'user';
             document.getElementById('edit-user-verified').value = String(user.verified);
+            document.getElementById('edit-user-platform').value = user.platform || '';
+            document.getElementById('edit-user-country').value = user.country || '';
+            document.getElementById('edit-user-time-zone').value = user.timeZone || 'UTC';
+            document.getElementById('edit-user-club-name').value = user.clubName || '';
             document.getElementById('edit-user-feedback').textContent = '';
 
             modalEditUser.showModal();
         }
 
         if (btnPass) {
-            const email = decodeURIComponent(btnPass.dataset.userEmail);
-            const newPass = prompt(`Enter new password for player (${email}):\n(Minimum 6 characters)`);
+            const userId = decodeURIComponent(btnPass.dataset.userId);
+            const tag = btnPass.dataset.playerTag;
+            const newPass = prompt(`Enter new password for player (${tag}):\n(Minimum 6 characters)`);
             if (newPass && newPass.length >= 6) {
-                adminFetch(`/api/admin/users/${encodeURIComponent(email)}/reset-password`, {
+                adminFetch(`/api/admin/users/${encodeURIComponent(userId)}/reset-password`, {
                     method: 'POST',
                     body: JSON.stringify({ newPassword: newPass })
                 }).then(() => {
-                    showToast(`Password updated for ${email}`);
+                    showToast(`Password updated for ${tag}`);
                 }).catch(err => {
                     alert(`Error: ${err.message}`);
                 });
@@ -353,12 +403,13 @@
         }
 
         if (btnDel) {
-            const email = decodeURIComponent(btnDel.dataset.userEmail);
-            if (confirm(`Are you sure you want to permanently delete player ${email}?\nThis action cannot be undone.`)) {
-                adminFetch(`/api/admin/users/${encodeURIComponent(email)}`, {
+            const userId = decodeURIComponent(btnDel.dataset.userId);
+            const tag = btnDel.dataset.playerTag;
+            if (confirm(`Are you sure you want to permanently delete player ${tag}?\nThis action cannot be undone.`)) {
+                adminFetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
                     method: 'DELETE'
                 }).then(() => {
-                    showToast(`Player ${email} deleted.`);
+                    showToast(`Player ${tag} deleted.`);
                     loadUsers();
                     loadOverview();
                 }).catch(err => {
@@ -371,7 +422,7 @@
     // Form: Edit User Submit
     document.getElementById('form-edit-user')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const originalEmail = document.getElementById('edit-user-original-email').value;
+        const originalUserId = document.getElementById('edit-user-original-id').value;
         const feedback = document.getElementById('edit-user-feedback');
         feedback.textContent = 'Saving changes live…';
         feedback.className = 'modal-feedback';
@@ -379,17 +430,18 @@
         const updatedData = {
             gamerTag: document.getElementById('edit-user-tag').value.trim(),
             name: document.getElementById('edit-user-name').value.trim(),
-            email: document.getElementById('edit-user-email').value.trim(),
+            email: document.getElementById('edit-user-email').value.trim() || undefined,
             rating: Number(document.getElementById('edit-user-rating').value),
-            wins: Number(document.getElementById('edit-user-wins').value),
-            draws: Number(document.getElementById('edit-user-draws').value),
-            losses: Number(document.getElementById('edit-user-losses').value),
             role: document.getElementById('edit-user-role').value,
-            verified: document.getElementById('edit-user-verified').value === 'true'
+            verified: document.getElementById('edit-user-verified').value === 'true',
+            platform: document.getElementById('edit-user-platform').value,
+            country: document.getElementById('edit-user-country').value.trim(),
+            timeZone: document.getElementById('edit-user-time-zone').value.trim() || 'UTC',
+            clubName: document.getElementById('edit-user-club-name').value.trim()
         };
 
         try {
-            const res = await adminFetch(`/api/admin/users/${encodeURIComponent(originalEmail)}`, {
+            const res = await adminFetch(`/api/admin/users/${encodeURIComponent(originalUserId)}`, {
                 method: 'PUT',
                 body: JSON.stringify(updatedData)
             });
@@ -425,7 +477,7 @@
             gamerTag: document.getElementById('create-user-tag').value.trim(),
             name: document.getElementById('create-user-name').value.trim(),
             email: document.getElementById('create-user-email').value.trim(),
-            password: document.getElementById('create-user-password').value || 'password123',
+            password: document.getElementById('create-user-password').value,
             rating: Number(document.getElementById('create-user-rating').value),
             role: document.getElementById('create-user-role').value,
             verified: document.getElementById('create-user-verified').value === 'true'
@@ -494,9 +546,9 @@
                     </td>
                     <td>
                         <div class="match-players-cell">
-                            <strong>${m.challenger.gamerTag}</strong>
+                            <strong>${escapeHtml(m.challenger.gamerTag)}</strong>
                             <span class="text-vs">vs</span>
-                            <strong>${m.opponent.gamerTag}</strong>
+                            <strong>${escapeHtml(m.opponent.gamerTag)}</strong>
                         </div>
                     </td>
                     <td><small>${dateStr}</small></td>
@@ -536,9 +588,9 @@
             document.getElementById('edit-match-id').value = match.id;
             document.getElementById('match-modal-participants').innerHTML = `
                 <div class="modal-h2h-row">
-                    <span>${match.challenger.gamerTag} (${match.challenger.rating} Elo)</span>
+                    <span>${escapeHtml(match.challenger.gamerTag)} (${match.challenger.rating} Elo)</span>
                     <strong>VS</strong>
-                    <span>${match.opponent.gamerTag} (${match.opponent.rating} Elo)</span>
+                    <span>${escapeHtml(match.opponent.gamerTag)} (${match.opponent.rating} Elo)</span>
                 </div>
             `;
             document.getElementById('edit-match-challenger-score').value = match.scores ? match.scores.challenger : 0;
@@ -613,8 +665,8 @@
         selectO.innerHTML = '';
 
         cachedUsers.forEach((u) => {
-            selectC.add(new Option(`${u.gamerTag} (${u.email})`, u.email));
-            selectO.add(new Option(`${u.gamerTag} (${u.email})`, u.email));
+            selectC.add(new Option(`${u.gamerTag} (${u.rating} Elo)`, u.id));
+            selectO.add(new Option(`${u.gamerTag} (${u.rating} Elo)`, u.id));
         });
         if (cachedUsers.length > 1) {
             selectO.selectedIndex = 1;
@@ -636,8 +688,8 @@
         feedback.textContent = 'Scheduling fixture…';
 
         const payload = {
-            challengerEmail: document.getElementById('create-match-challenger').value,
-            opponentEmail: document.getElementById('create-match-opponent').value,
+            challengerId: document.getElementById('create-match-challenger').value,
+            opponentId: document.getElementById('create-match-opponent').value,
             competition: document.getElementById('create-match-comp').value,
             scheduledAt: new Date(document.getElementById('create-match-date').value).toISOString(),
             ranked: document.getElementById('create-match-ranked').value === 'true'
@@ -750,6 +802,14 @@
 
     // Tournaments Management
     const modalTournament = document.getElementById('modal-tournament');
+    const syncFeaturedCupTitle = () => {
+        const titleInput = document.getElementById('t-title');
+        const featuredCupInput = document.getElementById('t-featured-cup');
+        if (!titleInput || !featuredCupInput) return;
+        titleInput.readOnly = featuredCupInput.checked;
+        if (featuredCupInput.checked) titleInput.value = 'Tim League Cup 2026';
+    };
+    document.getElementById('t-featured-cup')?.addEventListener('change', syncFeaturedCupTitle);
 
     const loadTournaments = async () => {
         const grid = document.getElementById('tournaments-cards-grid');
@@ -773,27 +833,33 @@
             grid.innerHTML = tournaments.map((t, idx) => {
                 const interestCount = interests[t.id] || 0;
                 const statusCls = t.status === 'Registration Open' ? 'open' : t.status === 'In Progress' ? 'live' : 'upcoming';
+                const isPublished = t.published !== false;
                 return `
-                <div class="admin-event-card" data-tid="${t.id}">
+                <div class="admin-event-card" data-tid="${escapeHtml(t.id)}">
                     <div class="event-card-header">
-                        <span class="event-badge">${t.badge || 'EVENT'}</span>
-                        <span class="event-status-tag status-${statusCls}">${t.status || 'Coming Soon'}</span>
+                        <span class="event-badge">${escapeHtml(t.badge || 'EVENT')}</span>
+                        <span class="event-publication-tag ${isPublished ? 'is-published' : 'is-draft'}" style="padding:4px 8px; border-radius:999px; background:${isPublished ? 'rgba(86, 214, 154, 0.1)' : 'rgba(148, 163, 184, 0.1)'}; color:${isPublished ? '#86efac' : '#cbd5e1'}; font-size:0.65rem; font-weight:800;">${isPublished ? 'Published' : 'Draft'}</span>
+                        <span class="event-status-tag status-${statusCls}">${escapeHtml(t.status || 'Coming Soon')}</span>
                     </div>
-                    <h3>${t.title}</h3>
-                    <p class="event-desc">${t.kicker ? `<em>${t.kicker}</em><br>` : ''}${t.desc || 'No description provided.'}</p>
+                    <h3>${escapeHtml(t.title)}</h3>
+                    <p class="event-desc">${t.kicker ? `<em>${escapeHtml(t.kicker)}</em><br>` : ''}${escapeHtml(t.desc || 'No description provided.')}</p>
                     <div class="event-details-grid">
-                        <div><span>Format:</span> <strong>${t.format}</strong></div>
-                        <div><span>Slots:</span> <strong>${t.slots || 'Unlimited'}</strong></div>
-                        <div><span>Dates:</span> <strong>${t.dates || 'TBC'}</strong></div>
-                        <div><span>Interest:</span> <strong style="color: #f4b72f;">★ ${interestCount} players</strong></div>
-                        ${t.prizePool ? `<div><span>Prize:</span> <strong>${t.prizePool}</strong></div>` : ''}
-                        ${t.minElo || t.maxElo ? `<div><span>Elo Req:</span> <strong>${t.minElo ? t.minElo + '+' : 'Any'} ${t.maxElo ? 'to ' + t.maxElo : ''}</strong></div>` : ''}
+                        <div><span>Format:</span> <strong>${escapeHtml(t.format || 'Not set')}</strong></div>
+                        <div><span>Slots:</span> <strong>${escapeHtml(t.slots || 'Unlimited')}</strong></div>
+                        <div><span>Dates:</span> <strong>${escapeHtml(t.dates || 'Not set')}</strong></div>
+                        ${t.eventType ? `<div><span>Event type:</span> <strong>${escapeHtml(t.eventType)}</strong></div>` : ''}
+                        ${t.platform ? `<div><span>Platform:</span> <strong>${escapeHtml(t.platform)}</strong></div>` : ''}
+                        <div><span>Registered:</span> <strong style="color: #f4b72f;">★ ${interestCount} players</strong></div>
+                        ${t.featuredCup ? '<div><span>Public page:</span> <strong>League Cup</strong></div>' : ''}
+                        ${t.prizePool ? `<div><span>Prize:</span> <strong>${escapeHtml(t.prizePool)}</strong></div>` : ''}
+                        ${t.minElo || t.maxElo ? `<div><span>Elo Req:</span> <strong>${t.minElo ? escapeHtml(t.minElo) + '+' : 'Any'} ${t.maxElo ? 'to ' + escapeHtml(t.maxElo) : ''}</strong></div>` : ''}
                     </div>
                     <div class="event-actions">
-                        <button type="button" class="btn-action edit" data-edit-tourn="${t.id}">Edit</button>
-                        <button type="button" class="btn-action" data-roster-tourn="${t.id}" style="background: rgba(244, 183, 47, 0.12); color: #f4b72f; border-color: rgba(244, 183, 47, 0.3);">👥 Roster (${interestCount})</button>
-                        <button type="button" class="btn-action toggle-reg" data-toggle-reg="${t.id}" data-current="${Boolean(t.registrationOpen)}">${t.registrationOpen ? 'Close Reg' : 'Open Reg'}</button>
-                        <button type="button" class="btn-action delete" data-delete-tourn="${t.id}">Remove</button>
+                        <button type="button" class="btn-action edit" data-edit-tourn="${escapeHtml(t.id)}">Edit</button>
+                        <button type="button" class="btn-action" data-duplicate-tourn="${escapeHtml(t.id)}">Duplicate</button>
+                        <button type="button" class="btn-action" data-roster-tourn="${escapeHtml(t.id)}" style="background: rgba(244, 183, 47, 0.12); color: #f4b72f; border-color: rgba(244, 183, 47, 0.3);">Roster (${interestCount})</button>
+                        <button type="button" class="btn-action toggle-reg" data-toggle-reg="${escapeHtml(t.id)}" data-current="${Boolean(t.registrationOpen)}" ${!isPublished ? 'disabled title="Publish this event before opening registration."' : ''}>${t.registrationOpen ? 'Close registration' : isPublished ? 'Open registration' : 'Publish to open registration'}</button>
+                        <button type="button" class="btn-action delete" data-delete-tourn="${escapeHtml(t.id)}">Remove</button>
                     </div>
                 </div>
             `;
@@ -830,12 +896,12 @@
             tbody.innerHTML = participants.map((p, idx) => `
                 <tr>
                     <td><strong style="color: ${idx < 3 ? '#f4b72f' : '#94a3b8'};">#${idx + 1}</strong></td>
-                    <td><strong>${p.gamerTag}</strong> <small style="color: #64748b;">(${p.name})</small></td>
-                    <td><small style="color: #cbd5e1;">${p.email}</small></td>
+                    <td><strong>${escapeHtml(p.gamerTag)}</strong> <small style="color: #64748b;">(${escapeHtml(p.name)})</small></td>
+                    <td><small style="color: #cbd5e1;">Private</small></td>
                     <td><strong class="user-elo-val">${p.rating.toLocaleString()}</strong></td>
                     <td><small>${p.wins}W–${p.draws}D–${p.losses}L</small></td>
                     <td class="text-right">
-                        <button type="button" class="btn-action delete" data-remove-player="${encodeURIComponent(p.email)}" data-player-tag="${p.gamerTag}" style="padding: 4px 8px; font-size: 0.72rem;">Remove</button>
+                        <button type="button" class="btn-action delete" data-remove-player="${encodeURIComponent(p.id)}" data-player-tag="${escapeHtml(p.gamerTag)}" style="padding: 4px 8px; font-size: 0.72rem;">Remove</button>
                     </td>
                 </tr>
             `).join('');
@@ -849,12 +915,12 @@
         const btn = e.target.closest('[data-remove-player]');
         if (!btn || !currentRosterTournId) return;
 
-        const email = decodeURIComponent(btn.dataset.removePlayer);
+        const userId = decodeURIComponent(btn.dataset.removePlayer);
         const tag = btn.dataset.playerTag;
 
         if (confirm(`Remove player "${tag}" from this tournament?`)) {
             try {
-                const res = await adminFetch(`/api/admin/tournaments/${encodeURIComponent(currentRosterTournId)}/participants/${encodeURIComponent(email)}`, {
+                const res = await adminFetch(`/api/admin/tournaments/${encodeURIComponent(currentRosterTournId)}/participants/${encodeURIComponent(userId)}`, {
                     method: 'DELETE'
                 });
                 showToast(res.message || 'Player removed from roster.');
@@ -872,6 +938,7 @@
         document.getElementById('modal-tournament-title').textContent = 'Add Tournament';
         document.getElementById('tournament-edit-id').value = '';
         document.getElementById('form-tournament').reset();
+        syncFeaturedCupTitle();
         document.getElementById('tournament-feedback').textContent = '';
         modalTournament.showModal();
     });
@@ -879,9 +946,43 @@
     // Handle Edit / Toggle / Delete from Grid
     document.getElementById('tournaments-cards-grid')?.addEventListener('click', async (e) => {
         const btnEdit = e.target.closest('[data-edit-tourn]');
+        const btnDuplicate = e.target.closest('[data-duplicate-tourn]');
         const btnDel = e.target.closest('[data-delete-tourn]');
         const btnToggle = e.target.closest('[data-toggle-reg]');
         const btnRoster = e.target.closest('[data-roster-tourn]');
+
+        if (btnDuplicate) {
+            const t = (cachedContent.tournaments || []).find(item => item.id === btnDuplicate.dataset.duplicateTourn);
+            const form = document.getElementById('form-tournament');
+            if (!t || !modalTournament || !form) return;
+
+            form.reset();
+            document.getElementById('modal-tournament-title').textContent = 'Duplicate Tournament';
+            document.getElementById('tournament-edit-id').value = '';
+            document.getElementById('t-title').value = `${String(t.title || 'Tournament').slice(0, 72)} - Copy`;
+            document.getElementById('t-badge').value = t.badge || '';
+            document.getElementById('t-kicker').value = '';
+            document.getElementById('t-status').value = 'Coming Soon';
+            document.getElementById('t-format').value = t.format || '';
+            document.getElementById('t-slots').value = t.slots || '';
+            document.getElementById('t-event-type').value = t.eventType || '';
+            document.getElementById('t-platform').value = t.platform || '';
+            document.getElementById('t-dates').value = '';
+            document.getElementById('t-prize').value = '';
+            document.getElementById('t-prize-details').value = '';
+            document.getElementById('t-min-elo').value = t.minElo ?? '';
+            document.getElementById('t-max-elo').value = t.maxElo ?? '';
+            document.getElementById('t-entry-link').value = '';
+            document.getElementById('t-desc').value = '';
+            document.getElementById('t-rules').value = '';
+            document.getElementById('t-reg-open').checked = false;
+            document.getElementById('t-published').checked = false;
+            document.getElementById('t-featured-cup').checked = false;
+            syncFeaturedCupTitle();
+            document.getElementById('tournament-feedback').textContent = 'Format, capacity, and Elo limits were copied. Add the event-specific details before saving.';
+            modalTournament.showModal();
+            return;
+        }
 
         if (btnRoster) {
             openTournamentRoster(btnRoster.dataset.rosterTourn);
@@ -901,13 +1002,20 @@
             document.getElementById('t-status').value = t.status || 'Coming Soon';
             document.getElementById('t-format').value = t.format || '';
             document.getElementById('t-slots').value = t.slots || '';
+            document.getElementById('t-event-type').value = t.eventType || '';
+            document.getElementById('t-platform').value = t.platform || '';
             document.getElementById('t-dates').value = t.dates || '';
             document.getElementById('t-prize').value = t.prizePool || '';
+            document.getElementById('t-prize-details').value = t.prizeDetails || '';
             document.getElementById('t-min-elo').value = t.minElo || '';
             document.getElementById('t-max-elo').value = t.maxElo || '';
             document.getElementById('t-entry-link').value = t.entryLink || '';
             document.getElementById('t-desc').value = t.desc || '';
+            document.getElementById('t-rules').value = t.rules || '';
             document.getElementById('t-reg-open').checked = Boolean(t.registrationOpen);
+            document.getElementById('t-published').checked = t.published !== false;
+            document.getElementById('t-featured-cup').checked = Boolean(t.featuredCup);
+            syncFeaturedCupTitle();
             document.getElementById('tournament-feedback').textContent = '';
 
             modalTournament.showModal();
@@ -960,13 +1068,20 @@
             status: document.getElementById('t-status').value,
             format: document.getElementById('t-format').value.trim(),
             slots: document.getElementById('t-slots').value.trim(),
+            eventType: document.getElementById('t-event-type').value.trim(),
+            platform: document.getElementById('t-platform').value.trim(),
             dates: document.getElementById('t-dates').value.trim(),
             prizePool: document.getElementById('t-prize').value.trim(),
+            prizeDetails: document.getElementById('t-prize-details').value.trim(),
             minElo: document.getElementById('t-min-elo').value ? Number(document.getElementById('t-min-elo').value) : null,
             maxElo: document.getElementById('t-max-elo').value ? Number(document.getElementById('t-max-elo').value) : null,
             entryLink: document.getElementById('t-entry-link').value.trim(),
             desc: document.getElementById('t-desc').value.trim(),
-            registrationOpen: document.getElementById('t-reg-open').checked
+            rules: document.getElementById('t-rules').value.trim(),
+            registrationOpen: document.getElementById('t-reg-open').checked ||
+                document.getElementById('t-status').value === 'Registration Open',
+            published: document.getElementById('t-published').checked,
+            featuredCup: document.getElementById('t-featured-cup').checked
         };
 
         try {
@@ -985,98 +1100,30 @@
         }
     });
 
-    // Clubs Standings Management
+    // Club standings are derived from verified player profiles.
     const loadClubs = async () => {
         const tbody = document.getElementById('clubs-tbody');
-        tbody.innerHTML = '<tr><td colspan="8" class="table-loading">Loading club standings…</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="table-loading">Loading club standings from player records…</td></tr>';
         try {
-            const data = await adminFetch('/api/admin/content');
-            const clubs = data.content?.clubs || [];
-            cachedContent.clubs = clubs;
-
-            tbody.innerHTML = clubs.map((c, idx) => `
+            const data = await adminFetch('/api/site/clubs');
+            const clubs = data.clubs || [];
+            tbody.innerHTML = clubs.length ? clubs.map((club) => `
                 <tr>
-                    <td><strong>#${c.rank}</strong></td>
-                    <td><strong>${c.name}</strong></td>
-                    <td>${c.captain}</td>
-                    <td><span class="comp-badge comp-open">${c.division.toUpperCase()}</span></td>
-                    <td><strong class="user-elo-val">${c.points.toLocaleString()}</strong></td>
-                    <td>${c.record}</td>
-                    <td>${c.matches}</td>
-                    <td class="text-right">
-                        <button type="button" class="btn-action edit" data-edit-club="${idx}">Edit</button>
-                        <button type="button" class="btn-action delete" data-delete-club="${idx}">Delete</button>
-                    </td>
+                    <td><strong>#${club.rank}</strong></td>
+                    <td><strong>${escapeHtml(club.name)}</strong></td>
+                    <td>${club.members}</td>
+                    <td><strong class="user-elo-val">${Number(club.averageRating).toLocaleString()}</strong></td>
+                    <td>${escapeHtml(club.record)}</td>
+                    <td>${club.players.map(escapeHtml).join(', ')}</td>
                 </tr>
-            `).join('');
+            `).join('') : '<tr><td colspan="6" class="table-empty">No verified players have a club assignment. Assign a club in the player editor.</td></tr>';
         } catch (err) {
-            tbody.innerHTML = `<tr><td colspan="8" class="table-error">Error: ${err.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="table-error">Error: ${escapeHtml(err.message)}</td></tr>`;
         }
     };
 
-    document.getElementById('btn-add-club')?.addEventListener('click', async () => {
-        const name = prompt('Club Name:');
-        if (!name) return;
-        const captain = prompt('Captain GamerTag:');
-        const points = Number(prompt('Club Points:', '1800')) || 1800;
-
-        cachedContent.clubs = cachedContent.clubs || [];
-        cachedContent.clubs.push({
-            id: `club-${Date.now()}`,
-            rank: cachedContent.clubs.length + 1,
-            name,
-            captain: captain || 'Captain',
-            division: 'premier',
-            points,
-            record: '10–2–2',
-            matches: 14,
-            change: '+15 this week'
-        });
-
-        await adminFetch('/api/admin/content/clubs', {
-            method: 'PUT',
-            body: JSON.stringify(cachedContent.clubs)
-        });
-        showToast('Club added live.');
-        loadClubs();
-    });
-
-    document.getElementById('clubs-tbody')?.addEventListener('click', async (e) => {
-        const btnEdit = e.target.closest('[data-edit-club]');
-        const btnDel = e.target.closest('[data-delete-club]');
-
-        if (btnEdit) {
-            const idx = Number(btnEdit.dataset.editClub);
-            const club = cachedContent.clubs[idx];
-            const newPoints = prompt(`Edit points for ${club.name}:`, club.points);
-            if (newPoints !== null) {
-                club.points = Number(newPoints) || club.points;
-                const newRecord = prompt(`Edit record (W–D–L) for ${club.name}:`, club.record);
-                if (newRecord) club.record = newRecord;
-
-                await adminFetch('/api/admin/content/clubs', {
-                    method: 'PUT',
-                    body: JSON.stringify(cachedContent.clubs)
-                });
-                showToast(`Club ${club.name} updated.`);
-                loadClubs();
-            }
-        }
-
-        if (btnDel) {
-            const idx = Number(btnDel.dataset.deleteClub);
-            if (confirm(`Delete club ${cachedContent.clubs[idx].name}?`)) {
-                cachedContent.clubs.splice(idx, 1);
-                // re-rank
-                cachedContent.clubs.forEach((c, i) => c.rank = i + 1);
-                await adminFetch('/api/admin/content/clubs', {
-                    method: 'PUT',
-                    body: JSON.stringify(cachedContent.clubs)
-                });
-                showToast('Club removed.');
-                loadClubs();
-            }
-        }
+    document.getElementById('btn-clubs-goto-users')?.addEventListener('click', () => {
+        document.querySelector('.admin-tab[data-tab="users"]')?.click();
     });
 
     // League Cup Bracket Master
@@ -1087,6 +1134,7 @@
             const data = await adminFetch('/api/admin/content');
             const bracket = data.content?.bracket || {};
             cachedContent.bracket = bracket;
+            cachedContent.tournaments = data.content?.tournaments || [];
             renderAdminBracket();
         } catch (err) {
             container.innerHTML = `<p class="table-error">Error: ${err.message}</p>`;
@@ -1096,118 +1144,137 @@
     const renderAdminBracket = () => {
         const container = document.getElementById('admin-bracket-tree');
         const b = cachedContent.bracket || {};
-        const r1 = b.round1 || [];
-        const qf = b.quarterFinals || [];
-        const sf = b.semiFinals || [];
-        const fin = b.finalMatch || {};
-
-        container.innerHTML = `
-            <div class="admin-bracket-grid">
-                <div class="bracket-col">
-                    <h4>Round of 16 (8 Matchups)</h4>
-                    ${r1.map((m, idx) => `
-                        <div class="admin-bracket-card">
-                            <label class="bracket-team-option ${m.winner === m.p1 ? 'is-winner' : ''}">
-                                <input type="radio" name="r1-${idx}" value="p1" ${m.winner === m.p1 ? 'checked' : ''} data-r1-idx="${idx}">
-                                <span>${m.p1}</span>
-                            </label>
-                            <label class="bracket-team-option ${m.winner === m.p2 ? 'is-winner' : ''}">
-                                <input type="radio" name="r1-${idx}" value="p2" ${m.winner === m.p2 ? 'checked' : ''} data-r1-idx="${idx}">
-                                <span>${m.p2}</span>
-                            </label>
-                        </div>
-                    `).join('')}
-                </div>
-
-                <div class="bracket-col">
-                    <h4>Quarter-Finals (4 Matchups)</h4>
-                    ${qf.map((m, idx) => `
-                        <div class="admin-bracket-card">
-                            <label class="bracket-team-option ${m.winner === m.p1 && m.p1 !== 'TBD' ? 'is-winner' : ''}">
-                                <input type="radio" name="qf-${idx}" value="p1" ${m.winner === m.p1 ? 'checked' : ''} data-qf-idx="${idx}" ${m.p1 === 'TBD' ? 'disabled' : ''}>
-                                <span>${m.p1}</span>
-                            </label>
-                            <label class="bracket-team-option ${m.winner === m.p2 && m.p2 !== 'TBD' ? 'is-winner' : ''}">
-                                <input type="radio" name="qf-${idx}" value="p2" ${m.winner === m.p2 ? 'checked' : ''} data-qf-idx="${idx}" ${m.p2 === 'TBD' ? 'disabled' : ''}>
-                                <span>${m.p2}</span>
-                            </label>
-                        </div>
-                    `).join('')}
-                </div>
-
-                <div class="bracket-col">
-                    <h4>Semi-Finals (2 Matchups)</h4>
-                    ${sf.map((m, idx) => `
-                        <div class="admin-bracket-card">
-                            <label class="bracket-team-option ${m.winner === m.p1 && m.p1 !== 'TBD' ? 'is-winner' : ''}">
-                                <input type="radio" name="sf-${idx}" value="p1" ${m.winner === m.p1 ? 'checked' : ''} data-sf-idx="${idx}" ${m.p1 === 'TBD' ? 'disabled' : ''}>
-                                <span>${m.p1}</span>
-                            </label>
-                            <label class="bracket-team-option ${m.winner === m.p2 && m.p2 !== 'TBD' ? 'is-winner' : ''}">
-                                <input type="radio" name="sf-${idx}" value="p2" ${m.winner === m.p2 ? 'checked' : ''} data-sf-idx="${idx}" ${m.p2 === 'TBD' ? 'disabled' : ''}>
-                                <span>${m.p2}</span>
-                            </label>
-                        </div>
-                    `).join('')}
-                </div>
-
-                <div class="bracket-col final-col">
-                    <h4>Grand Final &amp; Champion</h4>
-                    <div class="admin-bracket-card is-final">
-                        <label class="bracket-team-option ${fin.winner === fin.p1 && fin.p1 !== 'TBD' ? 'is-winner' : ''}">
-                            <input type="radio" name="fin-0" value="p1" ${fin.winner === fin.p1 ? 'checked' : ''} data-fin-idx="0" ${fin.p1 === 'TBD' ? 'disabled' : ''}>
-                            <span>${fin.p1}</span>
-                        </label>
-                        <label class="bracket-team-option ${fin.winner === fin.p2 && fin.p2 !== 'TBD' ? 'is-winner' : ''}">
-                            <input type="radio" name="fin-0" value="p2" ${fin.winner === fin.p2 ? 'checked' : ''} data-fin-idx="0" ${fin.p2 === 'TBD' ? 'disabled' : ''}>
-                            <span>${fin.p2}</span>
-                        </label>
+        const legacy = Array.isArray(b.round1);
+        const rounds = legacy
+            ? [
+                { key: 'round1', name: 'Round of 16', matches: b.round1 },
+                { key: 'quarterFinals', name: 'Quarter-Finals', matches: b.quarterFinals || [] },
+                { key: 'semiFinals', name: 'Semi-Finals', matches: b.semiFinals || [] },
+                { key: 'finalMatch', name: 'Grand Final', matches: b.finalMatch ? [b.finalMatch] : [] }
+            ]
+            : [
+                { key: 'round32', name: 'Round of 32', matches: b.round32 || [] },
+                { key: 'round16', name: 'Round of 16', matches: b.round16 || [] },
+                { key: 'quarterFinals', name: 'Quarter-Finals', matches: b.quarterFinals || [] },
+                { key: 'semiFinals', name: 'Semi-Finals', matches: b.semiFinals || [] },
+                { key: 'finalMatch', name: 'Grand Final', matches: b.finalMatch ? [b.finalMatch] : [] }
+            ];
+        if (!rounds.some((round) => round.matches.length)) {
+            container.innerHTML = '<p class="table-loading">No Cup bracket is published yet. Select “Seed from registered players” to build one from the featured Cup roster.</p>';
+            return;
+        }
+        container.innerHTML = `<div class="admin-bracket-grid">${rounds.map((round) => `
+            <div class="bracket-col ${round.key === 'finalMatch' ? 'final-col' : ''}">
+                <h4>${round.name} (${round.matches.length} match${round.matches.length === 1 ? '' : 'es'})</h4>
+                ${round.matches.map((match, idx) => `
+                    <div class="admin-bracket-card ${round.key === 'finalMatch' ? 'is-final' : ''}">
+                        ${['p1', 'p2'].map((side) => {
+                            const team = match[side] || 'TBD';
+                            const selected = match.winner === team && team !== 'TBD';
+                            return `<label class="bracket-team-option ${selected ? 'is-winner' : ''}">
+                                <input type="radio" name="${round.key}-${idx}" value="${side}" data-bracket-round="${round.key}" data-bracket-index="${idx}" ${selected ? 'checked' : ''} ${team === 'TBD' ? 'disabled' : ''}>
+                                <span>${escapeHtml(team)}</span>
+                            </label>`;
+                        }).join('')}
                     </div>
-                    ${fin.winner && fin.winner !== 'TBD' ? `
-                        <div class="admin-champ-box">
-                            🏆 CROWNED CHAMPION: <strong>${fin.winner}</strong>
-                        </div>
-                    ` : ''}
-                </div>
+                `).join('')}
+                ${round.key === 'finalMatch' && b.champion ? `<div class="admin-champ-box">🏆 CROWNED CHAMPION: <strong>${escapeHtml(b.champion)}</strong></div>` : ''}
             </div>
-        `;
+        `).join('')}</div>`;
     };
 
     document.getElementById('admin-bracket-tree')?.addEventListener('change', (e) => {
         const input = e.target;
         const b = cachedContent.bracket;
         if (!b) return;
+        const legacy = Array.isArray(b.round1);
+        const keys = legacy
+            ? ['round1', 'quarterFinals', 'semiFinals', 'finalMatch']
+            : ['round32', 'round16', 'quarterFinals', 'semiFinals', 'finalMatch'];
+        const roundKey = input.dataset.bracketRound;
+        const roundIndex = keys.indexOf(roundKey);
+        if (roundIndex < 0) return;
+        const matchIndex = Number(input.dataset.bracketIndex);
+        const roundMatches = roundKey === 'finalMatch' ? [b.finalMatch] : b[roundKey];
+        const match = roundMatches?.[matchIndex];
+        if (!match) return;
+        match.winner = match[input.value];
+        if (roundKey === 'finalMatch') {
+            b.champion = match.winner;
+        } else {
+            const nextKey = keys[roundIndex + 1];
+            const nextIndex = Math.floor(matchIndex / 2);
+            const nextSide = matchIndex % 2 === 0 ? 'p1' : 'p2';
+            const nextMatch = nextKey === 'finalMatch' ? b.finalMatch : b[nextKey]?.[nextIndex];
+            if (nextMatch) {
+                nextMatch[nextSide] = match.winner;
+                nextMatch.winner = null;
+                for (let followingRound = roundIndex + 2; followingRound < keys.length; followingRound += 1) {
+                    const followingKey = keys[followingRound];
+                    const followingIndex = Math.floor(nextIndex / 2);
+                    const followingSide = nextIndex % 2 === 0 ? 'p1' : 'p2';
+                    const followingMatch = followingKey === 'finalMatch' ? b.finalMatch : b[followingKey]?.[followingIndex];
+                    if (followingMatch) {
+                        followingMatch[followingSide] = 'TBD';
+                        followingMatch.winner = null;
+                    }
+                }
+                b.champion = null;
+            }
+        }
+        renderAdminBracket();
+    });
 
-        if (input.dataset.r1Idx !== undefined) {
-            const idx = Number(input.dataset.r1Idx);
-            const m = b.round1[idx];
-            m.winner = input.value === 'p1' ? m.p1 : m.p2;
-
-            const qfIdx = Math.floor(idx / 2);
-            const qfPos = idx % 2 === 0 ? 'p1' : 'p2';
-            b.quarterFinals[qfIdx][qfPos] = m.winner;
+    document.getElementById('btn-reset-bracket-default')?.addEventListener('click', async () => {
+        const cup = (cachedContent.tournaments || []).find((tournament) => tournament.featuredCup === true);
+        if (!cup) {
+            alert('Mark one event as the League Cup in Tournament Management before seeding the bracket.');
+            return;
+        }
+        const existingBracketHasWinners = [
+            ...(cachedContent.bracket?.round32 || []),
+            ...(cachedContent.bracket?.round16 || []),
+            ...(cachedContent.bracket?.round1 || []),
+            ...(cachedContent.bracket?.quarterFinals || []),
+            ...(cachedContent.bracket?.semiFinals || []),
+            ...(cachedContent.bracket?.finalMatch ? [cachedContent.bracket.finalMatch] : [])
+        ].some((match) => match.winner);
+        if (existingBracketHasWinners && !confirm('Regenerating seeds clears all current bracket winners. Continue?')) return;
+        try {
+            const data = await adminFetch(`/api/admin/tournaments/${encodeURIComponent(cup.id)}/participants`);
+            const players = (data.participants || []).slice(0, 32);
+            const seedOrder = [1, 32, 16, 17, 8, 25, 9, 24, 4, 29, 13, 20, 5, 28, 12, 21, 2, 31, 15, 18, 7, 26, 10, 23, 3, 30, 14, 19, 6, 27, 11, 22];
+            const seeded = new Map(players.map((player, index) => [index + 1, `#${index + 1} ${player.gamerTag}`]));
+            const round32 = Array.from({ length: 16 }, (_, index) => ({
+                p1: seeded.get(seedOrder[index * 2]) || 'TBD',
+                p2: seeded.get(seedOrder[index * 2 + 1]) || 'TBD',
+                winner: null
+            }));
+            const createRound = (length) => Array.from({ length }, () => ({ p1: 'TBD', p2: 'TBD', winner: null }));
+            const round16 = createRound(8);
+            const quarterFinals = createRound(4);
+            const semiFinals = createRound(2);
+            const finalMatch = { p1: 'TBD', p2: 'TBD', winner: null };
+            cachedContent.bracket = {
+                rounds: [
+                    { name: 'Round of 32', matches: round32 },
+                    { name: 'Round of 16', matches: round16 },
+                    { name: 'Quarter-Finals', matches: quarterFinals },
+                    { name: 'Semi-Finals', matches: semiFinals },
+                    { name: 'Grand Final', matches: [finalMatch] }
+                ],
+                round32,
+                round16,
+                quarterFinals,
+                semiFinals,
+                finalMatch,
+                champion: null,
+                generatedAt: new Date().toISOString()
+            };
             renderAdminBracket();
-        } else if (input.dataset.qfIdx !== undefined) {
-            const idx = Number(input.dataset.qfIdx);
-            const m = b.quarterFinals[idx];
-            m.winner = input.value === 'p1' ? m.p1 : m.p2;
-
-            const sfIdx = Math.floor(idx / 2);
-            const sfPos = idx % 2 === 0 ? 'p1' : 'p2';
-            b.semiFinals[sfIdx][sfPos] = m.winner;
-            renderAdminBracket();
-        } else if (input.dataset.sfIdx !== undefined) {
-            const idx = Number(input.dataset.sfIdx);
-            const m = b.semiFinals[idx];
-            m.winner = input.value === 'p1' ? m.p1 : m.p2;
-
-            const finPos = idx === 0 ? 'p1' : 'p2';
-            b.finalMatch[finPos] = m.winner;
-            renderAdminBracket();
-        } else if (input.dataset.finIdx !== undefined) {
-            b.finalMatch.winner = input.value === 'p1' ? b.finalMatch.p1 : b.finalMatch.p2;
-            b.champion = b.finalMatch.winner;
-            renderAdminBracket();
+            showToast(`Bracket seeded from ${players.length} registered player${players.length === 1 ? '' : 's'}; unfilled places remain TBD.`);
+        } catch (err) {
+            alert(`Could not load the registered Cup players: ${err.message}`);
         }
     });
 
@@ -1233,4 +1300,3 @@
     checkAdminSession();
 
 })();
-

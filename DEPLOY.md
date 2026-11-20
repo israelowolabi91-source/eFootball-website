@@ -17,12 +17,7 @@ Render provides persistent disk mounts and automatic SSL certificates (`https://
    - **Persistent Disk**: 1 GB mounted at `/var/data`
    - **Build Command**: `npm install`
    - **Start Command**: `node server.js`
-5. In the Environment Variables screen on Render, fill in your secrets:
-   - `OWNER_EMAIL`: `owolabimichael704@gmail.com`
-   - `OWNER_REVIEW_TOKEN`: `88da9a1f506ecfbb8455aa58a14991bfdd6631cd6a74ce609e6eb2848e55afa0`
-   - `SMTP_USER`: `owolabimichael704@gmail.com`
-   - `SMTP_PASS`: `zjmfeoqaasklodji`
-   - `BASE_URL`: `https://<your-render-subdomain>.onrender.com`
+5. In the Environment Variables screen on Render, set the private values for `OWNER_EMAIL`, `OWNER_REVIEW_TOKEN`, `ADMIN_KEY`, `SMTP_USER`, `SMTP_PASS`, and `BASE_URL`. Generate new unique secrets in your hosting dashboard; never commit them to this repository.
 6. Click **Apply**. Your website will be live in 2–3 minutes with automatic HTTPS.
 
 ---
@@ -63,11 +58,22 @@ Railway supports our [`Dockerfile`](./Dockerfile) and [`Procfile`](./Procfile).
 | `PORT` | Set automatically by cloud host | Listening port |
 | `DATA_DIR` | `/var/data` or `/app/data` | Path to persistent disk for SQLite & match data |
 | `BASE_URL` | `https://your-domain.com` | Public canonical URL for OAuth & email links |
-| `OWNER_EMAIL` | `owolabimichael704@gmail.com` | Master administrative user email |
+| `OWNER_EMAIL` | Set in hosting environment | Master administrative user email |
 | `OWNER_REVIEW_TOKEN` | 64-char hex token | Secret master key for Admin Console operations |
+| `ADMIN_KEY` | Unique random secret | Optional administrator key; no built-in default exists |
+| `ADMIN_PASSWORD` | Unique random secret | Optional administrator password; no built-in default exists |
 | `SMTP_HOST` | `smtp.gmail.com` | Gmail SMTP server for verification & match alerts |
 | `SMTP_PORT` | `465` | Secure SSL port |
 | `SMTP_SECURE` | `true` | SSL encryption flag |
-| `SMTP_USER` | `owolabimichael704@gmail.com` | Gmail sender address |
-| `SMTP_PASS` | `zjmfeoqaasklodji` | Gmail app password |
+| `SMTP_USER` | Set in hosting environment | Sender address |
+| `SMTP_PASS` | Set in hosting environment | Provider-specific SMTP credential |
 
+Any credentials previously stored in this file must be revoked and replaced in the hosting provider. Removing them from the current file does not erase them from prior Git history.
+
+## Request protections and account privacy
+
+The server applies security headers to responses and checks the `Origin` header on API mutations. Keep the public site and API on the same origin; cross-origin browser clients are intentionally rejected. Signed-in mutations without an `Origin` header are rejected. Session cookies are `HttpOnly` and use `SameSite=Lax`.
+
+API JSON responses redact email addresses, including administrator responses. The admin console uses player IDs for account actions; email changes can be submitted without exposing the current address. Validate these protections against the deployed HTTPS origin after each proxy or domain change.
+
+The admin console is not linked from public navigation and `/admin.html` is served only to a signed-in admin account. Administrators should sign in through the normal account page first, then open `/admin.html` directly. Non-admin visitors receive a not-found response.

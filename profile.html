@@ -8,8 +8,9 @@
     <meta name="description" content="Your personal eFootball League dashboard — stats, match history, Elo rating, rank, and account settings.">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="style.css?v=43">
+    <script src="site-config.js"></script>
+    <script src="script.js?v=43" defer></script>
     <style>
         /* ─── Profile page layout ─── */
         .profile-shell {
@@ -150,6 +151,32 @@
             display: flex;
             flex-direction: column;
             gap: 24px;
+        }
+        .profile-section-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .profile-section-tabs button {
+            padding: 10px 14px;
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            border-radius: 999px;
+            background: rgba(13, 31, 60, 0.85);
+            color: #cbd5e1;
+            font: inherit;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+        .profile-section-tabs button.is-active,
+        .profile-section-tabs button:focus-visible {
+            border-color: rgba(244, 183, 47, 0.65);
+            color: #f4b72f;
+        }
+        .profile-section-card[hidden] { display: none; }
+        .profile-record-note {
+            color: #94a3b8;
+            font-size: 0.82rem;
+            line-height: 1.6;
         }
         .profile-section-card {
             background: #0d1f3c;
@@ -339,7 +366,7 @@
 
             <div class="header-actions" id="header-actions">
                 <a class="header-sign-in" href="login.html">Sign in</a>
-                <a class="header-action" href="records.html">My records</a>
+                <a class="header-action" href="profile.html#records">My records</a>
             </div>
         </div>
     </header>
@@ -363,7 +390,7 @@
                 <a href="matches.html">Matches</a>
                 <a href="play.html">How to play</a>
                 <a href="cup.html">League Cup</a>
-                <a href="records.html">My records</a>
+                <a href="profile.html#records">My records</a>
                 <a href="profile.html" aria-current="page">My profile</a>
             </nav>
         </div>
@@ -373,13 +400,18 @@
     <script>
     (() => {
         const shell = document.getElementById('profile-shell');
+        const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[character]);
+        const profileLoginUrl = () => {
+            const destination = `${location.pathname}${location.search}${location.hash}`;
+            return `login.html?next=${encodeURIComponent(destination)}`;
+        };
 
         const tierInfo = (rating) => {
-            if (rating >= 1800) return { name: 'Legend Tier', cls: 'tier-elite', icon: '👑' };
-            if (rating >= 1500) return { name: 'Premier Division', cls: 'tier-elite', icon: '⭐' };
-            if (rating >= 1200) return { name: 'Challenger Division', cls: 'tier-competitive', icon: '🏆' };
-            if (rating >= 1000) return { name: 'Rising Division', cls: 'tier-developing', icon: '📈' };
-            return { name: 'Academy Division', cls: 'tier-developing', icon: '🎮' };
+            const tier = window.LEAGUE_CONFIG.getTier(rating);
+            const icons = { developing: '🎮', competitive: '🏆', elite: '⭐', premier: '👑' };
+            return { name: `${tier.name} Tier`, cls: tier.className, icon: icons[tier.id] };
         };
 
         const outcomeLabel = (outcome) => {
@@ -403,13 +435,14 @@
                     fetch('/api/me/matches', { credentials: 'same-origin' })
                 ]);
 
-                if (!meRes.ok) {
-                    window.location.href = 'login.html';
+                if (meRes.status === 401) {
+                    window.location.replace(profileLoginUrl());
                     return;
                 }
+                if (!meRes.ok) throw new Error('Your profile could not be loaded. Please try again.');
 
                 const me = await meRes.json();
-                if (!me.authenticated) { window.location.href = 'login.html'; return; }
+                if (!me.authenticated) { window.location.replace(profileLoginUrl()); return; }
 
                 const rankData = rankRes.ok ? await rankRes.json() : { rank: '–', total: '–', percentile: 50 };
                 const matchData = matchRes.ok ? await matchRes.json() : { matches: [] };
@@ -446,8 +479,8 @@
                             <div class="match-history-row">
                                 ${outcomeLabel(m.outcome)}
                                 <div class="match-opp-info">
-                                    <strong>vs ${m.opponent.gamerTag}</strong>
-                                    <small>${typeLabel} · ${formatDate(m.scheduledAt || m.createdAt)} · ${statusLabel}</small>
+                                    <strong>vs ${escapeHtml(m.opponent.gamerTag)}</strong>
+                                    <small>${escapeHtml(typeLabel)} · ${escapeHtml(formatDate(m.scheduledAt || m.createdAt))} · ${escapeHtml(statusLabel)}</small>
                                 </div>
                                 <div class="match-score-display">
                                     ${scoreText}
@@ -466,8 +499,8 @@
                     <aside class="profile-sidebar">
                         <div class="profile-card-main">
                             <div class="profile-avatar-lg" id="profile-avatar-lg">${gamerTag.charAt(0).toUpperCase()}</div>
-                            <h2 class="profile-display-name" id="profile-display-name">${name}</h2>
-                            <p class="profile-gamertag-lg">@${gamerTag}</p>
+                            <h2 class="profile-display-name" id="profile-display-name">${escapeHtml(name)}</h2>
+                            <p class="profile-gamertag-lg">@${escapeHtml(gamerTag)}</p>
                             <span class="profile-tier-chip ${tier.cls}">${tier.icon} ${tier.name}</span>
                             <div class="profile-elo-display">
                                 <small>ELO RATING</small>
@@ -484,11 +517,10 @@
 
                         <nav class="profile-sidebar-nav">
                             <a href="profile.html" class="active"><span class="nav-icon">👤</span> My Profile</a>
-                            <a href="records.html"><span class="nav-icon">📋</span> My Records</a>
+                            <a href="profile.html#records"><span class="nav-icon">📋</span> My Records</a>
                             <a href="matches.html#challenges"><span class="nav-icon">⚔️</span> Match Centre</a>
                             <a href="rankings.html"><span class="nav-icon">📊</span> Leaderboard</a>
                             <a href="tournaments.html"><span class="nav-icon">🏆</span> Tournaments</a>
-                            ${me.isAdmin ? '<a href="admin.html"><span class="nav-icon">⚡</span> Admin Console</a>' : ''}
                         </nav>
 
                         <button type="button" class="sidebar-logout-btn" id="profile-logout-btn">Sign out</button>
@@ -496,10 +528,16 @@
 
                     <div class="profile-main">
                         <!-- Stats Overview -->
-                        <div class="profile-section-card">
+                        <div class="profile-section-tabs" role="tablist" aria-label="Profile sections">
+                            <button type="button" role="tab" data-profile-tab="overview">Overview</button>
+                            <button type="button" role="tab" data-profile-tab="match-history">Match history</button>
+                            <button type="button" role="tab" data-profile-tab="records">Records</button>
+                            <button type="button" role="tab" data-profile-tab="settings">Settings</button>
+                        </div>
+                        <div class="profile-section-card" data-profile-panel="overview" role="tabpanel">
                             <div class="profile-section-header">
                                 <h2>📈 Season performance</h2>
-                                <a href="records.html">Update records →</a>
+                                <a href="profile.html#records">View verified record →</a>
                             </div>
                             <div class="profile-stats-grid">
                                 <div class="profile-stat-card wins-card">
@@ -530,7 +568,7 @@
                         </div>
 
                         <!-- Match History -->
-                        <div class="profile-section-card">
+                        <div class="profile-section-card" data-profile-panel="match-history" role="tabpanel" hidden>
                             <div class="profile-section-header">
                                 <h2>⚔️ Match history <small style="font-size:0.75rem;color:#4a5568;font-weight:400">(last 50)</small></h2>
                                 <a href="matches.html">Find opponents →</a>
@@ -540,23 +578,38 @@
                             </div>
                         </div>
 
+                        <section class="profile-section-card" data-profile-panel="records" role="tabpanel" hidden>
+                            <div class="profile-section-header">
+                                <h2>📋 Verified ranked record</h2>
+                                <span>Approved match data</span>
+                            </div>
+                            <p class="profile-record-note">Wins, draws, losses, and ranked-match totals are calculated from approved ranked matches. They cannot be edited manually.</p>
+                            <div class="profile-stats-grid">
+                                <div class="profile-stat-card wins-card"><span class="stat-val">${wins}</span><span class="stat-lbl">Wins</span></div>
+                                <div class="profile-stat-card draws-card"><span class="stat-val">${draws}</span><span class="stat-lbl">Draws</span></div>
+                                <div class="profile-stat-card losses-card"><span class="stat-val">${losses}</span><span class="stat-lbl">Losses</span></div>
+                                <div class="profile-stat-card"><span class="stat-val">${total}</span><span class="stat-lbl">Ranked matches</span></div>
+                            </div>
+                            <p><a href="matches.html#fixtures">Review approved results →</a></p>
+                        </section>
+
                         <!-- Edit Profile -->
-                        <div class="profile-section-card">
+                        <div class="profile-section-card" data-profile-panel="settings" role="tabpanel" hidden>
                             <div class="profile-section-header">
                                 <h2>⚙️ Account settings</h2>
                             </div>
                             <form class="edit-profile-form" id="edit-profile-form" novalidate>
                                 <div class="edit-field">
                                     <label for="edit-firstname">First name</label>
-                                    <input type="text" id="edit-firstname" name="firstName" value="${name}" minlength="2" maxlength="60" autocomplete="given-name">
+                                    <input type="text" id="edit-firstname" name="firstName" value="${escapeHtml(name)}" minlength="2" maxlength="60" autocomplete="given-name">
                                 </div>
                                 <div class="edit-field">
                                     <label for="edit-gamertag">Gamer tag</label>
-                                    <input type="text" id="edit-gamertag" name="gamerTag" value="${gamerTag}" minlength="3" maxlength="32" autocomplete="nickname">
+                                    <input type="text" id="edit-gamertag" name="gamerTag" value="${escapeHtml(gamerTag)}" minlength="3" maxlength="32" autocomplete="nickname">
                                 </div>
                                 <div class="edit-field" style="grid-column:1/-1">
                                     <label>Email address</label>
-                                    <input type="email" value="${me.email}" disabled style="opacity:0.5;cursor:not-allowed">
+                                    <input type="text" value="Private account email" disabled style="opacity:0.5;cursor:not-allowed">
                                 </div>
                                 <div class="edit-profile-actions">
                                     <button type="submit" class="save-profile-btn" id="save-profile-btn">Save changes</button>
@@ -566,7 +619,7 @@
                         </div>
 
                         <!-- Quick actions -->
-                        <div class="profile-section-card" style="background:linear-gradient(135deg,rgba(244,183,47,0.06) 0%,rgba(13,31,60,1) 100%);">
+                        <div class="profile-section-card" data-profile-panel="overview" role="tabpanel">
                             <div class="profile-section-header" style="margin-bottom:14px">
                                 <h2>🚀 Quick actions</h2>
                             </div>
@@ -575,16 +628,43 @@
                                 <a href="rankings.html">📊 View leaderboard</a>
                                 <a href="cup.html">👑 League Cup</a>
                                 <a href="tournaments.html">🏆 Tournaments</a>
-                                <a href="records.html">📋 Edit records</a>
+                                <a href="profile.html#records">📋 Verified records</a>
                             </div>
                         </div>
                     </div>
                 `;
 
+                const profileTabs = [...shell.querySelectorAll('[data-profile-tab]')];
+                const selectProfileTab = (requestedTab) => {
+                    const selected = profileTabs.some((tab) => tab.dataset.profileTab === requestedTab)
+                        ? requestedTab
+                        : 'overview';
+                    profileTabs.forEach((tab) => {
+                        const active = tab.dataset.profileTab === selected;
+                        tab.setAttribute('aria-selected', String(active));
+                        tab.classList.toggle('is-active', active);
+                    });
+                    shell.querySelectorAll('[data-profile-panel]').forEach((panel) => {
+                        panel.hidden = panel.dataset.profilePanel !== selected;
+                    });
+                };
+                profileTabs.forEach((tab) => {
+                    tab.addEventListener('click', () => {
+                        selectProfileTab(tab.dataset.profileTab);
+                        history.replaceState(null, '', `#${tab.dataset.profileTab}`);
+                    });
+                });
+                selectProfileTab(location.hash.slice(1));
+
                 // Logout handler
                 document.getElementById('profile-logout-btn')?.addEventListener('click', async () => {
-                    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); }
-                    finally { window.location.href = 'login.html'; }
+                    try {
+                        const response = await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+                        if (!response.ok) throw new Error('Could not sign out. Please try again.');
+                        window.location.href = 'login.html';
+                    } catch (error) {
+                        window.alert(error.message);
+                    }
                 });
 
                 // Edit profile form
@@ -622,7 +702,8 @@
                 });
 
             } catch (err) {
-                shell.innerHTML = `<div class="profile-loading" style="color:#f87171">Failed to load profile. <a href="login.html" style="color:#f4b72f">Sign in again →</a></div>`;
+                shell.innerHTML = `<div class="profile-loading" role="alert" style="color:#f87171">${escapeHtml(err.message)} <button type="button" id="profile-retry">Retry</button> <a href="${escapeHtml(profileLoginUrl())}" style="color:#f4b72f">Sign in →</a></div>`;
+                document.getElementById('profile-retry')?.addEventListener('click', renderProfile);
             }
         };
 
@@ -631,4 +712,3 @@
     </script>
 </body>
 </html>
-

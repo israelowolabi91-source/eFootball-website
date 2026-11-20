@@ -6,10 +6,11 @@
     <title>Sign in | Tim eFootball League</title>
     <meta name="description" content="Sign in to your Tim eFootball League account or recover your password.">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="style.css?v=43">
+    <script src="site-config.js"></script>
+    <script src="script.js?v=43" defer></script>
 </head>
-<body class="account-page">
+<body class="account-page premium-auth-page">
     <header class="site-header">
         <div class="header-container">
             <a class="brand" href="index.html" aria-label="Tim eFootball League home">
@@ -23,8 +24,28 @@
         </div>
     </header>
 
-    <main class="account-shell">
-        <section class="register-card">
+    <main class="account-shell premium-auth-shell">
+        <aside class="auth-story" aria-label="League overview">
+            <a class="auth-story-brand" href="index.html">
+                <span class="auth-story-mark"><img src="favicon.png" alt=""></span>
+                <span><strong>Tim eFootball</strong><small>League · Est. 2024</small></span>
+            </a>
+            <div class="auth-story-copy">
+                <span class="auth-live-label"><i></i> The league, in real time</span>
+                <h2>Your next win<br><em>has a home.</em></h2>
+                <p>One account for your verified player record, scheduled matches, tournament entries, and place on the leaderboard.</p>
+                <div class="auth-proof-grid">
+                    <div><strong id="auth-player-count">—</strong><span>verified players</span></div>
+                    <div><strong id="auth-match-count">—</strong><span>approved results</span></div>
+                </div>
+                <p class="auth-live-status" id="auth-live-status" role="status" aria-live="polite"></p>
+            </div>
+            <div class="auth-story-footer">
+                <span class="auth-story-seal" aria-hidden="true">T</span>
+                <span><strong>Built around fair play.</strong><small>Your profile. Your results. Your league.</small></span>
+            </div>
+        </aside>
+        <section class="register-card premium-auth-card">
             <!-- 1. Sign In State -->
             <div id="signin-state">
                 <div class="auth-heading">
@@ -34,8 +55,8 @@
                 </div>
                 <form id="signin-form" class="auth-form" novalidate>
                     <div class="field-group">
-                        <label for="signin-email">Gmail</label>
-                        <input id="signin-email" name="email" type="email" placeholder="you@gmail.com" autocomplete="email" maxlength="254" required>
+                        <label for="signin-email">Email</label>
+                        <input id="signin-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" maxlength="254" required>
                     </div>
                     <div class="field-group">
                         <div class="field-label-row">
@@ -50,16 +71,11 @@
                     <button type="submit" class="submit-button">Sign in</button>
                     <div id="signin-message" class="form-message" role="status" aria-live="polite"></div>
                 </form>
-                <div class="auth-divider" style="display:flex; align-items:center; gap:10px; margin:16px 0; color:#64748b; font-size:0.75rem;">
-                    <span style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></span>
-                    <span>OR</span>
-                    <span style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></span>
-                </div>
-                <button type="button" class="gate-google-btn" id="login-google-btn" style="margin-bottom:16px;">
+                <button type="button" class="gate-google-btn" id="login-google-btn" hidden style="margin-bottom:16px;">
                     <svg class="gate-google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
                     <span>Continue with Google</span>
                 </button>
-                <p class="signup-prompt">New to the league? <a href="signup.html">Create an account</a></p>
+                <p class="signup-prompt">New to the league? <a id="signup-link" href="signup.html">Create an account</a></p>
                 <p class="security-note"><span aria-hidden="true">🔒</span>Only verified users can sign in.</p>
             </div>
 
@@ -68,12 +84,12 @@
                 <div class="auth-heading">
                     <span class="auth-kicker">Account recovery</span>
                     <h1>Reset your password</h1>
-                    <p>Enter your Gmail address to receive a secure password reset link.</p>
+                    <p>Enter your email address to receive a secure password reset link.</p>
                 </div>
                 <form id="forgot-form" class="auth-form" novalidate>
                     <div class="field-group">
-                        <label for="forgot-email">Gmail address</label>
-                        <input id="forgot-email" name="email" type="email" placeholder="you@gmail.com" autocomplete="email" maxlength="254" required>
+                        <label for="forgot-email">Email address</label>
+                        <input id="forgot-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" maxlength="254" required>
                     </div>
                     <button type="submit" class="submit-button">Send reset link</button>
                     <div id="forgot-message" class="form-message" role="status" aria-live="polite"></div>
@@ -112,7 +128,7 @@
             <!-- 4. Email Verification State -->
             <div id="verification-state" class="verification-state" hidden>
                 <span class="recovery-icon" aria-hidden="true">✉</span>
-                <p class="auth-kicker">Check your Gmail</p>
+                <p class="auth-kicker">Check your email</p>
                 <h2 id="verification-title">Verify your account</h2>
                 <p id="verification-copy">Open the confirmation email and click the <strong>Verify my email</strong> button to unlock your account.</p>
                 <p><strong id="verification-email"></strong></p>
@@ -122,6 +138,10 @@
             </div>
         </section>
     </main>
+    <footer class="premium-auth-footer">
+        <span>© 2026 Tim eFootball League</span>
+        <nav aria-label="Legal"><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a></nav>
+    </footer>
 
     <script>
         const signinForm = document.getElementById('signin-form');
@@ -135,6 +155,37 @@
         const verificationMessage = document.getElementById('verification-message');
         let pendingEmail = '';
         let activeResetToken = '';
+        const searchParams = new URLSearchParams(location.search);
+        const safeNextPath = (value) => {
+            if (!value || value.startsWith('//') || value.startsWith('\\\\')) return '';
+            try {
+                const url = new URL(value, location.origin);
+                return url.origin === location.origin ? `${url.pathname}${url.search}${url.hash}` : '';
+            } catch {
+                return '';
+            }
+        };
+        const nextPath = safeNextPath(searchParams.get('next'));
+        const signInDestination = nextPath || 'index.html';
+        const signupLink = document.getElementById('signup-link');
+        if (signupLink && nextPath) signupLink.href = `signup.html?next=${encodeURIComponent(nextPath)}`;
+        const verificationLoginLink = document.querySelector('.verification-login-link');
+        if (verificationLoginLink && nextPath) verificationLoginLink.href = `login.html?next=${encodeURIComponent(nextPath)}`;
+        const fillLeagueStats = async () => {
+            try {
+                const response = await fetch('/api/site/dashboard', { cache: 'no-store' });
+                if (!response.ok) throw new Error('League totals are currently unavailable.');
+                const data = await response.json();
+                document.getElementById('auth-player-count').textContent = Number(data.stats?.players || 0).toLocaleString();
+                document.getElementById('auth-match-count').textContent = Number(data.stats?.approvedMatches || 0).toLocaleString();
+            } catch {
+                document.getElementById('auth-player-count').textContent = '—';
+                document.getElementById('auth-match-count').textContent = '—';
+                const status = document.getElementById('auth-live-status');
+                if (status) status.textContent = 'Live league totals are temporarily unavailable.';
+            }
+        };
+        fillLeagueStats();
 
         const showMessage = (element, text, isError = false) => {
             if (!element) return;
@@ -195,8 +246,8 @@
             const message = document.getElementById('signin-message');
             showMessage(message, '');
 
-            if (!/^[^\s@]+@gmail\.com$/i.test(email)) {
-                showMessage(message, 'Enter a valid Gmail address ending in @gmail.com.', true);
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showMessage(message, 'Enter a valid email address.', true);
                 return;
             }
             if (!password) {
@@ -218,31 +269,11 @@
                     return;
                 }
                 if (!response.ok) throw new Error(result.message || 'Sign in failed.');
-                window.location.href = 'index.html';
+                window.location.href = signInDestination;
             } catch (error) {
                 showMessage(message, error.message, true);
             } finally {
                 button.disabled = false;
-            }
-        });
-
-        document.getElementById('login-google-btn')?.addEventListener('click', async () => {
-            const email = prompt('Enter your Gmail address to continue with Google:', '');
-            if (!email || !email.trim()) return;
-            const message = document.getElementById('signin-message');
-            showMessage(message, 'Connecting with Google…');
-            try {
-                const response = await fetch('/api/auth/google', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ email: email.trim() })
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message || 'Google sign in failed.');
-                window.location.href = 'index.html';
-            } catch (err) {
-                showMessage(message, err.message, true);
             }
         });
 
@@ -254,8 +285,8 @@
             const message = document.getElementById('forgot-message');
             showMessage(message, '');
 
-            if (!/^[^\s@]+@gmail\.com$/i.test(email)) {
-                showMessage(message, 'Enter a valid Gmail address ending in @gmail.com.', true);
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showMessage(message, 'Enter a valid email address.', true);
                 return;
             }
 
@@ -268,7 +299,7 @@
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.message || 'Could not send reset email.');
-                showMessage(message, 'If an account exists for that Gmail, a reset link has been sent. Check your inbox.');
+                showMessage(message, "If that email has an account, we've sent a link.");
                 forgotForm.reset();
             } catch (error) {
                 showMessage(message, error.message, true);
@@ -306,7 +337,7 @@
                 if (!response.ok) throw new Error(result.message || 'Password reset link is invalid or expired.');
                 showMessage(message, 'Password updated successfully! Redirecting to sign in…');
                 setTimeout(() => {
-                    window.location.href = 'login.html?reset_success=1';
+                    window.location.href = `login.html?reset_success=1${nextPath ? `&next=${encodeURIComponent(nextPath)}` : ''}`;
                 }, 1200);
             } catch (error) {
                 showMessage(message, error.message, true);
@@ -337,7 +368,6 @@
 
         // Initialization & URL routing
         (async () => {
-            const searchParams = new URLSearchParams(location.search);
             const token = searchParams.get('token');
             const isPasswordResetPage = location.pathname.includes('reset-password') || searchParams.has('reset');
 
@@ -362,7 +392,7 @@
                     if (!response.ok) throw new Error(result.message || 'This verification link is invalid or expired.');
                     document.getElementById('verification-title').textContent = 'Email verified';
                     document.getElementById('verification-copy').textContent = 'Your account is ready. Taking you to sign in…';
-                    setTimeout(() => { window.location.href = 'login.html?verified=1'; }, 900);
+                    setTimeout(() => { window.location.href = `login.html?verified=1${nextPath ? `&next=${encodeURIComponent(nextPath)}` : ''}`; }, 900);
                 } catch (error) {
                     document.getElementById('verification-title').textContent = 'Verification link unavailable';
                     document.getElementById('verification-copy').textContent = error.message;
@@ -382,7 +412,7 @@
 
             try {
                 const response = await fetch('/api/me', { credentials: 'same-origin' });
-                if (response.ok) window.location.href = 'index.html';
+                if (response.ok) window.location.href = signInDestination;
             } catch (error) {
                 showMessage(document.getElementById('signin-message'), 'Cannot reach the server. Try again in a moment.', true);
             }

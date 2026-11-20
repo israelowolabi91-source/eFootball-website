@@ -1,19 +1,21 @@
-const CACHE_NAME = 'tim-league-shell-v34';
+const CACHE_NAME = 'tim-league-shell-v44';
 const APP_SHELL = [
   './',
   './index.html',
+  './cup.html',
   './matches.html',
   './rankings.html',
-  './play.html',
   './tournaments.html',
-  './cup.html',
-  './records.html',
+  './play.html',
+  './profile.html',
   './login.html',
   './signup.html',
+  './privacy.html',
+  './terms.html',
   './style.css',
+  './site-config.js',
   './script.js',
   './favicon.png',
-  './images/apple-touch-icon.png',
   './manifest.webmanifest'
 ];
 
@@ -37,10 +39,22 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
   const url = new URL(event.request.url);
-  if (url.pathname.startsWith('/api/')) return;
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/data/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => cachedResponse || fetch(event.request))
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok && url.origin === self.location.origin) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
   );
 });

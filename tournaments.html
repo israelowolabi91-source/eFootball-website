@@ -8,8 +8,9 @@
     <title>Tournaments &amp; Competitions | Tim eFootball League</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="style.css?v=43">
+    <script src="site-config.js"></script>
+    <script src="script.js?v=43" defer></script>
     <style>
         /* ─── Tournaments Hub Custom Styles ─── */
         .tourn-header-badge {
@@ -108,13 +109,38 @@
             gap: 16px;
             position: relative;
             overflow: hidden;
+            isolation: isolate;
             transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tourn-card::after {
+            content: "";
+            position: absolute;
+            z-index: 0;
+            top: -55%;
+            left: -65%;
+            width: 42%;
+            height: 210%;
+            background: linear-gradient(90deg, transparent, rgba(255, 223, 139, 0.11), transparent);
+            pointer-events: none;
+            transform: rotate(24deg) translateX(-120%);
+            transition: transform 700ms ease;
+        }
+
+        .tourn-card > * {
+            position: relative;
+            z-index: 1;
         }
 
         .tourn-card:hover {
             transform: translateY(-3px);
             border-color: rgba(244, 183, 47, 0.35);
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .tourn-card:hover::after,
+        .tourn-card:focus-within::after {
+            transform: rotate(24deg) translateX(430%);
         }
 
         .tourn-card-top {
@@ -242,6 +268,22 @@
             background: rgba(74, 222, 128, 0.15);
             border: 1px solid rgba(74, 222, 128, 0.4);
             color: #4ade80;
+        }
+
+        .tourn-detail-btn {
+            padding: 6px 12px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 6px;
+            background: rgba(148, 163, 184, 0.08);
+            color: #e2e8f0;
+            font-size: 0.78rem;
+            cursor: pointer;
+        }
+
+        .tourn-detail-btn:hover,
+        .tourn-detail-btn:focus-visible {
+            border-color: rgba(244, 183, 47, 0.65);
+            color: #f4b72f;
         }
 
         .tourn-interest-count {
@@ -471,6 +513,37 @@
             max-height: 85vh;
             overflow-y: auto;
         }
+        .event-extra-details:not([hidden]) {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .event-extra-details [data-event-detail] {
+            min-width: 0;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 9px;
+            background: rgba(0, 0, 0, 0.18);
+        }
+        .event-extra-details h4 {
+            margin: 0 0 7px;
+            color: #f4b72f;
+            font-size: 0.74rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .event-extra-details p {
+            margin: 0;
+            color: #cbd5e1;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+        @media (max-width: 560px) {
+            .event-extra-details:not([hidden]) {
+                grid-template-columns: 1fr;
+            }
+        }
         .event-modal-header {
             display: flex;
             align-items: flex-start;
@@ -671,30 +744,30 @@
     <main class="tournament-shell">
         <section class="tournament-hero" aria-labelledby="tournament-title">
             <div class="tournament-hero-copy">
-                <span class="tourn-header-badge">⚡ Official League Calendar · Season 04</span>
+                <span class="tourn-header-badge">⚡ Official League Calendar</span>
                 <h1 id="tournament-title">Compete. Climb.<br><em>Lift the Cup.</em></h1>
-                <p>Browse active leagues, knockout cups, and development ladders. Register your player interest directly into the league database to secure your qualifying seed.</p>
+                <p>Browse administrator-published events, review eligibility and schedules, and register from a verified player account when entry is open.</p>
                 <a class="tournament-primary-cta" href="#tournament-grid">Browse events <span aria-hidden="true">↓</span></a>
             </div>
 
-            <aside class="featured-tournament" aria-label="Featured tournament">
-                <div class="featured-topline"><span class="featured-label">Premier Trophy</span><span class="event-status status-open"><i></i> Open Qualifier</span></div>
-                <div class="featured-emblem" aria-hidden="true">LC<span>04</span></div>
-                <p class="featured-kicker">Championship Bracket</p>
-                <h2>Tim League Cup 2026</h2>
-                <p class="featured-description">The pinnacle 32-player single-elimination knockout tournament. Live bracket progression and verified Elo calculations.</p>
+            <aside class="featured-tournament" id="featured-cup-card" aria-label="Featured League Cup" hidden>
+                <div class="featured-topline"><span class="featured-label">League Cup</span><span class="event-status status-open" id="featured-cup-status"><i></i> Loading</span></div>
+                <div class="featured-emblem" id="featured-cup-badge" aria-hidden="true">LC</div>
+                <p class="featured-kicker" id="featured-cup-kicker">League Cup</p>
+                <h2 id="featured-cup-title">League Cup</h2>
+                <p class="featured-description" id="featured-cup-description"></p>
                 <div class="featured-facts">
-                    <span><strong>32</strong><small>Bracket Seeds</small></span>
-                    <span><strong>1v1</strong><small>Single Elim</small></span>
-                    <span><strong>Nov 15</strong><small>Round 1 Kickoff</small></span>
+                    <span><strong id="featured-cup-format">—</strong><small>Format</small></span>
+                    <span><strong id="featured-cup-capacity">—</strong><small>Places</small></span>
+                    <span><strong id="featured-cup-dates">—</strong><small>Schedule</small></span>
                 </div>
-                <a class="featured-link" href="cup.html">Open Cup Bracket <span aria-hidden="true">↗</span></a>
+                <a class="featured-link" href="cup.html">View League Cup <span aria-hidden="true">↗</span></a>
             </aside>
         </section>
 
-        <!-- Dynamic User Section: My Registered Interests -->
+        <!-- Dynamic User Section: My Tournament Registrations -->
         <section class="my-tournaments-panel" id="my-tournaments-panel" hidden>
-            <h2>⭐ Your Registered Tournament Interests</h2>
+            <h2>⭐ Your tournament registrations</h2>
             <div class="my-tournaments-list" id="my-tournaments-list">
                 <!-- Injected via script -->
             </div>
@@ -705,8 +778,10 @@
             <div class="tournament-section-heading">
                 <div>
                     <p class="eyebrow"><span class="eyebrow-line"></span> Live Competition Directory</p>
-                    <h2 id="events-title">Official Season 04 Tournaments</h2>
-                    <p class="section-description">Filter by entry status, review format requirements, and toggle your participation interest with one click.</p>
+                    <h2 id="events-title">Published tournaments</h2>
+                    <p class="section-description">Filter by status, review the organizer’s details, and register when entries are open.</p>
+                    <p id="tournament-data-status" class="rank-data-note" role="status" aria-live="polite">Loading events…</p>
+                    <button class="quiet-link" id="tournament-retry" type="button" hidden>Retry loading events</button>
                 </div>
             </div>
 
@@ -737,14 +812,14 @@
         <section class="tournament-guide" aria-labelledby="guide-title">
             <div class="guide-intro">
                 <p class="eyebrow"><span class="eyebrow-line"></span> Competitive Pathway</p>
-                <h2 id="guide-title">How to Enter &amp; Qualify</h2>
-                <p>Four clear steps from account verification to lifting your first official championship trophy.</p>
+                <h2 id="guide-title">How to enter an event</h2>
+                <p>Review the posted event details, register while entry is open, and wait for the organizer’s confirmation.</p>
             </div>
             <div class="guide-steps">
                 <article><span>01</span><h3>Verify Profile</h3><p>Ensure your gamer tag and verified email are linked so organizers can confirm your Elo rating.</p></article>
-                <article><span>02</span><h3>Register Interest</h3><p>Click "Register Interest" on any open competition to secure a priority registration queue spot.</p></article>
+                <article><span>02</span><h3>Register</h3><p>Use your verified account to register for events that are accepting entries.</p></article>
                 <article><span>03</span><h3>Coordinate Match</h3><p>Access your private fixture link in the Match Centre to arrange kickoff times with your opponent.</p></article>
-                <article><span>04</span><h3>Report &amp; Ascend</h3><p>Upload your in-game scoreline screenshot for owner verification and instant Elo adjustments.</p></article>
+                <article><span>04</span><h3>Report the result</h3><p>Follow the event’s instructions and wait for any required result approval before rankings change.</p></article>
             </div>
         </section>
 
@@ -761,11 +836,11 @@
                 </details>
                 <details>
                     <summary>What happens if my opponent disconnects or fails to show?<span aria-hidden="true">＋</span></summary>
-                    <p>Matches carry a 15-minute forfeit grace period. Take a screenshot showing your active lobby and message support through the Match Centre to request a walkover decision.</p>
+                    <p>Follow the no-show, walkover, and dispute process on the shared <a href="play.html#league-rules">match rules page</a>.</p>
                 </details>
                 <details>
                     <summary>Are tournament fixtures ranked?<span aria-hidden="true">＋</span></summary>
-                    <p>Yes. All official tournament bracket fixtures utilize our verified K=32 Elo calculation engine, directly impacting your global player ranking.</p>
+                    <p>Check the event details. Only eligible, approved ranked results affect player Elo; tournament placement alone does not.</p>
                 </details>
                 <details>
                     <summary>Can I participate in multiple competitions concurrently?<span aria-hidden="true">＋</span></summary>
@@ -781,8 +856,8 @@
             <div class="event-modal-header">
                 <div>
                     <span class="tourn-badge-pill" id="modal-event-badge">EVENT</span>
-                    <h2 id="modal-event-title">Tournament Name</h2>
-                    <div style="font-size: 0.85rem; color: #94a3b8;" id="modal-event-kicker">Tournament Subtitle</div>
+                    <h2 id="modal-event-title">Event details</h2>
+                    <div style="font-size: 0.85rem; color: #94a3b8;" id="modal-event-kicker">—</div>
                 </div>
                 <button type="button" class="event-modal-close-btn" id="modal-event-close-btn" aria-label="Close dialog">×</button>
             </div>
@@ -791,29 +866,46 @@
             <div class="event-stats-hero">
                 <div class="event-stat-box gold">
                     <span>Status</span>
-                    <strong id="modal-event-status">Registration Open</strong>
+                    <strong id="modal-event-status">—</strong>
                 </div>
                 <div class="event-stat-box">
                     <span>Format</span>
-                    <strong id="modal-event-format">1v1 Knockout</strong>
+                    <strong id="modal-event-format">—</strong>
                 </div>
                 <div class="event-stat-box">
                     <span>Capacity</span>
-                    <strong id="modal-event-slots">32 Seeds</strong>
+                    <strong id="modal-event-slots">—</strong>
                 </div>
                 <div class="event-stat-box">
                     <span>Prize / Honors</span>
-                    <strong id="modal-event-prize">League Cup Trophy</strong>
+                    <strong id="modal-event-prize">—</strong>
                 </div>
             </div>
 
             <!-- Event Overview Description -->
             <div>
                 <h4 style="color: #f4b72f; margin: 0 0 8px; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.05em;">Competition Briefing</h4>
-                <p id="modal-event-desc" style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.55; margin: 0; background: rgba(0,0,0,0.2); padding: 14px; border-radius: 8px;">
-                    Event description goes here.
-                </p>
+                <p id="modal-event-desc" style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.55; margin: 0; background: rgba(0,0,0,0.2); padding: 14px; border-radius: 8px;"></p>
             </div>
+
+            <section class="event-extra-details" id="modal-event-extra" aria-label="Additional event details" hidden>
+                <div data-event-detail>
+                    <h4>Event type</h4>
+                    <p id="modal-event-type"></p>
+                </div>
+                <div data-event-detail>
+                    <h4>Platform</h4>
+                    <p id="modal-event-platform"></p>
+                </div>
+                <div data-event-detail>
+                    <h4>Prize breakdown</h4>
+                    <p id="modal-event-prize-details"></p>
+                </div>
+                <div data-event-detail>
+                    <h4>Event rules</h4>
+                    <p id="modal-event-rules"></p>
+                </div>
+            </section>
 
             <!-- Live Registered Competitors / Seeding Table -->
             <div>
@@ -841,11 +933,11 @@
             <!-- Actions row -->
             <div class="event-modal-actions">
                 <div>
-                    <span style="font-size: 0.8rem; color: #94a3b8;">Official Elo verification: <strong style="color: #4ade80;">Active (K=32)</strong></span>
+                    <span style="font-size: 0.8rem; color: #94a3b8;">Tournament data is loaded from the league database.</span>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button type="button" class="tourn-reg-btn" id="modal-event-action-btn">
-                        ⚡ Register Interest Now
+                        ⚡ Register now
                     </button>
                     <a href="matches.html" class="header-action" style="padding: 9px 18px; font-size: 0.82rem; border-radius: 8px;">Match Centre →</a>
                 </div>
@@ -888,6 +980,12 @@
         const myList = document.getElementById('my-tournaments-list');
         const detailDialog = document.getElementById('event-detail-dialog');
         const closeBtn = document.getElementById('modal-event-close-btn');
+        const dataStatus = document.getElementById('tournament-data-status');
+        const retryButton = document.getElementById('tournament-retry');
+        const featuredCupCard = document.getElementById('featured-cup-card');
+        const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[character]);
 
         closeBtn?.addEventListener('click', () => detailDialog.close());
         detailDialog?.addEventListener('click', (e) => {
@@ -895,17 +993,21 @@
         });
 
         const loadData = async () => {
+            retryButton.hidden = true;
+            dataStatus.textContent = 'Loading events from the league database…';
+            const wakeTimer = window.setTimeout(() => {
+                dataStatus.textContent = 'The server is waking up. Tournament details will appear shortly…';
+            }, 8000);
             try {
-                // Fetch public tournaments & user interests in parallel
                 const [tournRes, myRes] = await Promise.all([
                     fetch('/api/site/tournaments', { cache: 'no-store' }),
                     fetch('/api/me/tournaments', { credentials: 'same-origin' }).catch(() => null)
                 ]);
-
-                if (tournRes.ok) {
-                    const data = await tournRes.json();
-                    allTournaments = data.tournaments || [];
-                }
+                const data = await tournRes.json().catch(() => ({}));
+                if (!tournRes.ok) throw new Error(data.message || 'Tournament data could not be loaded.');
+                allTournaments = Array.isArray(data.tournaments)
+                    ? data.tournaments.filter((tournament) => tournament.published !== false)
+                    : [];
 
                 if (myRes && myRes.ok) {
                     const myData = await myRes.json();
@@ -913,12 +1015,42 @@
                         myInterestIds = new Set(myData.interestIds);
                         renderMyInterests(myData.tournaments || []);
                     }
+                } else {
+                    myInterestIds = new Set();
+                    myPanel.hidden = true;
                 }
 
+                renderFeaturedCup();
                 renderGrid();
+                dataStatus.textContent = allTournaments.length
+                    ? 'Events and registration availability are managed by league administrators.'
+                    : 'No tournaments have been published yet. Check back after an administrator posts an event.';
+                const requestedEvent = new URLSearchParams(location.hash.slice(1)).get('event');
+                if (requestedEvent && allTournaments.some((tournament) => tournament.id === requestedEvent)) {
+                    document.getElementById('tournament-grid-section').scrollIntoView({ behavior: 'smooth' });
+                    openEventModal(requestedEvent);
+                }
             } catch (err) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #f87171;">Could not load live tournaments. Please try again later.</div>';
+                dataStatus.textContent = `Tournament events could not be loaded: ${err.message}`;
+                retryButton.hidden = false;
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #f87171;">Tournament data is temporarily unavailable. Retry to try again.</div>';
+            } finally {
+                window.clearTimeout(wakeTimer);
             }
+        };
+
+        const renderFeaturedCup = () => {
+            const cup = allTournaments.find((tournament) => tournament.featuredCup === true);
+            featuredCupCard.hidden = !cup;
+            if (!cup) return;
+            document.getElementById('featured-cup-title').textContent = cup.title || 'League Cup';
+            document.getElementById('featured-cup-kicker').textContent = cup.kicker || 'League Cup event';
+            document.getElementById('featured-cup-badge').textContent = cup.badge || 'LC';
+            document.getElementById('featured-cup-description').textContent = cup.desc || cup.format || 'See event details and registration on the League Cup page.';
+            document.getElementById('featured-cup-status').lastChild.textContent = ` ${cup.status || 'Coming Soon'}`;
+            document.getElementById('featured-cup-format').textContent = cup.format || 'TBC';
+            document.getElementById('featured-cup-capacity').textContent = cup.slots || 'TBC';
+            document.getElementById('featured-cup-dates').textContent = cup.dates || 'TBC';
         };
 
         const renderMyInterests = (tournaments) => {
@@ -928,11 +1060,11 @@
             }
             myPanel.hidden = false;
             myList.innerHTML = tournaments.map(t => `
-                <div class="my-tourn-chip" style="cursor: pointer;" data-open-tid="${t.id}">
+                <div class="my-tourn-chip" style="cursor: pointer;" data-open-tid="${escapeHtml(t.id)}">
                     <span>👑</span>
                     <div>
-                        <strong>${t.title}</strong>
-                        <div style="font-size: 0.72rem; color: #94a3b8;">${t.dates || 'TBC'} · ${t.status}</div>
+                        <strong>${escapeHtml(t.title)}</strong>
+                        <div style="font-size: 0.72rem; color: #94a3b8;">${escapeHtml(t.dates || 'TBC')} · ${escapeHtml(t.status)}</div>
                     </div>
                 </div>
             `).join('');
@@ -944,48 +1076,54 @@
                 const matchesSearch = !searchQuery || 
                     (t.title && t.title.toLowerCase().includes(searchQuery)) ||
                     (t.format && t.format.toLowerCase().includes(searchQuery)) ||
-                    (t.desc && t.desc.toLowerCase().includes(searchQuery));
+                    (t.eventType && t.eventType.toLowerCase().includes(searchQuery)) ||
+                    (t.platform && t.platform.toLowerCase().includes(searchQuery)) ||
+                    (t.desc && t.desc.toLowerCase().includes(searchQuery)) ||
+                    (t.rules && t.rules.toLowerCase().includes(searchQuery));
                 return matchesFilter && matchesSearch;
             });
 
             if (!filtered.length) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #64748b;">No tournaments found matching your criteria.</div>';
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #64748b;">${allTournaments.length ? 'No tournaments found matching your criteria.' : 'No events are published yet.'}</div>`;
                 return;
             }
 
             grid.innerHTML = filtered.map(t => {
                 const isInterested = myInterestIds.has(t.id);
+                const registrationOpen = t.registrationOpen === true && t.status === 'Registration Open';
                 const statusCls = t.status === 'Registration Open' ? 'open' : t.status === 'In Progress' ? 'live' : t.status === 'Completed' ? 'completed' : 'upcoming';
 
                 return `
-                <article class="tourn-card" data-tid="${t.id}" style="cursor: pointer;">
+                <article class="tourn-card" data-tid="${escapeHtml(t.id)}" style="cursor: pointer;">
                     <div class="tourn-card-top">
-                        <span class="tourn-badge-pill">${t.badge || 'EVENT'}</span>
+                        <span class="tourn-badge-pill">${escapeHtml(t.badge || 'EVENT')}</span>
                         <span class="tourn-status-pill status-${statusCls}">
-                            <i></i> ${t.status || 'Coming Soon'}
+                            <i></i> ${escapeHtml(t.status || 'Coming Soon')}
                         </span>
                     </div>
 
                     <div class="tourn-title-wrap">
-                        <h3>${t.title}</h3>
-                        ${t.kicker ? `<div class="tourn-kicker">${t.kicker}</div>` : ''}
+                        <h3>${escapeHtml(t.title)}</h3>
+                        ${t.kicker ? `<div class="tourn-kicker">${escapeHtml(t.kicker)}</div>` : ''}
                     </div>
 
-                    <p class="tourn-desc">${t.desc || 'Join the official league bracket and compete against registered players.'}</p>
+                    <p class="tourn-desc">${escapeHtml(t.desc || 'Review the event details and organiser instructions.')}</p>
 
                     <div class="tourn-specs-list">
-                        <div><span>Format:</span> <strong>${t.format}</strong></div>
-                        <div><span>Capacity:</span> <strong>${t.slots || 'Unlimited'}</strong></div>
-                        <div><span>Schedule:</span> <strong>${t.dates || 'TBC'}</strong></div>
-                        <div><span>Prize / Glory:</span> <strong>${t.prizePool || 'Championship Elo'}</strong></div>
-                        ${t.minElo || t.maxElo ? `<div style="grid-column: 1/-1;"><span>Rating Requirement:</span> <strong>${t.minElo ? t.minElo + '+' : 'Any'} ${t.maxElo ? 'to ' + t.maxElo + ' Elo' : ''}</strong></div>` : ''}
+                        <div><span>Format:</span> <strong>${escapeHtml(t.format || 'To be announced')}</strong></div>
+                        <div><span>Capacity:</span> <strong>${escapeHtml(t.slots || 'To be announced')}</strong></div>
+                        <div><span>Schedule:</span> <strong>${escapeHtml(t.dates || 'To be announced')}</strong></div>
+                        ${t.eventType ? `<div><span>Event type:</span> <strong>${escapeHtml(t.eventType)}</strong></div>` : ''}
+                        ${t.platform ? `<div><span>Platform:</span> <strong>${escapeHtml(t.platform)}</strong></div>` : ''}
+                        ${t.prizePool ? `<div><span>Prize:</span> <strong>${escapeHtml(t.prizePool)}</strong></div>` : ''}
+                        ${t.minElo || t.maxElo ? `<div style="grid-column: 1/-1;"><span>Rating Requirement:</span> <strong>${t.minElo ? escapeHtml(t.minElo) + '+' : 'Any'} ${t.maxElo ? 'to ' + escapeHtml(t.maxElo) + ' Elo' : ''}</strong></div>` : ''}
                     </div>
 
-                    <div class="tourn-card-footer" onclick="event.stopPropagation()">
-                        <button type="button" class="tourn-reg-btn ${isInterested ? 'is-registered' : ''}" data-register-btn="${t.id}">
-                            ${isInterested ? '✓ Interested' : '⚡ Register Interest'}
+                    <div class="tourn-card-footer">
+                        <button type="button" class="tourn-reg-btn ${isInterested ? 'is-registered' : ''}" data-register-btn="${escapeHtml(t.id)}" ${!isInterested && !registrationOpen ? 'disabled' : ''}>
+                            ${isInterested ? '✓ Withdraw registration' : registrationOpen ? '⚡ Register' : 'Registration closed'}
                         </button>
-                        <button type="button" class="header-action" data-open-tid="${t.id}" style="padding: 6px 12px; font-size: 0.78rem; border-radius: 6px; cursor: pointer;">
+                        <button type="button" class="tourn-detail-btn" data-open-tid="${escapeHtml(t.id)}">
                             Enter Event →
                         </button>
                     </div>
@@ -1002,48 +1140,70 @@
 
             document.getElementById('modal-event-badge').textContent = t.badge || 'EVENT';
             document.getElementById('modal-event-title').textContent = t.title;
-            document.getElementById('modal-event-kicker').textContent = t.kicker || t.dates || 'Season 04 Tournament';
-            document.getElementById('modal-event-status').textContent = t.status || 'Active';
-            document.getElementById('modal-event-format').textContent = t.format || 'Standard';
-            document.getElementById('modal-event-slots').textContent = t.slots || 'Open Entry';
-            document.getElementById('modal-event-prize').textContent = t.prizePool || 'Official Elo + Seeds';
-            document.getElementById('modal-event-desc').textContent = t.desc || 'Full tournament details, bracket schedules, and official match rooms will be coordinated through the Match Centre.';
+            document.getElementById('modal-event-kicker').textContent = t.kicker || t.dates || 'Tournament event';
+            document.getElementById('modal-event-status').textContent = t.status || 'Status not set';
+            document.getElementById('modal-event-format').textContent = t.format || 'Not specified';
+            document.getElementById('modal-event-slots').textContent = t.slots || 'Not specified';
+            document.getElementById('modal-event-prize').textContent = t.prizePool || 'Not specified';
+            document.getElementById('modal-event-desc').textContent = t.desc || 'The organiser has not added an event description.';
+            const extraDetails = document.getElementById('modal-event-extra');
+            const extraValues = [
+                ['modal-event-type', t.eventType],
+                ['modal-event-platform', t.platform],
+                ['modal-event-prize-details', t.prizeDetails],
+                ['modal-event-rules', t.rules]
+            ];
+            let hasExtraDetails = false;
+            extraValues.forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                const section = element.closest('[data-event-detail]');
+                element.textContent = value || 'Not specified';
+                section.hidden = !value;
+                hasExtraDetails = hasExtraDetails || Boolean(value);
+            });
+            extraDetails.hidden = !hasExtraDetails;
 
             const isInterested = myInterestIds.has(tournId);
             const actionBtn = document.getElementById('modal-event-action-btn');
             actionBtn.className = `tourn-reg-btn ${isInterested ? 'is-registered' : ''}`;
-            actionBtn.textContent = isInterested ? '✓ You Are Registered' : '⚡ Register Interest Now';
+            const registrationOpen = t.registrationOpen === true && t.status === 'Registration Open';
+            actionBtn.disabled = !isInterested && !registrationOpen;
+            actionBtn.textContent = isInterested ? '✓ Withdraw registration' : registrationOpen ? '⚡ Register now' : 'Registration closed';
 
             // Fetch live participants
             const tbody = document.getElementById('modal-event-participants-body');
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#94a3b8;">Loading confirmed seeds…</td></tr>';
             
-            detailDialog.showModal();
+            if (!detailDialog.open) detailDialog.showModal();
 
             try {
                 const res = await fetch(`/api/site/tournaments/${encodeURIComponent(tournId)}`, { cache: 'no-store' });
-                if (res.ok) {
-                    const data = await res.json();
-                    const participants = data.participants || [];
-                    document.getElementById('modal-event-count').textContent = `${participants.length} Players Confirmed`;
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || 'Participants could not be loaded.');
+                const participants = data.participants || [];
+                document.getElementById('modal-event-count').textContent = `${participants.length} registered player${participants.length === 1 ? '' : 's'}`;
 
-                    if (!participants.length) {
-                        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 20px;">No registered competitors yet. Click register below to claim Seed #1!</td></tr>';
-                    } else {
-                        tbody.innerHTML = participants.map((p, idx) => `
-                            <tr>
-                                <td><strong style="color: ${idx < 3 ? '#f4b72f' : '#94a3b8'};">#${idx + 1}</strong></td>
-                                <td><strong>${p.gamerTag}</strong> <small style="color: #64748b;">(${p.name})</small></td>
-                                <td><strong style="color: #38bdf8;">${Number(p.rating || 1000).toLocaleString()} Elo</strong></td>
-                                <td style="color: #64748b; font-size: 0.76rem;">${p.registeredAt ? new Date(p.registeredAt).toLocaleDateString() : 'Confirmed'}</td>
-                            </tr>
-                        `).join('');
-                    }
+                if (!participants.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 20px;">No players are registered for this event yet.</td></tr>';
+                } else {
+                    tbody.innerHTML = participants.map((p, idx) => `
+                        <tr>
+                            <td><strong style="color: ${idx < 3 ? '#f4b72f' : '#94a3b8'};">#${idx + 1}</strong></td>
+                            <td><strong>${escapeHtml(p.gamerTag)}</strong></td>
+                            <td><strong style="color: #38bdf8;">${Number(p.rating || 1000).toLocaleString()} Elo</strong></td>
+                            <td style="color: #64748b; font-size: 0.76rem;">${p.registeredAt ? new Date(p.registeredAt).toLocaleDateString() : 'Registered'}</td>
+                        </tr>
+                    `).join('');
                 }
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#f87171; padding:15px;">Could not load participants list.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#f87171; padding:15px;">${escapeHtml(err.message)} <button type="button" data-retry-participants="${escapeHtml(tournId)}">Retry</button></td></tr>`;
             }
         };
+
+        document.getElementById('modal-event-participants-body')?.addEventListener('click', (event) => {
+            const retry = event.target.closest('[data-retry-participants]');
+            if (retry) openEventModal(retry.dataset.retryParticipants);
+        });
 
         // Modal Action Button (Register from within modal)
         document.getElementById('modal-event-action-btn')?.addEventListener('click', async () => {
@@ -1059,11 +1219,12 @@
                 });
 
                 if (res.status === 401) {
-                    window.location.href = 'login.html';
+                    window.location.href = `login.html?next=${encodeURIComponent(`tournaments.html#event=${currentActiveTournId}`)}`;
                     return;
                 }
 
                 const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Could not update registration.');
                 if (data.ok) {
                     if (data.registered) {
                         myInterestIds.add(currentActiveTournId);
@@ -1073,10 +1234,10 @@
                     await loadData();
                     openEventModal(currentActiveTournId);
                 } else {
-                    alert(data.message || 'Could not update registration.');
+                    throw new Error(data.message || 'Could not update registration.');
                 }
-            } catch {
-                alert('Connection error. Please try again.');
+            } catch (error) {
+                alert(error.message || 'Connection error. Please try again.');
             } finally {
                 actionBtn.disabled = false;
             }
@@ -1136,28 +1297,29 @@
                 });
 
                 if (res.status === 401) {
-                    window.location.href = 'login.html';
+                    window.location.href = `login.html?next=${encodeURIComponent(`tournaments.html#event=${tid}`)}`;
                     return;
                 }
 
                 const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Could not update registration.');
                 if (data.ok) {
                     if (data.registered) {
                         myInterestIds.add(tid);
                     } else {
                         myInterestIds.delete(tid);
                     }
-                    loadData();
+                    await loadData();
                 } else {
-                    alert(data.message || 'Could not update registration interest.');
-                    btn.disabled = false;
+                    throw new Error(data.message || 'Could not update registration.');
                 }
             } catch (err) {
-                alert('Connection error. Please try again.');
+                alert(err.message || 'Connection error. Please try again.');
                 btn.disabled = false;
             }
         };
 
+        retryButton.addEventListener('click', loadData);
         loadData();
     })();
     </script>

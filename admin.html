@@ -6,7 +6,7 @@
     <title>Admin Operations Console | Tim eFootball League</title>
     <meta name="description" content="Master administrative management console for Tim eFootball League. Live control over player accounts, matches, Elo ratings, tournaments, and broadcast announcements.">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=43">
 </head>
 <body class="admin-page">
     <!-- Top Announcement Bar (Preview / Live) -->
@@ -58,24 +58,24 @@
             <form id="admin-key-form" class="admin-auth-form">
                 <label for="admin-master-key">Master Secret Password or Key
                     <div style="position: relative; display: flex; align-items: center;">
-                        <input type="password" id="admin-master-key" placeholder="Enter secret password e.g. admin123" required autocomplete="current-password" style="padding-right: 42px; width: 100%;">
+                        <input type="password" id="admin-master-key" placeholder="Enter your configured administrator key" required autocomplete="current-password" style="padding-right: 42px; width: 100%;">
                         <button type="button" class="btn-toggle-pw" data-target="admin-master-key" style="position: absolute; right: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: 4px;" title="Show/Hide Password">👁️</button>
                     </div>
-                    <small style="color: #94a3b8; font-size: 0.76rem; display: block; margin-top: 5px;">Configured in <code>.env</code> as <strong>ADMIN_KEY</strong> (default: <code>admin123</code>)</small>
+                    <small style="color: #94a3b8; font-size: 0.76rem; display: block; margin-top: 5px;">Set <strong>ADMIN_KEY</strong> in your private server environment.</small>
                 </label>
                 <button type="submit" class="admin-submit-btn">Unlock Admin Console →</button>
             </form>
 
             <form id="admin-password-form" class="admin-auth-form" hidden>
                 <label for="admin-email">Admin Email
-                    <input type="email" id="admin-email" placeholder="owolabimichael704@gmail.com" value="owolabimichael704@gmail.com" required autocomplete="email">
+                    <input type="email" id="admin-email" placeholder="admin@example.com" required autocomplete="email">
                 </label>
                 <label for="admin-password">Password
                     <div style="position: relative; display: flex; align-items: center;">
                         <input type="password" id="admin-password" placeholder="Account password or admin secret" required autocomplete="current-password" style="padding-right: 42px; width: 100%;">
                         <button type="button" class="btn-toggle-pw" data-target="admin-password" style="position: absolute; right: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: 4px;" title="Show/Hide Password">👁️</button>
                     </div>
-                    <small style="color: #94a3b8; font-size: 0.76rem; display: block; margin-top: 5px;">Accepts account password or master secret (<code>admin123</code>)</small>
+                    <small style="color: #94a3b8; font-size: 0.76rem; display: block; margin-top: 5px;">Use your verified administrator account password.</small>
                 </label>
                 <button type="submit" class="admin-submit-btn">Sign in as Administrator →</button>
             </form>
@@ -180,7 +180,7 @@
                             <li>
                                 <div>
                                     <strong>Player Directory &amp; Elo Standings</strong>
-                                    <p>Live edit any player's Elo rating, wins, draws, losses, or verification status.</p>
+                                    <p>Manage player profiles, Elo ratings, roles, and verification. Ranked records are calculated from approved results.</p>
                                 </div>
                                 <button type="button" class="admin-btn-sm" id="btn-goto-users">Edit Players →</button>
                             </li>
@@ -205,7 +205,7 @@
                             </div>
                             <div class="diag-item">
                                 <span>Owner Email</span>
-                                <strong id="diag-owner-email">owolabimichael704@gmail.com</strong>
+                                <strong id="diag-owner-email">Configured on server</strong>
                             </div>
                             <div class="diag-item">
                                 <span>Admin Key Protection</span>
@@ -225,7 +225,7 @@
                 <div class="admin-pane-header">
                     <div>
                         <h2>Player Profiles &amp; Accounts</h2>
-                        <p>Live management of all registered players. You can edit gamer tags, adjust Elo ratings, change records, grant admin access, or reset passwords.</p>
+                        <p>Live management of registered players. Update profile details and Elo ratings, manage access, or reset passwords. Ranked records are calculated from approved results.</p>
                     </div>
                     <button type="button" class="admin-action-btn primary" id="btn-open-create-user">+ Add New Player</button>
                 </div>
@@ -254,7 +254,7 @@
                         <thead>
                             <tr>
                                 <th>Player</th>
-                                <th>Email</th>
+                                <th>Email (private)</th>
                                 <th>Rating (Elo)</th>
                                 <th>Record (W–D–L)</th>
                                 <th>Status</th>
@@ -306,6 +306,29 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="admin-pane-header reports-pane-heading">
+                    <div>
+                        <h3>Private player reports</h3>
+                        <p>Reports are visible only to administrators. Review conduct reports separately from score approvals.</p>
+                    </div>
+                </div>
+                <div class="admin-table-container">
+                    <table class="admin-table" id="player-reports-table">
+                        <thead>
+                            <tr>
+                                <th>Submitted</th>
+                                <th>Reporter</th>
+                                <th>Reported player</th>
+                                <th>Reason and details</th>
+                                <th>Status</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="player-reports-tbody">
+                            <tr><td colspan="6" class="table-loading">Loading private player reports…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <!-- TAB 4: LIVE BROADCAST BANNER -->
@@ -347,6 +370,33 @@
                                     </label>
                                 </div>
                             </div>
+                            <div class="form-row form-row-3">
+                                <div class="form-field">
+                                    <label for="edit-user-platform">Platform
+                                        <select id="edit-user-platform">
+                                            <option value="">Not set</option>
+                                            <option value="Mobile">Mobile</option>
+                                            <option value="Console">Console</option>
+                                            <option value="PC">PC</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <div class="form-field">
+                                    <label for="edit-user-country">Country
+                                        <input type="text" id="edit-user-country" maxlength="60">
+                                    </label>
+                                </div>
+                                <div class="form-field">
+                                    <label for="edit-user-time-zone">Time zone
+                                        <input type="text" id="edit-user-time-zone" maxlength="100" placeholder="Europe/London">
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label for="edit-user-club-name">Club membership
+                                    <input type="text" id="edit-user-club-name" maxlength="60" placeholder="Leave blank if unaffiliated">
+                                </label>
+                            </div>
 
                             <div class="form-field">
                                 <span class="field-title">Visual Color Theme</span>
@@ -382,8 +432,8 @@
                             <div class="site-announcement-bar announcement-gold" id="preview-bar">
                                 <div class="announcement-content">
                                     <span class="announcement-badge">LEAGUE NOTICE</span>
-                                    <span class="announcement-text" id="preview-text">Season 04 League Cup registrations are live! Enter the 32-player knockout bracket.</span>
-                                    <a href="cup.html" class="announcement-link" id="preview-link">View League Cup →</a>
+                                    <span class="announcement-text" id="preview-text">Announcement text preview</span>
+                                    <a href="cup.html" class="announcement-link" id="preview-link">Preview link →</a>
                                 </div>
                             </div>
                         </div>
@@ -396,7 +446,7 @@
                 <div class="admin-pane-header">
                     <div>
                         <h2>Tournaments &amp; Competition Content</h2>
-                        <p>Manage the tournament cards, eligibility rules, and registration windows displayed on tournaments.html.</p>
+                        <p>Create, duplicate, and edit events, manage eligibility and registration windows, and review each roster before opening entries.</p>
                     </div>
                     <button type="button" class="admin-action-btn primary" id="btn-add-tournament">+ Add Tournament</button>
                 </div>
@@ -410,10 +460,10 @@
             <section class="admin-tab-pane" id="pane-clubs">
                 <div class="admin-pane-header">
                     <div>
-                        <h2>Club League Standings (Clubs Tab)</h2>
-                        <p>Live management of the official club leaderboard shown on rankings.html.</p>
+                        <h2>Player club records</h2>
+                        <p>Club cards are calculated from verified members’ profiles. Change a player’s club in the player editor; ratings and records are never manually invented here.</p>
                     </div>
-                    <button type="button" class="admin-action-btn primary" id="btn-add-club">+ Add Club</button>
+                    <button type="button" class="admin-action-btn primary" id="btn-clubs-goto-users">Manage players</button>
                 </div>
 
                 <div class="admin-table-container">
@@ -422,16 +472,14 @@
                             <tr>
                                 <th>Rank</th>
                                 <th>Club Name</th>
-                                <th>Captain</th>
-                                <th>Division</th>
-                                <th>Club Points</th>
-                                <th>Record W–D–L</th>
-                                <th>Matches</th>
-                                <th class="text-right">Actions</th>
+                                <th>Verified Members</th>
+                                <th>Average Elo</th>
+                                <th>Combined Member Record</th>
+                                <th>Players</th>
                             </tr>
                         </thead>
                         <tbody id="clubs-tbody">
-                            <!-- Populated dynamically -->
+                            <tr><td colspan="6" class="table-loading">Loading clubs from verified player profiles…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -442,11 +490,11 @@
                 <div class="admin-pane-header">
                     <div>
                         <h2>Official League Cup Knockout Bracket</h2>
-                        <p>Control the 16-seed knockout bracket displayed on cup.html. Advance winners, adjust matchup pairings, or crown the official champion.</p>
+                        <p>Generate the 32-player knockout bracket from registered League Cup players, record winners, and publish updates for visitors to view.</p>
                     </div>
                     <div class="admin-quick-actions">
                         <button type="button" class="admin-action-btn primary" id="btn-save-bracket-live">Publish Bracket to cup.html</button>
-                        <button type="button" class="admin-action-btn secondary" id="btn-reset-bracket-default">Reset Seeds</button>
+                        <button type="button" class="admin-action-btn secondary" id="btn-reset-bracket-default">Seed from registered players</button>
                     </div>
                 </div>
 
@@ -465,7 +513,7 @@
                 <button type="button" class="modal-close" data-close-modal>×</button>
             </div>
             <form id="form-edit-user">
-                <input type="hidden" id="edit-user-original-email">
+                <input type="hidden" id="edit-user-original-id">
                 <div class="form-row">
                     <div class="form-field">
                         <label for="edit-user-tag">Gamer Tag
@@ -481,7 +529,7 @@
                 <div class="form-row">
                     <div class="form-field">
                         <label for="edit-user-email">Email Address
-                            <input type="email" id="edit-user-email" required>
+                            <input type="email" id="edit-user-email" placeholder="Leave blank to keep private email unchanged">
                         </label>
                     </div>
                     <div class="form-field">
@@ -490,21 +538,9 @@
                         </label>
                     </div>
                 </div>
-                <div class="form-row form-row-3">
+                <div class="form-row">
                     <div class="form-field">
-                        <label for="edit-user-wins">Wins
-                            <input type="number" id="edit-user-wins" min="0" required>
-                        </label>
-                    </div>
-                    <div class="form-field">
-                        <label for="edit-user-draws">Draws
-                            <input type="number" id="edit-user-draws" min="0" required>
-                        </label>
-                    </div>
-                    <div class="form-field">
-                        <label for="edit-user-losses">Losses
-                            <input type="number" id="edit-user-losses" min="0" required>
-                        </label>
+                        <p class="form-field-note">Verified ranked record <strong id="edit-user-record">0W – 0D – 0L</strong>. Counts update from approved ranked matches and cannot be manually edited.</p>
                     </div>
                 </div>
                 <div class="form-row">
@@ -557,12 +593,12 @@
                 <div class="form-row">
                     <div class="form-field">
                         <label for="create-user-email">Email Address
-                            <input type="email" id="create-user-email" placeholder="alex@gmail.com" required>
+                            <input type="email" id="create-user-email" placeholder="player@example.com" required>
                         </label>
                     </div>
                     <div class="form-field">
                         <label for="create-user-password">Initial Password (Optional)
-                            <input type="text" id="create-user-password" placeholder="Defaults to password123">
+                            <input type="password" id="create-user-password" placeholder="Set a temporary password or leave blank">
                         </label>
                     </div>
                 </div>
@@ -716,7 +752,7 @@
 
     <!-- MODAL: CREATE / EDIT TOURNAMENT -->
     <dialog class="admin-modal" id="modal-tournament">
-        <div class="admin-modal-card" style="max-width: 640px;">
+        <div class="admin-modal-card" style="max-width: 640px; max-height: 90vh; overflow-y: auto;">
             <div class="admin-modal-header">
                 <h3 id="modal-tournament-title">Add Tournament</h3>
                 <button type="button" class="modal-close" data-close-modal>×</button>
@@ -726,7 +762,7 @@
                 <div class="form-row">
                     <div class="form-field">
                         <label for="t-title">Tournament Title <span style="color:#f87171">*</span>
-                            <input type="text" id="t-title" placeholder="e.g. Tim League Cup Season 04" required maxlength="80">
+                            <input type="text" id="t-title" placeholder="Tournament title (Cup title is managed automatically)" required maxlength="80">
                         </label>
                     </div>
                     <div class="form-field">
@@ -767,8 +803,33 @@
                 </div>
                 <div class="form-row">
                     <div class="form-field">
+                        <label for="t-event-type">Event type
+                            <input type="text" id="t-event-type" list="t-event-type-options" placeholder="e.g. Knockout Cup" maxlength="50">
+                        </label>
+                        <datalist id="t-event-type-options">
+                            <option value="Knockout Cup"></option>
+                            <option value="League Season"></option>
+                            <option value="Groups + Knockout"></option>
+                            <option value="Swiss Challenge"></option>
+                            <option value="Friendly Showdown"></option>
+                        </datalist>
+                    </div>
+                    <div class="form-field">
+                        <label for="t-platform">Platform
+                            <input type="text" id="t-platform" list="t-platform-options" placeholder="e.g. eFootball Mobile" maxlength="80">
+                        </label>
+                        <datalist id="t-platform-options">
+                            <option value="eFootball Mobile"></option>
+                            <option value="eFootball Console / PC"></option>
+                            <option value="Cross-platform"></option>
+                            <option value="Any platform"></option>
+                        </datalist>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
                         <label for="t-dates">Dates / Schedule
-                            <input type="text" id="t-dates" placeholder="e.g. Starts Nov 15 · 19:30 BST" maxlength="100">
+                            <input type="text" id="t-dates" placeholder="e.g. Starts Nov 15 · 19:30" maxlength="100">
                         </label>
                     </div>
                     <div class="form-field">
@@ -776,6 +837,11 @@
                             <input type="text" id="t-prize" placeholder="e.g. League Cup Trophy & Top Seed" maxlength="100">
                         </label>
                     </div>
+                </div>
+                <div class="form-field">
+                    <label for="t-prize-details">Prize breakdown / rewards
+                        <textarea id="t-prize-details" rows="3" placeholder="List placements, rewards, and any special honors..." maxlength="1000" style="resize:vertical;min-height:75px"></textarea>
+                    </label>
                 </div>
                 <div class="form-row">
                     <div class="form-field">
@@ -788,6 +854,11 @@
                             <input type="number" id="t-max-elo" placeholder="e.g. 1400" min="0" max="3000">
                         </label>
                     </div>
+                </div>
+                <div class="form-field">
+                    <label for="t-rules">Event rules
+                        <textarea id="t-rules" rows="5" placeholder="Explain match settings, tie-breakers, reporting, no-shows, and any event-specific rules..." maxlength="3000" style="resize:vertical;min-height:110px"></textarea>
+                    </label>
                 </div>
                 <div class="form-field">
                     <label for="t-entry-link">Entry / Rules Link (optional)
@@ -804,6 +875,21 @@
                         <input type="checkbox" id="t-reg-open">
                         <span class="switch-slider"></span>
                         <strong>Registration is actively open</strong>
+                    </label>
+                </div>
+                <div class="form-field-switch">
+                    <label class="switch-label" for="t-published">
+                        <input type="checkbox" id="t-published" checked>
+                        <span class="switch-slider"></span>
+                        <strong>Publish this event to players</strong>
+                    </label>
+                    <small class="field-hint">Draft events stay private to administrators. Duplicated events start as drafts.</small>
+                </div>
+                <div class="form-field-switch">
+                    <label class="switch-label" for="t-featured-cup">
+                        <input type="checkbox" id="t-featured-cup">
+                        <span class="switch-slider"></span>
+                        <strong>Feature this event as the League Cup</strong>
                     </label>
                 </div>
                 <div class="modal-actions">
@@ -832,7 +918,7 @@
                             <tr>
                                 <th>Seed</th>
                                 <th>Gamer Tag</th>
-                                <th>Email</th>
+                                <th>Email (private)</th>
                                 <th>Elo</th>
                                 <th>Record</th>
                                 <th class="text-right">Action</th>
@@ -853,7 +939,6 @@
     <!-- Toast Notification Overlay -->
     <div class="admin-toast-container" id="admin-toast-container" aria-live="polite"></div>
 
-    <script src="admin.js" defer></script>
+    <script src="admin.js?v=43" defer></script>
 </body>
 </html>
-
