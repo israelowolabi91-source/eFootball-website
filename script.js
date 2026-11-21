@@ -299,6 +299,15 @@ const renderOnboardingStep = () => {
 	const step = onboardingSteps[activeOnboardingStep];
 	if (!step) return;
 
+	const mascot = document.querySelector('#onboarding-mascot');
+	const speechMark = document.querySelector('.mascot-speech-mark');
+	if (mascot) {
+		mascot.dataset.step = String(activeOnboardingStep + 1);
+		mascot.classList.remove('mascot-step-react');
+		window.requestAnimationFrame(() => mascot.classList.add('mascot-step-react'));
+	}
+	if (speechMark) speechMark.textContent = activeOnboardingStep === onboardingSteps.length - 1 ? '✓' : String(activeOnboardingStep + 1);
+
 	if (onboardingTitle) onboardingTitle.textContent = step.title;
 	if (onboardingDescription) onboardingDescription.textContent = step.description;
 	if (onboardingStepCount) onboardingStepCount.textContent = step.kicker;

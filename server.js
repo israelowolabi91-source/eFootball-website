@@ -14,6 +14,7 @@ const LEAGUE_CONFIG = require('./site-config');
 
 const app = express();
 app.disable('x-powered-by');
+app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT || 3000);
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const ROOT = __dirname;
@@ -722,10 +723,10 @@ const validateAccountInput = ({ firstName, gamerTag, email, password }) => {
 
 const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 5,
+  limit: 20,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
-  message: { message: 'Too many sign-in attempts. Please try again in 15 minutes.' }
+  message: { message: 'Too many sign-in requests from this network. Please try again in 15 minutes.' }
 });
 const passwordResetRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,

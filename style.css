@@ -10273,6 +10273,28 @@ body {
 	animation: mascot-blink 6.4s ease-in-out infinite;
 }
 
+.mascot-smile {
+	transform-box: fill-box;
+	transform-origin: center;
+	animation: mascot-smile 3.6s ease-in-out infinite;
+}
+
+.mascot-brow {
+	transform-box: fill-box;
+	transform-origin: center;
+	animation: mascot-brows 5.2s ease-in-out infinite;
+}
+
+.mascot-scarf-tail {
+	transform-box: fill-box;
+	transform-origin: 15% 25%;
+	animation: mascot-scarf 2.8s ease-in-out infinite;
+}
+
+.onboarding-mascot.mascot-step-react {
+	animation: mascot-float 3.6s ease-in-out infinite, mascot-step-celebrate 650ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
 .mascot-crest {
 	position: absolute;
 	z-index: 2;
@@ -10585,6 +10607,27 @@ body {
 @keyframes mascot-blink {
 	0%, 44%, 48%, 100% { transform: scaleY(1); }
 	46% { transform: scaleY(0.08); }
+}
+
+@keyframes mascot-smile {
+	0%, 100% { stroke-width: 3; }
+	50% { stroke-width: 4; transform: scaleX(1.06); }
+}
+
+@keyframes mascot-brows {
+	0%, 65%, 100% { transform: translateY(0) rotate(0); }
+	72%, 82% { transform: translateY(-2px) rotate(-2deg); }
+}
+
+@keyframes mascot-scarf {
+	0%, 100% { transform: skewX(0) translateY(0); }
+	50% { transform: skewX(-5deg) translateY(-3px); }
+}
+
+@keyframes mascot-step-celebrate {
+	0% { scale: 0.96; }
+	48% { scale: 1.055; }
+	100% { scale: 1; }
 }
 
 @keyframes mascot-sparkle {
