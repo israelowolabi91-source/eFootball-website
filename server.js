@@ -655,14 +655,35 @@ const verifyPassword = async (password, storedHash) => {
   return crypto.timingSafeEqual(Buffer.from(key, 'hex'), derivedKey);
 };
 
-const smtpReady = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
+const smtpReady = Boolean(process.env.BREVO_API_KEY);
 const mailer = smtpReady
-  ? nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 465),
-      secure: String(process.env.SMTP_SECURE || 'true') === 'true',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-    })
+  ? {
+      sendMail: async ({ from, to, subject, html }) => {
+        const senderEmail =
+          process.env.BREVO_SENDER_EMAIL ||
+          String(from || '').replace(/^.*<|>.*$/g, '').trim();
+        const recipients = (Array.isArray(to) ? to : [to]).map((email) => ({ email }));
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': process.env.BREVO_API_KEY,
+            'content-type': 'application/json',
+            accept: 'application/json'
+          },
+          body: JSON.stringify({
+            sender: { name: 'Tim eFootball League', email: senderEmail },
+            to: recipients,
+            subject,
+            htmlContent: html
+          }),
+          signal: AbortSignal.timeout(15000)
+        });
+        if (!response.ok) {
+          throw new Error(`Brevo error ${response.status}: ${await response.text()}`);
+        }
+        return response.json();
+      }
+    }
   : null;
 
 const sendEmail = async ({ to, subject, html }) => {
