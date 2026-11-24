@@ -8,9 +8,9 @@
     <title>Tournaments &amp; Competitions | Tim eFootball League</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css?v=44">
+    <link rel="stylesheet" href="style.css?v=45">
     <script src="site-config.js"></script>
-    <script src="script.js?v=44" defer></script>
+    <script src="script.js?v=46" defer></script>
     <style>
         /* ─── Tournaments Hub Custom Styles ─── */
         .tourn-header-badge {
@@ -704,6 +704,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="member-experience.css?v=1">
 </head>
 <body class="tournaments-page">
     <header class="site-header">
@@ -712,7 +713,7 @@
                 <span class="brand-mark"><img src="favicon.png" alt=""></span>
                 <span class="brand-copy">
                     <span class="brand-name">Tim eFootball</span>
-                    <span class="brand-label">League <span>•</span> Est. 2024</span>
+                    <span class="brand-label">League <span>•</span> Est. 2026</span>
                 </span>
             </a>
 
@@ -986,7 +987,6 @@
         const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         })[character]);
-
         closeBtn?.addEventListener('click', () => detailDialog.close());
         detailDialog?.addEventListener('click', (e) => {
             if (e.target === detailDialog) detailDialog.close();
@@ -1094,7 +1094,7 @@
                 const statusCls = t.status === 'Registration Open' ? 'open' : t.status === 'In Progress' ? 'live' : t.status === 'Completed' ? 'completed' : 'upcoming';
 
                 return `
-                <article class="tourn-card" data-tid="${escapeHtml(t.id)}" style="cursor: pointer;">
+                <article class="tourn-card" data-tid="${escapeHtml(t.id)}" data-event-theme="${escapeHtml(String(t.badge || 'event').toLowerCase())}" style="cursor: pointer;">
                     <div class="tourn-card-top">
                         <span class="tourn-badge-pill">${escapeHtml(t.badge || 'EVENT')}</span>
                         <span class="tourn-status-pill status-${statusCls}">
@@ -1189,7 +1189,7 @@
                     tbody.innerHTML = participants.map((p, idx) => `
                         <tr>
                             <td><strong style="color: ${idx < 3 ? '#f4b72f' : '#94a3b8'};">#${idx + 1}</strong></td>
-                            <td><strong>${escapeHtml(p.gamerTag)}</strong></td>
+                            <td><span class="tournament-participant"><span class="tournament-participant-avatar">${p.avatarUrl ? `<img src="${escapeHtml(p.avatarUrl)}" alt="" loading="lazy">` : escapeHtml(String(p.gamerTag || 'P').slice(0, 1).toUpperCase())}</span><strong>${escapeHtml(p.gamerTag)}</strong></span></td>
                             <td><strong style="color: #38bdf8;">${Number(p.rating || 1000).toLocaleString()} Elo</strong></td>
                             <td style="color: #64748b; font-size: 0.76rem;">${p.registeredAt ? new Date(p.registeredAt).toLocaleDateString() : 'Registered'}</td>
                         </tr>

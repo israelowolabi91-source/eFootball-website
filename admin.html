@@ -6,7 +6,8 @@
     <title>Admin Operations Console | Tim eFootball League</title>
     <meta name="description" content="Master administrative management console for Tim eFootball League. Live control over player accounts, matches, Elo ratings, tournaments, and broadcast announcements.">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css?v=44">
+    <link rel="stylesheet" href="style.css?v=45">
+    <link rel="stylesheet" href="admin.css?v=1">
 </head>
 <body class="admin-page">
     <!-- Top Announcement Bar (Preview / Live) -->
@@ -215,6 +216,40 @@
                                 <span>Email Delivery (SMTP)</span>
                                 <strong id="diag-email-status">Configured</strong>
                             </div>
+                        </div>
+                    </div>
+                    <div class="admin-overview-card admin-competition-card">
+                        <div class="card-title-row">
+                            <h3>Competition Control</h3>
+                            <span class="admin-card-kicker">SITE CONTENT</span>
+                        </div>
+                        <p class="admin-card-intro">Keep the public competition pages current with the events and cup information players use to plan their season.</p>
+                        <div class="admin-shortcut-grid">
+                            <button type="button" class="admin-shortcut" id="btn-goto-tournaments">
+                                <span class="shortcut-mark">01</span>
+                                <span><strong>Tournaments &amp; Events</strong><small>Dates, entry, eligibility, rosters</small></span>
+                                <span class="shortcut-arrow" aria-hidden="true">→</span>
+                            </button>
+                            <button type="button" class="admin-shortcut" id="btn-goto-bracket">
+                                <span class="shortcut-mark">02</span>
+                                <span><strong>League Cup Bracket</strong><small>Seeds, results, champion</small></span>
+                                <span class="shortcut-arrow" aria-hidden="true">→</span>
+                            </button>
+                            <a class="admin-shortcut" href="tournaments.html" target="_blank" rel="noopener">
+                                <span class="shortcut-mark">↗</span>
+                                <span><strong>Preview events page</strong><small>See the public tournament listings</small></span>
+                                <span class="shortcut-arrow" aria-hidden="true">↗</span>
+                            </a>
+                            <a class="admin-shortcut" href="rankings.html" target="_blank" rel="noopener">
+                                <span class="shortcut-mark">03</span>
+                                <span><strong>Preview rankings</strong><small>Check player ratings and divisions</small></span>
+                                <span class="shortcut-arrow" aria-hidden="true">↗</span>
+                            </a>
+                            <a class="admin-shortcut" href="cup.html" target="_blank" rel="noopener">
+                                <span class="shortcut-mark">04</span>
+                                <span><strong>Preview League Cup</strong><small>Review the visitor bracket page</small></span>
+                                <span class="shortcut-arrow" aria-hidden="true">↗</span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -939,6 +974,6 @@
     <!-- Toast Notification Overlay -->
     <div class="admin-toast-container" id="admin-toast-container" aria-live="polite"></div>
 
-    <script src="admin.js?v=43" defer></script>
+    <script src="admin.js?v=44" defer></script>
 </body>
 </html>

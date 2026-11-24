@@ -233,8 +233,14 @@
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('is-active'));
             document.querySelectorAll('.admin-tab-pane').forEach(p => p.classList.remove('is-active'));
             tab.classList.add('is-active');
+            document.querySelectorAll('.admin-tab').forEach((item) => item.setAttribute('aria-selected', String(item === tab)));
             const targetPane = document.getElementById(`pane-${tab.dataset.tab}`);
             if (targetPane) targetPane.classList.add('is-active');
+            if (targetPane) {
+                history.replaceState(null, '', `#${tab.dataset.tab}`);
+                targetPane.setAttribute('tabindex', '-1');
+                targetPane.focus({ preventScroll: true });
+            }
 
             if (tab.dataset.tab === 'users') loadUsers();
             if (tab.dataset.tab === 'matches') {
@@ -247,6 +253,25 @@
             if (tab.dataset.tab === 'bracket') loadBracket();
         });
     });
+
+    const openAdminTab = (name) => document.querySelector(`.admin-tab[data-tab="${name}"]`)?.click();
+    document.getElementById('btn-goto-tournaments')?.addEventListener('click', () => openAdminTab('tournaments'));
+    document.getElementById('btn-goto-bracket')?.addEventListener('click', () => openAdminTab('bracket'));
+
+    // Let operators jump between the seven work areas without leaving the keyboard.
+    document.addEventListener('keydown', (event) => {
+        if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        const target = event.target;
+        if (target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+        const tab = document.querySelector(`.admin-tab[data-tab="${['overview', 'users', 'matches', 'broadcast', 'tournaments', 'clubs', 'bracket'][Number(event.key) - 1] || ''}"]`);
+        if (tab) {
+            event.preventDefault();
+            tab.click();
+        }
+    });
+
+    const initialTab = window.location.hash.slice(1);
+    if (initialTab && document.querySelector(`.admin-tab[data-tab="${CSS.escape(initialTab)}"]`)) openAdminTab(initialTab);
 
     // Shortcuts from overview cards
     document.getElementById('btn-goto-broadcast')?.addEventListener('click', () => {

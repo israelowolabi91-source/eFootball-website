@@ -1,20 +1,13 @@
-const CACHE_NAME = 'tim-league-shell-v44';
+const CACHE_NAME = 'tim-league-shell-v47';
 const APP_SHELL = [
-  './',
-  './index.html',
-  './cup.html',
-  './matches.html',
-  './rankings.html',
-  './tournaments.html',
-  './play.html',
-  './profile.html',
   './login.html',
   './signup.html',
   './privacy.html',
   './terms.html',
   './style.css',
+  './member-experience.css',
   './site-config.js',
-  './script.js',
+  './script.js?v=46',
   './favicon.png',
   './manifest.webmanifest'
 ];
@@ -46,15 +39,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(async () => (
+        await caches.match('./login.html') || Response.error()
+      ))
+    );
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        if (response.ok && url.origin === self.location.origin) {
+        if (response.ok && url.origin === self.location.origin && event.request.mode !== 'navigate') {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         }
         return response;
       })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
+      .catch(() => caches.match(event.request))
   );
 });

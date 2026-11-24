@@ -8,9 +8,10 @@
     <title>Rankings | Tim eFootball League</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css?v=44">
+    <link rel="stylesheet" href="style.css?v=47">
+    <link rel="stylesheet" href="member-experience.css?v=1">
     <script src="site-config.js"></script>
-    <script src="script.js?v=44" defer></script>
+    <script src="script.js?v=46" defer></script>
 </head>
 <body class="rankings-page">
     <header class="site-header">
@@ -19,7 +20,7 @@
                 <span class="brand-mark"><img src="favicon.png" alt=""></span>
                 <span class="brand-copy">
                     <span class="brand-name">Tim eFootball</span>
-                    <span class="brand-label">League <span>•</span> Est. 2024</span>
+                    <span class="brand-label">League <span>•</span> Est. 2026</span>
                 </span>
             </a>
 
@@ -146,6 +147,11 @@
                 <p class="eyebrow"><span class="eyebrow-line"></span> Rating simulator</p>
                 <h2 id="calculator-title">Interactive Elo Calculator &amp; Tier Simulator.</h2>
                 <p>Estimate rating changes and tier progress with the official league rating equation and shared tier thresholds.</p>
+                <div class="calc-mode-selector" role="tablist" aria-label="Simulation Mode">
+                    <button type="button" class="calc-mode-btn is-active" data-calc-mode="single" aria-selected="true">⚡ Single Match Projection</button>
+                    <button type="button" class="calc-mode-btn" data-calc-mode="series" aria-selected="false">📈 Series &amp; Streak Simulator</button>
+                    <button type="button" class="calc-mode-btn" data-calc-mode="target" aria-selected="false">🎯 Road to Next Tier</button>
+                </div>
             </div>
 
             <div class="calc-card">
@@ -153,14 +159,14 @@
                     <div class="calc-inputs">
                         <div class="calc-field">
                             <label for="calc-user-rating">Your Current Elo Rating
-                                <input type="number" id="calc-user-rating" min="100" max="3000" value="1000" step="1">
+                                <input type="number" id="calc-user-rating" min="100" max="3000" value="1000" step="1" inputmode="numeric">
                             </label>
                             <small class="field-hint">Defaults to your profile Elo when logged in.</small>
                         </div>
 
                         <div class="calc-field">
                             <label for="calc-opponent-rating">Opponent Elo Rating
-                                <input type="number" id="calc-opponent-rating" min="100" max="3000" value="1000" step="1">
+                                <input type="number" id="calc-opponent-rating" min="100" max="3000" value="1000" step="1" inputmode="numeric">
                             </label>
                             <div class="calc-quick-pick">
                                 <span>Or select rival:</span>
@@ -168,19 +174,24 @@
                                     <option value="">Custom rating</option>
                                 </select>
                             </div>
+                            <div class="calc-rating-presets" aria-label="Quick opponent rating presets">
+                                <button type="button" data-calc-opponent-offset="-150">Lower-rated (-150)</button>
+                                <button type="button" class="is-active" data-calc-opponent-offset="0">Even match (±0)</button>
+                                <button type="button" data-calc-opponent-offset="150">Higher-rated (+150)</button>
+                            </div>
                         </div>
 
                         <div class="calc-field">
                             <label for="calc-k-factor">Match Competition Multiplier (K-Factor)
                                 <select id="calc-k-factor">
-                                    <option value="32" data-league-k="ranked">Standard Ranked Match</option>
-                                    <option value="32" data-league-k="cup">League Cup / Tournament Knockout</option>
-                                    <option value="16" data-league-k="placement">Placement / Provisional Match</option>
+                                    <option value="32" data-league-k="ranked">Standard Ranked Match (K=32)</option>
+                                    <option value="32" data-league-k="cup">League Cup / Knockout (K=32)</option>
+                                    <option value="16" data-league-k="placement">Placement / Provisional (K=16)</option>
                                 </select>
                             </label>
                         </div>
 
-                        <div class="calc-field">
+                        <div class="calc-field" id="calc-single-outcome-field">
                             <span class="calc-field-title">Anticipated Match Result</span>
                             <div class="calc-result-buttons" role="radiogroup" aria-label="Anticipated match outcome">
                                 <button type="button" class="calc-res-btn is-active" data-outcome="win" aria-pressed="true">Win (+1.0)</button>
@@ -188,13 +199,77 @@
                                 <button type="button" class="calc-res-btn" data-outcome="loss" aria-pressed="false">Loss (0.0)</button>
                             </div>
                         </div>
+
+                        <!-- Multi-match / Streak Simulator Controls -->
+                        <div class="calc-field calc-series-controls" id="calc-series-controls" hidden>
+                            <span class="calc-field-title">Series Scenario Preset</span>
+                            <div class="calc-series-presets">
+                                <button type="button" class="calc-series-btn is-active" data-series="3-win">3-Win Sweep</button>
+                                <button type="button" class="calc-series-btn" data-series="bo3-clinch">Best-of-3 (2-1)</button>
+                                <button type="button" class="calc-series-btn" data-series="5-streak">5-Win Run</button>
+                                <button type="button" class="calc-series-btn" data-series="bounce">Bounce-back (L-W-W)</button>
+                            </div>
+                            <div class="calc-series-custom-strip">
+                                <small>Interactive Series Sequence (tap to toggle W/D/L):</small>
+                                <div class="calc-series-chips" id="calc-series-chips"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="calc-results-display">
-                        <div class="calc-delta-box">
-                            <span class="calc-delta-label">PROJECTED RATING CHANGE</span>
-                            <strong class="calc-delta-val" id="calc-delta">—</strong>
-                            <span class="calc-projected-rating" id="calc-projected-rating">Enter ratings to calculate.</span>
+                        <div class="calc-matchup-card">
+                            <div class="calc-matchup-topline">
+                                <span>RATING MATCHUP</span>
+                                <strong id="calc-matchup-readout">EVEN MATCH</strong>
+                                <span class="calc-risk-badge" id="calc-risk-badge">Balanced Risk</span>
+                            </div>
+                            <div class="calc-matchup-players">
+                                <div><small>YOUR EXPECTED SCORE</small><strong id="calc-your-expectation">50%</strong><span id="calc-your-matchup-rating">1,000 Elo</span></div>
+                                <span class="calc-matchup-divider" aria-hidden="true">VS</span>
+                                <div><small>OPPONENT EXPECTED SCORE</small><strong id="calc-opponent-expectation">50%</strong><span id="calc-opponent-matchup-rating">1,000 Elo</span></div>
+                            </div>
+                            <div class="calc-expectation-track" role="progressbar" aria-label="Expected Elo score for you" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span id="calc-expectation-fill"></span></div>
+                            <p class="calc-expectation-caption">Expected score share based on standard Elo mathematics (logistic probability curve).</p>
+                        </div>
+
+                        <!-- Live 3-Way Stake Matrix -->
+                        <div class="calc-stake-matrix" id="calc-stake-matrix">
+                            <div class="stake-col stake-win">
+                                <span class="stake-label">WIN</span>
+                                <strong class="stake-delta" id="stake-win-delta">+16</strong>
+                                <span class="stake-proj" id="stake-win-proj">1,016 Elo</span>
+                            </div>
+                            <div class="stake-col stake-draw">
+                                <span class="stake-label">DRAW</span>
+                                <strong class="stake-delta" id="stake-draw-delta">±0</strong>
+                                <span class="stake-proj" id="stake-draw-proj">1,000 Elo</span>
+                            </div>
+                            <div class="stake-col stake-loss">
+                                <span class="stake-label">LOSS</span>
+                                <strong class="stake-delta" id="stake-loss-delta">-16</strong>
+                                <span class="stake-proj" id="stake-loss-proj">984 Elo</span>
+                            </div>
+                        </div>
+
+                        <div class="calc-delta-box" id="calc-delta-box">
+                            <span class="calc-delta-label" id="calc-delta-headline">PROJECTED RATING CHANGE</span>
+                            <strong class="calc-delta-val" id="calc-delta" aria-live="polite">+16</strong>
+                            <span class="calc-projected-rating" id="calc-projected-rating">New Rating: 1,016 Elo</span>
+                        </div>
+
+                        <!-- Series Trajectory Card (active in Series Mode) -->
+                        <div class="calc-trajectory-card" id="calc-trajectory-card" hidden>
+                            <div class="calc-trajectory-topline">
+                                <span>SERIES TRAJECTORY</span>
+                                <strong id="calc-trajectory-net">+45 Elo Net</strong>
+                            </div>
+                            <div class="calc-trajectory-steps" id="calc-trajectory-steps"></div>
+                        </div>
+
+                        <!-- Target Tier Calculator (active in Target Mode) -->
+                        <div class="calc-target-card" id="calc-target-card" hidden>
+                            <span class="calc-kicker">TIER CLIMB REQUIREMENTS</span>
+                            <div class="calc-target-milestones" id="calc-target-milestones"></div>
                         </div>
 
                         <div class="calc-tier-breakdown">
@@ -213,9 +288,14 @@
                             </div>
                         </div>
 
-                        <div class="calc-insight" id="calc-insight">
-                            <span class="insight-icon" aria-hidden="true">💡</span>
-                            <p id="calc-insight-text">Rating changes depend on both players’ ratings, the match outcome, and the competition’s K-factor.</p>
+                        <div class="calc-footer-actions">
+                            <div class="calc-insight" id="calc-insight">
+                                <span class="insight-icon" aria-hidden="true">💡</span>
+                                <p id="calc-insight-text">Rating changes depend on both players’ ratings, the match outcome, and the competition’s K-factor.</p>
+                            </div>
+                            <button type="button" class="calc-share-btn" id="calc-share-btn">
+                                <span aria-hidden="true">📋</span> Copy Simulation
+                            </button>
                         </div>
                     </div>
                 </div>

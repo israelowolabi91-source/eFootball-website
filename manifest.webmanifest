@@ -2,7 +2,7 @@
   "name": "Tim eFootball League",
   "short_name": "Tim League",
   "description": "Tournaments, rankings, matches, and competitions for the Tim eFootball League.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#07152d",
   "theme_color": "#0b2042",

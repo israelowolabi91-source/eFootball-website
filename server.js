@@ -23,6 +23,7 @@ const USERS_FILE = process.env.USERS_FILE || path.join(DATA_DIR, 'users.json');
 const DATABASE_FILE = process.env.DATABASE_FILE || path.join(DATA_DIR, 'efootball.sqlite');
 const MATCHES_FILE = process.env.MATCHES_FILE || path.join(DATA_DIR, 'challenges.json');
 const EVIDENCE_DIR = process.env.MATCH_EVIDENCE_DIR || path.join(DATA_DIR, 'match-evidence');
+const PROFILE_PHOTO_DIR = process.env.PROFILE_PHOTO_DIR || path.join(DATA_DIR, 'player-photos');
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const OWNER_EMAIL = String(process.env.OWNER_EMAIL || '').trim().toLowerCase();
 const OWNER_REVIEW_TOKEN = String(process.env.OWNER_REVIEW_TOKEN || '');
@@ -45,6 +46,7 @@ if (!fs.existsSync(MATCHES_FILE)) {
   fs.writeFileSync(MATCHES_FILE, '{}', { mode: 0o600 });
 }
 fs.mkdirSync(EVIDENCE_DIR, { recursive: true, mode: 0o700 });
+fs.mkdirSync(PROFILE_PHOTO_DIR, { recursive: true, mode: 0o700 });
 
 const database = new Database(DATABASE_FILE);
 database.pragma('journal_mode = WAL');
@@ -303,6 +305,65 @@ if (!cupTitleMigration) {
   database.prepare("INSERT INTO app_migrations (name, completed_at) VALUES ('normalize-featured-cup-title-v1', ?)").run(new Date().toISOString());
 }
 
+const starterTournamentMigration = database.prepare("SELECT 1 FROM app_migrations WHERE name = 'seed-community-events-v1'").get();
+if (!starterTournamentMigration) {
+  const existingTournaments = getSiteContent('tournaments', []);
+  const starterEvents = [
+      {
+        id: 'community-cup-2026', title: 'Tim League Cup 2026', kicker: 'One bracket. One champion.', badge: 'CUP',
+        format: '32-player single elimination', slots: '32 players', status: 'Registration Open',
+        eventType: 'Knockout Cup', platform: 'Mobile, Console & PC', dates: 'Registration closes Dec 6 · Matches Dec 7–20, 2026',
+        desc: 'The season showpiece is back. Win your way through the bracket and claim the League Cup champion feature on your profile.',
+        rules: 'Register with a verified account. Play each round by the published deadline. Both players submit the final score and a match screenshot. Admins review disputed reports.',
+        registrationOpen: true, featuredCup: true, published: true, prizePool: 'Champion profile feature',
+        prizeDetails: 'The winner is featured on the League Cup page and in the season recap.', minElo: null, maxElo: null, entryLink: ''
+      },
+      {
+        id: 'neon-night-blitz-2026', title: 'Neon Night Blitz', kicker: 'Fast fixtures. Bright lights.', badge: 'BLITZ',
+        format: 'Four-round Swiss · one match per round', slots: '16 players', status: 'Registration Open',
+        eventType: 'Swiss Sprint', platform: 'All platforms', dates: 'Dec 4–5, 2026',
+        desc: 'A quick-fire evening tournament for players who want a full mini-season in one weekend. Pairings keep close records facing each other.',
+        rules: 'Four scheduled rounds. Report every result with a screenshot in Match Centre. Standings use wins, then goal difference, then goals scored.',
+        registrationOpen: true, featuredCup: false, published: true, prizePool: 'Neon Night winner feature',
+        prizeDetails: 'Top finishers receive a public tournament recap mention.', minElo: null, maxElo: null, entryLink: ''
+      },
+      {
+        id: 'underdog-uprising-2026', title: 'Underdog Uprising', kicker: 'The next name on the leaderboard.', badge: 'RISING',
+        format: '16-player knockout', slots: '16 players', status: 'Coming Soon',
+        eventType: 'Rising Players Cup', platform: 'All platforms', dates: 'Dec 12–19, 2026',
+        desc: 'A level playing field for developing competitors. Build a run, upset a seed, and earn your first big tournament story.',
+        rules: 'Open to players rated 1,399 Elo or below when registration closes. Verified profile and screenshot-backed result reports are required.',
+        registrationOpen: false, featuredCup: false, published: true, prizePool: 'Breakthrough player feature',
+        prizeDetails: 'The finalist with the biggest rating rise receives a season recap feature.', minElo: null, maxElo: 1399, entryLink: ''
+      },
+      {
+        id: 'derby-day-ladder-2026', title: 'Derby Day: Rivalry Ladder', kicker: 'Choose a rival. Settle it on the pitch.', badge: 'DERBY',
+        format: 'Open challenge ladder · 3 fixtures', slots: '24 players', status: 'Coming Soon',
+        eventType: 'Rivalry Ladder', platform: 'All platforms', dates: 'Dec 19–27, 2026',
+        desc: 'A social ladder built around head-to-head rivalries. Play three different opponents and climb the event table with every verified result.',
+        rules: 'Each player receives up to three fixtures. Both opponents report the same score and submit a screenshot. Standings are settled by wins and goal difference.',
+        registrationOpen: false, featuredCup: false, published: true, prizePool: 'Rivalry Week spotlight',
+        prizeDetails: 'The ladder leader and closest rivalry are highlighted in the event recap.', minElo: null, maxElo: null, entryLink: ''
+      },
+      {
+        id: 'golden-boot-gauntlet-2026', title: 'Golden Boot Gauntlet', kicker: 'Attack first. Keep the receipts.', badge: 'GOALS',
+        format: 'Five-match scoring challenge', slots: 'Open entry', status: 'Coming Soon',
+        eventType: 'Community Challenge', platform: 'All platforms', dates: 'Jan 2–10, 2027',
+        desc: 'A friendly scoring race focused on goals, not Elo. Bring your sharpest attack and submit verified match results for the event board.',
+        rules: 'Play up to five event fixtures. Only approved match reports count. Ties are broken by goals scored, then goal difference.',
+        registrationOpen: false, featuredCup: false, published: true, prizePool: 'Golden Boot profile badge',
+        prizeDetails: 'The top scorer is featured in the community recap.', minElo: null, maxElo: null, entryLink: ''
+      }
+    ];
+  const mergedTournaments = Array.isArray(existingTournaments) ? [...existingTournaments] : [];
+  starterEvents.forEach((event) => {
+    if (event.featuredCup && mergedTournaments.some((existing) => existing.featuredCup)) return;
+    if (!mergedTournaments.some((existing) => existing.id === event.id)) mergedTournaments.push(event);
+  });
+  setSiteContent('tournaments', mergedTournaments);
+  database.prepare("INSERT INTO app_migrations (name, completed_at) VALUES ('seed-community-events-v1', ?)").run(new Date().toISOString());
+}
+
 // Auto-verify and promote OWNER_EMAIL if registered
 if (OWNER_EMAIL) {
   const users = readUsers();
@@ -386,6 +447,7 @@ const publicProfile = (user) => {
     platform: user.platform || null,
     country: user.country || null,
     clubName: user.clubName || null,
+    avatarUrl: user.avatar?.file ? `/api/players/${encodeURIComponent(user.id)}/avatar?v=${encodeURIComponent(user.avatar.updatedAt || '')}` : null,
     rating: user.rating,
     wins: user.wins,
     losses: user.losses,
@@ -408,6 +470,7 @@ const publicMatchProfile = (user) => ({
   platform: user.platform || null,
   country: user.country || null,
   clubName: user.clubName || null,
+  avatarUrl: user.avatar?.file ? `/api/players/${encodeURIComponent(user.id)}/avatar?v=${encodeURIComponent(user.avatar.updatedAt || '')}` : null,
   rating: user.rating,
   wins: user.wins,
   losses: user.losses,
@@ -620,7 +683,7 @@ const formatMatchTime = (value, timeZone) => new Date(value).toLocaleString('en-
   timeZone: normalizedTimeZone(timeZone) || 'UTC'
 });
 const privateMatchUrl = (matchId, token) =>
-  `${BASE_URL}/matches.html#match=${encodeURIComponent(matchId)}&access=${encodeURIComponent(token)}`;
+  `${BASE_URL}/matches.html?match=${encodeURIComponent(matchId)}&access=${encodeURIComponent(token)}#challenges`;
 const notifyMatchParticipant = async (match, recipient, { subject, title, message }) => {
   const token = createToken();
   await sendEmail({
@@ -845,7 +908,8 @@ app.use((req, res, next) => {
   next();
 });
 app.get('/', (req, res) => {
-  res.redirect(302, '/index.html');
+	const signedInUser = findSessionUser(req, readUsers());
+	res.redirect(302, signedInUser ? '/index.html' : '/login.html');
 });
 app.get(['/login.html', '/auth.html', '/reset-password.html'], (req, res) => {
   res.sendFile(path.join(ROOT, 'login.html'));
@@ -873,13 +937,19 @@ app.use((req, res, next) => {
     '/profile.html', '/privacy.html', '/terms.html', '/records.html'
   ]);
   const publicAssets = new Set([
-    '/style.css', '/script.js', '/site-config.js', '/admin.js',
+    '/style.css', '/script.js', '/site-config.js', '/admin.js', '/admin.css', '/member-experience.css',
     '/sw.js', '/favicon.png', '/manifest.webmanifest'
   ]);
   const publicFile = publicHtml.has(normalized) ||
     publicAssets.has(normalized) ||
     /^\/images\/[\w./-]+\.(?:png|jpg|jpeg|webp|svg|ico)$/.test(normalized);
-  if (!['GET', 'HEAD'].includes(req.method) || publicFile) return next();
+  if (!['GET', 'HEAD'].includes(req.method)) return next();
+  const authLandingPages = new Set(['/login.html', '/signup.html', '/privacy.html', '/terms.html']);
+  if (publicHtml.has(normalized) && !authLandingPages.has(normalized) && !findSessionUser(req, readUsers())) {
+    const requestedPath = req.originalUrl.length <= 2048 ? req.originalUrl : '/index.html';
+    return res.redirect(302, `/login.html?next=${encodeURIComponent(requestedPath)}`);
+  }
+  if (publicFile) return next();
   if (normalized.startsWith('/api/')) return next();
   return res.sendStatus(404);
 });
@@ -1048,6 +1118,7 @@ app.get('/api/me', (req, res) => {
     firstName: user.firstName || user.name,
     gamerName: user.gamerTag || user.gamerName,
     gamerTag: user.gamerTag || user.gamerName,
+    avatarUrl: publicProfile(user).avatarUrl,
     wins: user.wins,
     draws: user.draws,
     losses: user.losses,
@@ -1102,7 +1173,7 @@ app.get('/api/me/matches', (req, res) => {
         scheduledAt: m.scheduledAt,
         createdAt: m.createdAt,
         role: isChallenger ? 'challenger' : 'opponent',
-        opponent: opponent ? { gamerTag: opponent.gamerTag, rating: opponent.rating } : { gamerTag: 'Unknown', rating: null },
+        opponent: opponent ? { gamerTag: opponent.gamerTag, rating: opponent.rating, avatarUrl: publicMatchProfile(opponent).avatarUrl } : { gamerTag: 'Unknown', rating: null, avatarUrl: null },
         outcome,
         myScore,
         oppScore,
@@ -1290,6 +1361,39 @@ app.get('/api/profile', (req, res) => {
   res.json({ profile: publicProfile(user), ownerConfigured: Boolean(OWNER_EMAIL), emailDelivery: Boolean(mailer) });
 });
 
+const saveProfilePhoto = (user, dataUrl) => {
+  if (typeof dataUrl !== 'string') throw new Error('Choose a PNG, JPEG, or WebP profile photo.');
+  const match = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataUrl);
+  if (!match) throw new Error('Use a PNG, JPEG, or WebP profile photo.');
+  const contents = Buffer.from(match[2], 'base64');
+  if (!contents.length || contents.length > 2 * 1024 * 1024) throw new Error('Profile photos must be 2 MB or smaller.');
+  const imageType = match[1];
+  const validBytes = imageType === 'png'
+    ? contents.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    : imageType === 'jpeg'
+      ? contents.length >= 3 && contents[0] === 0xff && contents[1] === 0xd8 && contents[2] === 0xff
+      : contents.length >= 12 && contents.toString('ascii', 0, 4) === 'RIFF' && contents.toString('ascii', 8, 12) === 'WEBP';
+  if (!validBytes) throw new Error('The photo contents do not match the selected image type.');
+  const extension = imageType === 'jpeg' ? 'jpg' : imageType;
+  const file = `photo-${crypto.randomUUID()}.${extension}`;
+  if (user.avatar?.file && /^photo-[\w-]+\.(png|jpg|webp)$/.test(user.avatar.file)) {
+    fs.rmSync(path.join(PROFILE_PHOTO_DIR, path.basename(user.avatar.file)), { force: true });
+  }
+  fs.writeFileSync(path.join(PROFILE_PHOTO_DIR, file), contents, { mode: 0o600 });
+  return { file, contentType: `image/${imageType}`, updatedAt: new Date().toISOString() };
+};
+
+app.get('/api/players/:id/avatar', (req, res) => {
+  const user = Object.values(readUsers()).find((candidate) => candidate.id === req.params.id && candidate.verified);
+  const avatar = user?.avatar;
+  if (!avatar || !/^photo-[\w-]+\.(png|jpg|webp)$/.test(avatar.file)) {
+    return res.sendStatus(404);
+  }
+  res.setHeader('Content-Type', avatar.contentType || (avatar.file.endsWith('.jpg') ? 'image/jpeg' : `image/${path.extname(avatar.file).slice(1)}`));
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  return res.sendFile(path.join(PROFILE_PHOTO_DIR, avatar.file));
+});
+
 app.patch('/api/profile', (req, res) => {
   const user = requireUser(req, res);
   if (!user) return;
@@ -1302,6 +1406,20 @@ app.patch('/api/profile', (req, res) => {
   if (duplicate) return res.status(409).json({ message: 'That gamer tag is already in use.' });
   user.firstName = firstName;
   user.gamerTag = gamerTag;
+  if (Object.hasOwn(req.body, 'avatarData')) {
+    if (req.body.avatarData === null) {
+      if (user.avatar?.file && /^photo-[\w-]+\.(png|jpg|webp)$/.test(user.avatar.file)) {
+        fs.rmSync(path.join(PROFILE_PHOTO_DIR, path.basename(user.avatar.file)), { force: true });
+      }
+      delete user.avatar;
+    } else {
+      try {
+        user.avatar = saveProfilePhoto(user, req.body.avatarData);
+      } catch (error) {
+        return res.status(400).json({ message: error.message });
+      }
+    }
+  }
   users[user.email] = user;
   writeUsers(users);
   res.json({ profile: publicProfile(user) });
@@ -1366,6 +1484,8 @@ app.get('/api/site/dashboard', (req, res) => {
       id: match.id,
       challenger: challenger.gamerTag,
       opponent: opponent.gamerTag,
+      challengerAvatarUrl: publicMatchProfile(challenger).avatarUrl,
+      opponentAvatarUrl: publicMatchProfile(opponent).avatarUrl,
       challengerScore: match.result.challengerScore,
       opponentScore: match.result.opponentScore,
       approvedAt: match.result.approvedAt || match.createdAt,
@@ -1685,7 +1805,7 @@ app.post('/api/matches', async (req, res) => {
       await sendEmail({
         to: recipient.email,
         subject,
-        html: emailLayout(title, message, `${BASE_URL}/matches.html#match=${encodeURIComponent(id)}&access=${encodeURIComponent(token)}`, 'Open private match link', recipient.firstName, 'This private link expires in 180 days. Do not forward it; it grants access to this match only.')
+        html: emailLayout(title, message, privateMatchUrl(id, token), 'Open private match link', recipient.firstName, 'This private link expires in 180 days. Do not forward it; it grants access to this match only.')
       });
       match.emailStatus[role] = 'sent';
     } catch (error) {
@@ -1732,7 +1852,7 @@ app.post('/api/matches/:id/respond', async (req, res) => {
     await sendEmail({
       to: challenger.email,
       subject: `${opponent.gamerTag} ${action === 'accept' ? 'accepted' : 'declined'} your match invitation`,
-      html: emailLayout(`Invitation ${action === 'accept' ? 'accepted' : 'declined'}`, `${opponent.gamerTag} ${action === 'accept' ? 'accepted your match invitation.' : 'declined your match invitation.'}${action === 'accept' ? ` The match is scheduled for ${formatMatchTime(match.scheduledAt, match.timeZone)} (${match.timeZone || 'UTC'}).` : ''}`, `${BASE_URL}/matches.html#match=${encodeURIComponent(match.id)}&access=${encodeURIComponent(challengerToken)}`, 'Open private match link', challenger.firstName, 'This private link expires in 180 days. Do not forward it; it grants access to this match only.')
+      html: emailLayout(`Invitation ${action === 'accept' ? 'accepted' : 'declined'}`, `${opponent.gamerTag} ${action === 'accept' ? 'accepted your match invitation.' : 'declined your match invitation.'}${action === 'accept' ? ` The match is scheduled for ${formatMatchTime(match.scheduledAt, match.timeZone)} (${match.timeZone || 'UTC'}).` : ''}`, privateMatchUrl(match.id, challengerToken), 'Open private match link', challenger.firstName, 'This private link expires in 180 days. Do not forward it; it grants access to this match only.')
     });
     match.accessTokens[challenger.email] = { tokenHash: hashToken(challengerToken), expiresAt: Date.now() + 180 * 24 * 60 * 60 * 1000 };
     match.emailStatus.challenger = 'sent';
@@ -1768,7 +1888,7 @@ app.post('/api/matches/:id/resend-invitation', async (req, res) => {
     await sendEmail({
       to: opponent.email,
       subject: `${challenger.gamerTag} sent you an eFootball match invitation`,
-      html: emailLayout('Match invitation reminder', `${challenger.gamerTag} is waiting for your response to a ${match.ranked ? 'ranked' : 'friendly'} match invitation.`, `${BASE_URL}/matches.html#match=${encodeURIComponent(match.id)}&access=${encodeURIComponent(opponentToken)}`, 'View private invitation', opponent.firstName, 'This private link expires in 180 days. Do not forward it; it grants access to this match only.')
+      html: emailLayout('Match invitation reminder', `${challenger.gamerTag} is waiting for your response to a ${match.ranked ? 'ranked' : 'friendly'} match invitation.`, privateMatchUrl(match.id, opponentToken), 'View private invitation', opponent.firstName, 'This private link expires in 180 days. Do not forward it; it grants access to this match only.')
     });
     match.accessTokens[opponent.email] = { tokenHash: hashToken(opponentToken), expiresAt: Date.now() + 180 * 24 * 60 * 60 * 1000 };
     match.emailStatus.opponent = 'sent';
@@ -1935,7 +2055,7 @@ app.post('/api/matches/:id/result', async (req, res) => {
       await sendEmail({
         to: opponent.email,
         subject: `${user.gamerTag} submitted a match score`,
-        html: emailLayout('Your opponent reported the score', `${user.gamerTag} submitted ${report.challengerScore} – ${report.opponentScore}. Open your private link to report your score and upload your own screenshot.`, `${BASE_URL}/matches.html#match=${encodeURIComponent(match.id)}&access=${encodeURIComponent(opponentToken)}`, 'Review private match', opponent.firstName, 'This private link expires in 180 days. Do not forward it; it grants access to this match only.')
+        html: emailLayout('Your opponent reported the score', `${user.gamerTag} submitted ${report.challengerScore} – ${report.opponentScore}. Open your private link to report your score and upload your own screenshot.`, privateMatchUrl(match.id, opponentToken), 'Review private match', opponent.firstName, 'This private link expires in 180 days. Do not forward it; it grants access to this match only.')
       });
       match.accessTokens[otherEmail] = { tokenHash: hashToken(opponentToken), expiresAt: Date.now() + 180 * 24 * 60 * 60 * 1000 };
       writeMatches(matches);
@@ -1973,7 +2093,7 @@ app.post('/api/matches/:id/result', async (req, res) => {
       await sendEmail({
         to: OWNER_EMAIL,
         subject: `Disputed match result needs review: ${users[match.challengerEmail]?.gamerTag || 'Player'} vs ${users[match.opponentEmail]?.gamerTag || 'Player'}`,
-        html: emailLayout('Disputed match result awaiting review', `The score reports submitted by the players do not match. Review both screenshots and decide the verified score in the owner panel.`, `${BASE_URL}/matches.html#owner=${encodeURIComponent(OWNER_REVIEW_TOKEN)}`, 'Review result', '', 'This private owner link grants access to match review. Keep it secret; change OWNER_REVIEW_TOKEN to revoke old links.')
+        html: emailLayout('Disputed match result awaiting review', `The score reports submitted by the players do not match. Review both screenshots and decide the verified score in the owner panel.`, `${BASE_URL}/matches.html?owner=${encodeURIComponent(OWNER_REVIEW_TOKEN)}#challenges`, 'Review result', '', 'This private owner link grants access to match review. Keep it secret; change OWNER_REVIEW_TOKEN to revoke old links.')
       });
       ownerNotified = true;
     } catch (error) {
@@ -2059,7 +2179,7 @@ app.post('/api/matches/:id/walkover', async (req, res) => {
           html: emailLayout(
             'Match Forfeit / Walkover',
             `A 3-0 walkover victory has been officially awarded to ${winnerTag} because ${loserTag} was a no-show 20+ minutes past kick-off.`,
-            `${BASE_URL}/matches.html#match=${encodeURIComponent(match.id)}`,
+            `${BASE_URL}/matches.html?match=${encodeURIComponent(match.id)}#challenges`,
             'View Match',
             player.firstName
           )
@@ -3015,6 +3135,7 @@ app.get('/api/site/tournaments/:id', (req, res) => {
     if (u.verified && u.tournamentInterests && u.tournamentInterests[tourn.id]) {
       participants.push({
         gamerTag: u.gamerTag || u.gamerName || 'Player',
+        avatarUrl: publicMatchProfile(u).avatarUrl,
         rating: u.rating || 1000,
         registeredAt: u.tournamentInterests[tourn.id].registeredAt || null
       });

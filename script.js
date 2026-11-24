@@ -139,68 +139,860 @@ const syncLeagueConfigUi = () => {
 };
 syncLeagueConfigUi();
 
+const setupTacticalBuilder = () => {
+	const formationSelect = document.querySelector('#formation-select');
+	const playerLayer = document.querySelector('#pitch-players-layer');
+	if (!formationSelect || !playerLayer) return;
+
+	const formations = {
+		'4-3-3': {
+			shape: '4-3-3',
+			strength: 'Natural wing passing triangles, flank cutbacks, and overlapping channel options.',
+			subtactic: 'Wing Rotation · Defensive instruction on Full-backs',
+			players: [
+				['GK', 50, 90], ['LB', 12, 72], ['LCB', 37, 76], ['RCB', 63, 76], ['RB', 88, 72],
+				['DMF', 50, 61], ['LCMF', 32, 49], ['RCMF', 68, 49],
+				['LWF', 16, 29], ['CF', 50, 23], ['RWF', 84, 29]
+			]
+		},
+		'4-2-1-3': {
+			shape: '4-2-1-3',
+			strength: 'Dual pivot midfield shielding with instantaneous 4-man counter-attack punch.',
+			subtactic: 'Anchoring on Central DMF · Counter Target on CF',
+			players: [
+				['GK', 50, 90], ['LB', 12, 72], ['LCB', 37, 76], ['RCB', 63, 76], ['RB', 88, 72],
+				['LDMF', 38, 60], ['RDMF', 62, 60], ['AMF', 50, 44],
+				['LWF', 17, 29], ['CF', 50, 23], ['RWF', 83, 29]
+			]
+		},
+		'4-1-2-3': {
+			shape: '4-1-2-3',
+			strength: 'Twin AMF half-space infiltration with devastating wing crosses and box entries.',
+			subtactic: 'Deep Line on DMF · Defensive on both Full-backs',
+			players: [
+				['GK', 50, 90], ['LB', 12, 72], ['LCB', 37, 76], ['RCB', 63, 76], ['RB', 88, 72],
+				['DMF', 50, 62], ['LAMF', 33, 44], ['RAMF', 67, 44],
+				['LWF', 16, 28], ['CF', 50, 22], ['RWF', 84, 28]
+			]
+		},
+		'4-2-2-2': {
+			shape: '4-2-2-2',
+			strength: 'Compact dual AMF playmakers feeding a lethal two-striker combination.',
+			subtactic: 'Anchoring on LDMF/RDMF · False 9 on one Striker',
+			players: [
+				['GK', 50, 90], ['LB', 12, 72], ['LCB', 37, 76], ['RCB', 63, 76], ['RB', 88, 72],
+				['LDMF', 38, 60], ['RDMF', 62, 60], ['LAMF', 29, 43], ['RAMF', 71, 43],
+				['LCF', 40, 24], ['RCF', 60, 24]
+			]
+		},
+		'4-4-2': {
+			shape: '4-4-2',
+			strength: 'Impermeable two-bank defensive structure with balanced flank crossings.',
+			subtactic: 'Centring on Wingers · Tight Marking on opponent AMF',
+			players: [
+				['GK', 50, 90], ['LB', 12, 72], ['LCB', 37, 76], ['RCB', 63, 76], ['RB', 88, 72],
+				['LMF', 14, 52], ['LCMF', 38, 56], ['RCMF', 62, 56], ['RMF', 86, 52],
+				['LCF', 40, 24], ['RCF', 60, 24]
+			]
+		},
+		'3-2-4-1': {
+			shape: '3-2-4-1',
+			strength: 'Dominant 5-man midfield box providing overwhelming passing lanes and ball retention.',
+			subtactic: 'Anchoring on Central CB · Defensive on LDMF',
+			players: [
+				['GK', 50, 90], ['LCB', 25, 76], ['CB', 50, 79], ['RCB', 75, 76],
+				['LDMF', 39, 61], ['RDMF', 61, 61], ['LMF', 12, 43], ['LAMF', 39, 42],
+				['RAMF', 61, 42], ['RMF', 88, 43], ['CF', 50, 23]
+			]
+		},
+		'3-4-3': {
+			shape: '3-4-3',
+			strength: 'Aggressive wide traps with simultaneous 3-man forward pressure on turnover.',
+			subtactic: 'Deep Line on Wide Midfielders · Counter Target on CF',
+			players: [
+				['GK', 50, 90], ['LCB', 24, 76], ['CB', 50, 79], ['RCB', 76, 76],
+				['LMF', 12, 50], ['LCMF', 38, 56], ['RCMF', 62, 56], ['RMF', 88, 50],
+				['LWF', 18, 28], ['CF', 50, 22], ['RWF', 82, 28]
+			]
+		},
+		'4-2-3-1': {
+			shape: '4-2-3-1',
+			strength: 'Supreme central pitch equilibrium with dedicated number 10 orchestrating.',
+			subtactic: 'Anchoring on AMF · Defensive on LDMF',
+			players: [
+				['GK', 50, 90], ['LB', 12, 72], ['LCB', 37, 76], ['RCB', 63, 76], ['RB', 88, 72],
+				['LDMF', 38, 62], ['RDMF', 62, 62], ['LMF', 16, 42], ['AMF', 50, 40], ['RMF', 84, 42],
+				['CF', 50, 22]
+			]
+		},
+		'5-2-1-2': {
+			shape: '5-2-1-2',
+			strength: 'Unbreachable 5-man low block with direct surgical 3-man counter-punch.',
+			subtactic: 'Wing Backs on LWB/RWB · Counter Target on Striker',
+			players: [
+				['GK', 50, 90], ['LCB', 25, 77], ['CB', 50, 79], ['RCB', 75, 77],
+				['LWB', 10, 59], ['RWB', 90, 59], ['LCMF', 39, 56], ['RCMF', 61, 56],
+				['AMF', 50, 41], ['LCF', 40, 24], ['RCF', 60, 24]
+			]
+		}
+	};
+
+	const roles = {
+		GK: {
+			name: 'Sweeper Keeper',
+			zone: 'gk',
+			instruction: 'Stay composed, protect the near post, and offer a safe passing option when possession is secure.',
+			traits: 'Awareness, reflexes, distribution',
+			controls: [
+				{ btn: '△ / Y (Hold)', name: 'Keeper Rush', desc: 'Sprint out to close 1v1 angles on breakaways' },
+				{ btn: 'R3 Click + Move', name: 'Manual GK Steer', desc: 'Anticipate curling far-post finesse shots' }
+			]
+		},
+		LB: {
+			name: 'Left Full-back',
+			zone: 'def',
+			instruction: 'Support the left channel when it is safe, then recover quickly to protect the space behind your winger.',
+			traits: 'Stamina, defensive awareness, crossing',
+			controls: [
+				{ btn: 'L2 / LT (Hold)', name: 'Match-Up Contain', desc: 'Block inside cutbacks from tricky wingers' },
+				{ btn: 'R2 + ◯ / RT + B', name: 'Stunning Cross', desc: 'Whip curling ball over defenders into 6-yard box' }
+			]
+		},
+		RB: {
+			name: 'Right Full-back',
+			zone: 'def',
+			instruction: 'Balance overlaps with recovery runs; avoid leaving both flanks exposed at once.',
+			traits: 'Stamina, defensive awareness, passing',
+			controls: [
+				{ btn: 'L2 / LT (Hold)', name: 'Match-Up Contain', desc: 'Hold ground and block crossing lanes' },
+				{ btn: 'L1 + ◯ / LB + B', name: 'Early Cross', desc: 'Curve ball behind backline from deep flank' }
+			]
+		},
+		LCB: {
+			name: 'Cover Centre-back',
+			zone: 'def',
+			instruction: 'Read through balls and cover the channel while your partner challenges the striker.',
+			traits: 'Defensive awareness, speed, tackling',
+			controls: [
+				{ btn: '▢ x2 / X x2', name: 'Shoulder Charge', desc: 'Cleanly muscle forward off through-balls' },
+				{ btn: 'L2 / LT', name: 'Jockey & Intercept', desc: 'Cut off threaded passing vectors' }
+			]
+		},
+		RCB: {
+			name: 'Stopper Centre-back',
+			zone: 'def',
+			instruction: 'Hold the central line, contest the striker, and keep your clearances away from danger.',
+			traits: 'Physical contact, tackling, aerial strength',
+			controls: [
+				{ btn: '◯ / B (Tap)', name: 'Emergency Clear', desc: 'First-time header or boot out of danger' },
+				{ btn: 'L2 / LT', name: 'Shot Block', desc: 'Spread body to deflect goalbound strikes' }
+			]
+		},
+		CB: {
+			name: 'Central Centre-back',
+			zone: 'def',
+			instruction: 'Protect the central lane and keep the back line connected as the ball moves across the pitch.',
+			traits: 'Defensive awareness, heading, passing',
+			controls: [
+				{ btn: 'L2 / LT (Hold)', name: 'Match-Up Pivot', desc: 'Anchor central danger zone' },
+				{ btn: '▢ x2 / X x2', name: 'Physical Duel', desc: 'Dispossess shielding target man' }
+			]
+		},
+		DMF: {
+			name: 'Anchor Midfielder',
+			zone: 'mid',
+			instruction: 'Screen the defence, close central passing lanes, and offer a simple outlet after a regain.',
+			traits: 'Defensive awareness, ball winning, short passing',
+			controls: [
+				{ btn: 'L2 / LT (Hold)', name: 'Match-Up Wall', desc: 'Block central through-balls before 18-yard box' },
+				{ btn: '✕ / A (Tap)', name: 'First-Time Release', desc: 'Quick release to playmaker without taking a touch' }
+			]
+		},
+		LDMF: {
+			name: 'Left Pivot',
+			zone: 'mid',
+			instruction: 'Protect the left half-space and move the ball forward without breaking the team’s shape.',
+			traits: 'Interception, balance, short passing',
+			controls: [
+				{ btn: 'L2 / LT', name: 'Passing Lane Intercept', desc: 'Step into passing lanes cleanly' },
+				{ btn: 'R2 + ✕ / RT + A', name: 'Stunning Low Pass', desc: 'Driven ball straight to the wingers' }
+			]
+		},
+		RDMF: {
+			name: 'Right Pivot',
+			zone: 'mid',
+			instruction: 'Cover the right half-space and stay connected to the centre-backs during transitions.',
+			traits: 'Interception, stamina, passing',
+			controls: [
+				{ btn: 'L2 / LT', name: 'Match-Up Shield', desc: 'Provide defensive cover for overlapping RB' },
+				{ btn: 'L1 + △ / LB + Y', name: 'Lofted Switch', desc: 'Ping diagonal pass to open opposite flank' }
+			]
+		},
+		LCMF: {
+			name: 'Left Central Midfielder',
+			zone: 'mid',
+			instruction: 'Link build-up to attack, support the left side, and track runners when possession changes.',
+			traits: 'Stamina, ball control, through passing',
+			controls: [
+				{ btn: 'L1 + ✕ / LB + A', name: 'Give-and-Go (1-2)', desc: 'Pass and sprint forward into half-space' },
+				{ btn: 'R2 + △ / RT + Y', name: 'Stunning Through Pass', desc: 'Thread needle between CB and LB' }
+			]
+		},
+		RCMF: {
+			name: 'Right Central Midfielder',
+			zone: 'mid',
+			instruction: 'Connect the right channel to the centre and arrive late when the attacking shape allows.',
+			traits: 'Stamina, passing, ball control',
+			controls: [
+				{ btn: 'R1 + R2 / RB + RT', name: 'Super Cancel', desc: 'Break movement lock to intercept rebound' },
+				{ btn: 'R2 + ▢ / RT + X', name: 'Edge-of-Box Strike', desc: 'Unleash stunning shot from second-ball rebound' }
+			]
+		},
+		AMF: {
+			name: 'Advanced Playmaker',
+			zone: 'mid',
+			instruction: 'Find pockets between the lines, turn into space, and create the final pass for the forwards.',
+			traits: 'Vision, tight possession, through passing',
+			controls: [
+				{ btn: 'R2 + △ / RT + Y', name: 'Stunning Through Ball', desc: 'Weighted curler into striker’s stride' },
+				{ btn: 'Right Stick Flick', name: 'Double Touch Skill', desc: 'Glide past approaching DMF effortlessly' },
+				{ btn: 'L1 + ✕ / LB + A', name: 'Wall Pass Trigger', desc: 'Set up rapid one-two at top of box' }
+			]
+		},
+		LAMF: {
+			name: 'Left Attacking Midfielder',
+			zone: 'mid',
+			instruction: 'Combine with the striker and full-back, then attack the inside channel when space opens.',
+			traits: 'Agility, passing, finishing',
+			controls: [
+				{ btn: 'L3 Gentle + R2', name: 'Finesse Dribble', desc: 'Slip between defender’s recovery challenge' },
+				{ btn: 'R2 + ▢ / RT + X', name: 'Far Post Curler', desc: 'Curl stunning strike into top right corner' }
+			]
+		},
+		RAMF: {
+			name: 'Right Attacking Midfielder',
+			zone: 'mid',
+			instruction: 'Offer a close passing option and time runs into the right half-space.',
+			traits: 'Ball control, vision, finishing',
+			controls: [
+				{ btn: 'R2 + △ / RT + Y', name: 'Incisive Ground Pass', desc: 'Cut defence open toward right striker' },
+				{ btn: 'L2 / LT', name: 'Body Shielding', desc: 'Hold off centre-back before releasing pass' }
+			]
+		},
+		LWF: {
+			name: 'Left Winger',
+			zone: 'atk',
+			instruction: 'Stretch the pitch, then choose whether to attack the byline or cut inside based on the defender.',
+			traits: 'Acceleration, dribbling, crossing',
+			controls: [
+				{ btn: 'R2 Double Tap / RT x2', name: 'Burst Sprint', desc: 'Explode past full-back into open touchline' },
+				{ btn: 'R2 + ▢ / RT + X', name: 'Finesse Curler', desc: 'Cut inside on right foot and curl top bins' },
+				{ btn: 'R2 + ◯ / RT + B', name: 'Driven Low Cross', desc: 'Drill ball across face of goal for tap-in' }
+			]
+		},
+		RWF: {
+			name: 'Right Winger',
+			zone: 'atk',
+			instruction: 'Keep width in transition and make a decisive run once the ball carrier has control.',
+			traits: 'Acceleration, dribbling, finishing',
+			controls: [
+				{ btn: 'Right Stick + Left Stick', name: 'Chop / Cut Turn', desc: 'Snap back inside defender’s sliding challenge' },
+				{ btn: 'R2 + ◯ / RT + B', name: 'Far-Post Pinpoint Cross', desc: 'Loft pinpoint cross to arriving CF' }
+			]
+		},
+		LMF: {
+			name: 'Left Wide Midfielder',
+			zone: 'mid',
+			instruction: 'Provide width, support the wing-back, and recover into the midfield line when defending.',
+			traits: 'Stamina, crossing, defensive work rate',
+			controls: [
+				{ btn: 'R2 + ◯ / RT + B', name: 'Deep Early Cross', desc: 'Whip ball early while strikers are in motion' },
+				{ btn: 'L2 / LT', name: 'Track Back Tackle', desc: 'Help full-back double team opponent winger' }
+			]
+		},
+		RMF: {
+			name: 'Right Wide Midfielder',
+			zone: 'mid',
+			instruction: 'Stretch the right flank and help protect the outside channel when possession is lost.',
+			traits: 'Stamina, crossing, defensive work rate',
+			controls: [
+				{ btn: 'R2 + ✕ / RT + A', name: 'Driven Diagonal', desc: 'Switch play quickly across to opposite flank' },
+				{ btn: 'L1 + ✕ / LB + A', name: 'Overlap Trigger', desc: 'Release RB and run inside into box' }
+			]
+		},
+		LWB: {
+			name: 'Left Wing-back',
+			zone: 'def',
+			instruction: 'Provide the left side’s width, but time forward runs so the back three are not left isolated.',
+			traits: 'Stamina, speed, crossing',
+			controls: [
+				{ btn: 'R2 Double Tap', name: 'Touchline Blast', desc: 'Fly down flank into crossing zone' },
+				{ btn: 'L2 / LT', name: 'Recovery Jockey', desc: 'Funnel attacker into the 3 centre-backs' }
+			]
+		},
+		RWB: {
+			name: 'Right Wing-back',
+			zone: 'def',
+			instruction: 'Push into space on the right and recover quickly to restore the back five.',
+			traits: 'Stamina, speed, defensive awareness',
+			controls: [
+				{ btn: 'L1 + ◯ / LB + B', name: 'Swerving Cross', desc: 'Curling delivery away from goalkeeper' },
+				{ btn: 'L2 / LT', name: 'Flank Lockdown', desc: 'Prevent crosses from entering 18-yard box' }
+			]
+		},
+		CF: {
+			name: 'Centre-forward',
+			zone: 'atk',
+			instruction: 'Pin the centre-backs, offer a passing target, and time runs across the defensive line.',
+			traits: 'Finishing, offensive awareness, acceleration',
+			controls: [
+				{ btn: 'R2 + ▢ / RT + X', name: 'Stunning Shot', desc: 'Unleash thunderous dipped strike from distance' },
+				{ btn: 'L2 / LT', name: 'Manual Shield', desc: 'Hold off centre-back before laying ball off' },
+				{ btn: 'L1 + △ / LB + Y', name: 'Shoulder Run Break', desc: 'Time run on shoulder of offside trap' }
+			]
+		},
+		LCF: {
+			name: 'Left Striker',
+			zone: 'atk',
+			instruction: 'Work across the left channel and combine with the attacking midfielder before making a run in behind.',
+			traits: 'Finishing, acceleration, off-ball movement',
+			controls: [
+				{ btn: 'R2 + ▢ / RT + X', name: 'Far Post Finesse', desc: 'Curl clinical shot around outstretched GK' },
+				{ btn: '✕ / A (Tap)', name: 'Layoff Pass', desc: 'Set up partner striker for first-time shot' }
+			]
+		},
+		RCF: {
+			name: 'Right Striker',
+			zone: 'atk',
+			instruction: 'Stay connected to the partner striker and attack the space the defence leaves open.',
+			traits: 'Finishing, balance, offensive awareness',
+			controls: [
+				{ btn: 'R2 + ▢ / RT + X', name: 'Near-Post Blast', desc: 'Hammer stunning shot past keeper’s ear' },
+				{ btn: 'Right Stick Flick', name: 'Body Feint', desc: 'Shift weight to create half-yard shooting window' }
+			]
+		}
+	};
+
+	const playstyles = {
+		'quick-counter': {
+			title: 'Quick Counter',
+			description: 'Look to break forward immediately upon winning the ball. High defensive line pushes up to compress space, releasing wide runners and a central striker instantaneously.',
+			line: 85, lineLabel: 'Very High', press: 'High · Aggressive Overload', speed: 'Instant · Vertical Sprint',
+			best: 'You want to win the ball high and score in 3 passes',
+			watch: 'A high line leaves large space behind for long balls',
+			countersWell: 'Possession Game & Slow Patient Build-Up',
+			counterAlert: 'Long Ball Counter & Rapid Route One Outlets'
+		},
+		possession: {
+			title: 'Possession Game',
+			description: 'Use close passing triangles to maintain 60%+ possession and pull the opponent out of position. Patient circulation with short triangles creates openings.',
+			line: 62, lineLabel: 'Balanced', press: 'Measured · Compact Block', speed: 'Patient · Tiki-Taka Triangles',
+			best: 'You are comfortable controlling tempo and breaking blocks',
+			watch: 'Turnovers in midfield invite devastating counters',
+			countersWell: 'Mid-blocks & Deep Compact 5-Back Defences',
+			counterAlert: 'High Press Quick Counter & Flank Overloads'
+		},
+		'long-ball-counter': {
+			title: 'Long Ball Counter',
+			description: 'Deep compact defensive line drops naturally to neutralize pace. Once won, long driven passes unleash target strikers and rapid wingers with massive space to attack.',
+			line: 42, lineLabel: 'Compact Low', press: 'Selective · Mid/Low Block', speed: 'Direct · Long Outlet Delivery',
+			best: 'You face pace spammers or high-line Quick Counter teams',
+			watch: 'Lone striker can get isolated without midfield support',
+			countersWell: 'High Defensive Lines & Ultra-Pressing Systems',
+			counterAlert: 'Patient Possession Teams who recycle safely'
+		},
+		'out-wide': {
+			title: 'Out Wide',
+			description: 'Maximize pitch width to isolate full-backs 1-on-1 and whip dangerous early crosses. Midfielders make delayed late box entries for cutbacks.',
+			line: 68, lineLabel: 'Balanced-High', press: 'Wide · Flank Pressure', speed: 'Wide · Cross & Switch Play',
+			best: 'You have tall, clinical headers and crossing specialists',
+			watch: 'Central midfield can be exposed on quick turnovers',
+			countersWell: 'Narrow 4-3-1-2 / 4-2-2-2 Formations lacking flank cover',
+			counterAlert: 'Quick Counter Wingers attacking vacated fullback channels'
+		}
+	};
+
+	const situations = {
+		chasing: {
+			system: '4-1-2-3 · Quick Counter',
+			desc: 'Push attacking mentality to +1 or +2 Red on D-pad. Sub on explosive super-sub wingers and flood the penalty box with runners.',
+			instructions: [
+				{ title: 'Attacking Fullbacks', detail: 'Sends both full-backs overlapping high to create 3v2 flank overloads.' },
+				{ title: 'Counter Target', detail: 'Assign to CF to keep them permanently forward, pinning both center-backs.' }
+			],
+			dpad: '+1 or +2 Red (Ultra Attacking)'
+		},
+		protecting: {
+			system: '5-2-1-2 · Long Ball Counter',
+			desc: 'Drop attacking mentality to -1 Blue on D-pad. Contract backline depth and slow down restart sequences to kill opponent momentum.',
+			instructions: [
+				{ title: 'Deep Line', detail: 'Assign to DMF to drop into backline forming a 6-man defensive wall.' },
+				{ title: 'Defensive', detail: 'Assign to both Full-backs / Wing-backs to forbid forward overlaps.' }
+			],
+			dpad: '-1 Blue (Defensive Stability)'
+		},
+		'low-block': {
+			system: '3-2-4-1 · Possession Game',
+			desc: 'Overload the central half-spaces with 5 midfielders. Do not force early passes; circulate patiently and use stunning shots from 22 yards.',
+			instructions: [
+				{ title: 'Centring', detail: 'Wingers cut inside to pull full-backs out of position and create shooting lanes.' },
+				{ title: 'False 9', detail: 'Striker drops deep into midfield, dragging a center-back out of the penalty box.' }
+			],
+			dpad: 'Neutral (Balanced Circulation)'
+		},
+		'speed-spam': {
+			system: '4-2-1-3 · Long Ball Counter',
+			desc: 'Deep defensive line naturally neutralizes through-balls over the top. Use Match-Up (L2/LT) to cut running angles without diving in.',
+			instructions: [
+				{ title: 'Anchoring', detail: 'Assign to DMF to stay strictly central and prevent passing lanes into the striker.' },
+				{ title: 'Tight Marking', detail: 'Assign to your fastest CB to stick like glue to their fastest forward.' }
+			],
+			dpad: 'Neutral or -1 Blue'
+		}
+	};
+
+	const formationReadout = document.querySelector('#tactical-formation-readout');
+	const boardStatus = document.querySelector('#tactical-board-status');
+	const playstyleButtons = [...document.querySelectorAll('.playstyle-tab[data-playstyle]')];
+	const overview = document.querySelector('#playstyle-overview');
+	const situationButtons = [...document.querySelectorAll('.situation-pill[data-situation]')];
+	let activePlaystyle = 'quick-counter';
+
+	const selectRole = (slot, button) => {
+		playerLayer.querySelectorAll('.pitch-player').forEach((player) => {
+			const selected = player === button;
+			player.classList.toggle('is-selected', selected);
+			player.setAttribute('aria-pressed', String(selected));
+		});
+		const role = roles[slot[0]] || roles.CMF || { name: 'Player Role', zone: 'mid', instruction: 'Fulfill tactical responsibilities.', traits: 'Awareness, stamina, technique', controls: [] };
+		const setText = (selector, value) => {
+			const element = document.querySelector(selector);
+			if (element) element.textContent = value;
+		};
+
+		const roleCard = document.querySelector('#player-role-detail');
+		if (roleCard) {
+			roleCard.dataset.zone = role.zone || 'mid';
+		}
+		const zoneEmblem = role.zone === 'atk' ? '⚽' : role.zone === 'def' ? '🛡️' : role.zone === 'gk' ? '🧤' : '⚙️';
+		setText('#role-zone-emblem', zoneEmblem);
+		setText('#role-tag', `${slot[0]} · Tactical Role · ${(role.zone || 'MID').toUpperCase()} ZONE`);
+		setText('#role-slot-pill', `${slot[0]} Selected`);
+		setText('#role-title', `${slot[0]} · ${role.name}`);
+		setText('#role-instruction', role.instruction);
+		setText('#role-traits', role.traits);
+		if (boardStatus) boardStatus.textContent = `${slot[0]} selected · ${role.name}`;
+
+		// Render traits as individual stylish chips
+		const traitsContainer = document.querySelector('#role-traits-chips');
+		if (traitsContainer && role.traits) {
+			traitsContainer.replaceChildren();
+			role.traits.split(',').forEach((trait) => {
+				const chip = document.createElement('span');
+				chip.className = 'trait-chip';
+				chip.textContent = trait.trim();
+				traitsContainer.append(chip);
+			});
+		}
+
+		// Render controller commands for this role
+		const controlsGrid = document.querySelector('#role-controls-grid');
+		if (controlsGrid && Array.isArray(role.controls)) {
+			controlsGrid.replaceChildren();
+			role.controls.forEach((ctrl) => {
+				const item = document.createElement('div');
+				item.className = 'ctrl-item';
+				item.innerHTML = `<span class="ctrl-btn">${ctrl.btn}</span><div><strong>${ctrl.name}</strong><small>${ctrl.desc}</small></div>`;
+				controlsGrid.append(item);
+			});
+		}
+	};
+
+	const renderFormation = () => {
+		const formationKey = formationSelect.value;
+		const formation = formations[formationKey] || formations['4-2-1-3'];
+		playerLayer.replaceChildren();
+		formation.players.forEach((slot, index) => {
+			const role = roles[slot[0]] || { zone: 'mid' };
+			const player = document.createElement('button');
+			player.type = 'button';
+			player.className = `pitch-player pos-${role.zone || 'mid'}`;
+			player.style.left = `${slot[1]}%`;
+			player.style.top = `${slot[2]}%`;
+			player.dataset.position = slot[0];
+			player.setAttribute('aria-pressed', 'false');
+			player.setAttribute('aria-label', `Select ${slot[0]}, ${roles[slot[0]]?.name || 'team role'}`);
+			player.textContent = slot[0].replace('_', ' ');
+			player.dataset.number = String(index + 1).padStart(2, '0');
+			player.addEventListener('click', () => selectRole(slot, player));
+			playerLayer.append(player);
+		});
+		if (formationReadout) {
+			formationReadout.replaceChildren(
+				document.createTextNode(formation.shape),
+				Object.assign(document.createElement('span'), { textContent: `${formation.players.length} positions` })
+			);
+		}
+		const setText = (selector, value) => {
+			const element = document.querySelector(selector);
+			if (element) element.textContent = value;
+		};
+		setText('#formation-strength', formation.strength || 'Balanced tactical structure.');
+		setText('#formation-subtactic', formation.subtactic || 'Standard league sub-tactics.');
+
+		const preferred = formation.players.find((slot) => slot[0] === 'CF') || formation.players.find((slot) => slot[0].includes('CF')) || formation.players[0];
+		const preferredButton = [...playerLayer.querySelectorAll('.pitch-player')].find((player) => player.dataset.position === preferred[0]);
+		selectRole(preferred, preferredButton);
+	};
+
+	const renderPlaystyle = (key) => {
+		const style = playstyles[key];
+		if (!style) return;
+		activePlaystyle = key;
+		playstyleButtons.forEach((button) => {
+			const selected = button.dataset.playstyle === key;
+			button.classList.toggle('is-active', selected);
+			button.setAttribute('aria-selected', String(selected));
+			button.tabIndex = selected ? 0 : -1;
+		});
+		const setText = (selector, value) => {
+			const element = document.querySelector(selector);
+			if (element) element.textContent = value;
+		};
+		const playstyleIcons = {
+			'quick-counter': { icon: '⚡', sub: 'High-Press Vertical Transition' },
+			possession: { icon: '🎯', sub: 'Patient Triangle Circulation' },
+			'long-ball-counter': { icon: '🚀', sub: 'Deep Block & Route One Outlet' },
+			'out-wide': { icon: '🌊', sub: 'Touchline Overload & Pinpoint Cross' }
+		};
+		const meta = playstyleIcons[key] || { icon: '⚽', sub: 'Team Tactical Philosophy' };
+		setText('#tactical-playstyle-icon', meta.icon);
+		setText('#tactical-playstyle-sub', meta.sub);
+		setText('#tactical-playstyle-title', style.title);
+		setText('#tactical-playstyle-desc', style.description);
+		setText('#stat-press', style.press);
+		setText('#stat-speed', style.speed);
+		setText('#tactical-best-when', style.best);
+		setText('#tactical-watch-for', style.watch);
+		setText('#tactical-counters-well', style.countersWell || 'Various styles');
+		setText('#tactical-counter-alert', style.counterAlert || 'Watch your shape');
+		setText('#stat-line-label', `${style.lineLabel} (${style.line}%)`);
+
+		const line = document.querySelector('#stat-def-line');
+		if (line) line.style.width = `${style.line}%`;
+		const lineLabel = document.querySelector('#stat-def-line')?.closest('.tactical-stat')?.querySelector('.stat-label-row strong');
+		if (lineLabel) lineLabel.textContent = `${style.lineLabel} (${style.line}%)`;
+		if (overview) {
+			overview.dataset.playstyle = key;
+			overview.classList.remove('tactical-content-refresh');
+			window.requestAnimationFrame(() => overview.classList.add('tactical-content-refresh'));
+		}
+	};
+
+	const renderSituation = (key) => {
+		const sit = situations[key];
+		if (!sit) return;
+		situationButtons.forEach((btn) => {
+			const sel = btn.dataset.situation === key;
+			btn.classList.toggle('is-active', sel);
+			btn.setAttribute('aria-selected', String(sel));
+		});
+		const setText = (selector, value) => {
+			const element = document.querySelector(selector);
+			if (element) element.textContent = value;
+		};
+		setText('#situation-system', sit.system);
+		setText('#situation-desc', sit.desc);
+		setText('#situation-dpad', sit.dpad);
+		const list = document.querySelector('#situation-instructions');
+		if (list && Array.isArray(sit.instructions)) {
+			list.replaceChildren();
+			sit.instructions.forEach((ins) => {
+				const li = document.createElement('li');
+				li.innerHTML = `<strong>${ins.title}:</strong> ${ins.detail}`;
+				list.append(li);
+			});
+		}
+
+		// Update 5-level D-Pad meter
+		const sitDpadLevels = {
+			chasing: ['1', '2'],
+			protecting: ['-1'],
+			'low-block': ['0'],
+			'speed-spam': ['-1', '0']
+		};
+		const activeLevels = new Set(sitDpadLevels[key] || ['0']);
+		document.querySelectorAll('.dpad-step[data-dpad-step]').forEach((step) => {
+			const active = activeLevels.has(step.dataset.dpadStep);
+			step.classList.toggle('is-active', active);
+		});
+	};
+
+	formationSelect.addEventListener('change', renderFormation);
+	playstyleButtons.forEach((button, index) => {
+		button.addEventListener('click', () => renderPlaystyle(button.dataset.playstyle));
+		button.addEventListener('keydown', (event) => {
+			if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+			event.preventDefault();
+			const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? playstyleButtons.length - 1 :
+				(index + (event.key === 'ArrowRight' ? 1 : -1) + playstyleButtons.length) % playstyleButtons.length;
+			playstyleButtons[nextIndex]?.focus();
+			playstyleButtons[nextIndex]?.click();
+		});
+	});
+
+	situationButtons.forEach((btn) => {
+		btn.addEventListener('click', () => renderSituation(btn.dataset.situation));
+	});
+
+	renderFormation();
+	renderPlaystyle(activePlaystyle);
+	renderSituation('chasing');
+};
+setupTacticalBuilder();
+
 const setupEloCalculator = () => {
 	const currentInput = document.querySelector('#calc-user-rating');
 	const opponentInput = document.querySelector('#calc-opponent-rating');
 	const kFactorSelect = document.querySelector('#calc-k-factor');
 	const presetSelect = document.querySelector('#calc-opponent-preset');
 	const outcomeButtons = [...document.querySelectorAll('.calc-res-btn[data-outcome]')];
+	const ratingPresetButtons = [...document.querySelectorAll('[data-calc-opponent-offset]')];
+	const modeButtons = [...document.querySelectorAll('.calc-mode-btn[data-calc-mode]')];
 	const deltaOutput = document.querySelector('#calc-delta');
 	if (!currentInput || !opponentInput || !kFactorSelect || !deltaOutput) return;
 
 	currentInput.value = String(window.LEAGUE_CONFIG.elo.initialRating);
 	opponentInput.value = String(window.LEAGUE_CONFIG.elo.initialRating);
 	let outcome = 'win';
+	let selectedOpponentOffset = 0;
+	let activeMode = 'single';
+	let seriesSequence = ['win', 'win', 'win'];
 	const outcomes = { win: 1, draw: 0.5, loss: 0 };
 	const tierDescription = (tier) => `${tier.name} (${window.LEAGUE_CONFIG.formatTierRange(tier).replace(' rating', '')})`;
+	const clampRating = (value) => Math.min(3000, Math.max(100, Math.round(value)));
+
+	const seriesPresets = {
+		'3-win': ['win', 'win', 'win'],
+		'bo3-clinch': ['win', 'loss', 'win'],
+		'5-streak': ['win', 'win', 'win', 'win', 'win'],
+		'bounce': ['loss', 'win', 'win']
+	};
+
+	const renderSeriesChips = () => {
+		const container = document.querySelector('#calc-series-chips');
+		if (!container) return;
+		container.replaceChildren();
+		seriesSequence.forEach((res, index) => {
+			const chip = document.createElement('button');
+			chip.type = 'button';
+			chip.className = `calc-series-chip is-${res}`;
+			chip.textContent = `M${index + 1}: ${res.toUpperCase()}`;
+			chip.title = 'Click to cycle Win -> Draw -> Loss';
+			chip.addEventListener('click', () => {
+				seriesSequence[index] = res === 'win' ? 'draw' : res === 'draw' ? 'loss' : 'win';
+				renderSeriesChips();
+				render();
+			});
+			container.append(chip);
+		});
+	};
+
 	const render = () => {
 		const current = Number(currentInput.value);
 		const opponent = Number(opponentInput.value);
 		const kFactor = Number(kFactorSelect.value);
-		if (![current, opponent, kFactor].every(Number.isFinite) || current < 100 || opponent < 100) {
+		const validRatings = [current, opponent].every((rating) => Number.isInteger(rating) && rating >= 100 && rating <= 3000);
+		if (!validRatings || !Number.isFinite(kFactor) || kFactor <= 0) {
 			deltaOutput.textContent = '—';
-			document.querySelector('#calc-projected-rating').textContent = 'Enter valid player ratings to calculate.';
+			deltaOutput.classList.remove('positive', 'negative');
 			return;
 		}
+
+		// Calculate 3-way stake matrix
+		const winChange = window.LEAGUE_CONFIG.calculateEloChange(current, opponent, 1.0, kFactor);
+		const drawChange = window.LEAGUE_CONFIG.calculateEloChange(current, opponent, 0.5, kFactor);
+		const lossChange = window.LEAGUE_CONFIG.calculateEloChange(current, opponent, 0.0, kFactor);
+
+		const setText = (selector, value) => {
+			const el = document.querySelector(selector);
+			if (el) el.textContent = value;
+		};
+
+		setText('#stake-win-delta', `${winChange > 0 ? '+' : ''}${winChange}`);
+		setText('#stake-win-proj', `${Math.max(100, current + winChange).toLocaleString()} Elo`);
+		setText('#stake-draw-delta', `${drawChange > 0 ? '+' : ''}${drawChange}`);
+		setText('#stake-draw-proj', `${Math.max(100, current + drawChange).toLocaleString()} Elo`);
+		setText('#stake-loss-delta', `${lossChange}`);
+		setText('#stake-loss-proj', `${Math.max(100, current + lossChange).toLocaleString()} Elo`);
+
+		// Standard single-match outcome projection
 		const change = window.LEAGUE_CONFIG.calculateEloChange(current, opponent, outcomes[outcome], kFactor);
 		const projected = Math.max(100, current + change);
 		const tier = window.LEAGUE_CONFIG.getTier(projected);
 		const nextTier = window.LEAGUE_CONFIG.tiers.find((item) => item.min > projected);
-		const currentTier = window.LEAGUE_CONFIG.getTier(current);
 		const delta = projected - current;
-		deltaOutput.textContent = `${delta > 0 ? '+' : ''}${delta}`;
-		deltaOutput.classList.toggle('positive', delta >= 0);
-		deltaOutput.classList.toggle('negative', delta < 0);
-		document.querySelector('#calc-projected-rating').textContent = `New Rating: ${projected.toLocaleString()} Elo`;
+
+		if (activeMode === 'single') {
+			deltaOutput.textContent = `${delta > 0 ? '+' : ''}${delta}`;
+			deltaOutput.classList.toggle('positive', delta >= 0);
+			deltaOutput.classList.toggle('negative', delta < 0);
+			deltaOutput.classList.remove('calc-delta-pop');
+			window.requestAnimationFrame(() => deltaOutput.classList.add('calc-delta-pop'));
+			setText('#calc-delta-headline', 'PROJECTED RATING CHANGE');
+			setText('#calc-projected-rating', `New Rating: ${projected.toLocaleString()} Elo`);
+		} else if (activeMode === 'series') {
+			// Compute series trajectory step by step
+			let runningRating = current;
+			const steps = [];
+			seriesSequence.forEach((res, i) => {
+				const stepDelta = window.LEAGUE_CONFIG.calculateEloChange(runningRating, opponent, outcomes[res], kFactor);
+				runningRating = Math.max(100, runningRating + stepDelta);
+				steps.push({ match: i + 1, result: res, delta: stepDelta, rating: runningRating });
+			});
+			const netSeriesDelta = runningRating - current;
+			deltaOutput.textContent = `${netSeriesDelta > 0 ? '+' : ''}${netSeriesDelta}`;
+			deltaOutput.classList.toggle('positive', netSeriesDelta >= 0);
+			deltaOutput.classList.toggle('negative', netSeriesDelta < 0);
+			setText('#calc-delta-headline', `SERIES NET CHANGE (${seriesSequence.length} MATCHES)`);
+			setText('#calc-projected-rating', `Series Final Rating: ${runningRating.toLocaleString()} Elo`);
+			setText('#calc-trajectory-net', `${netSeriesDelta > 0 ? '+' : ''}${netSeriesDelta} Elo Net · Ending at ${runningRating.toLocaleString()}`);
+
+			const trajectoryContainer = document.querySelector('#calc-trajectory-steps');
+			if (trajectoryContainer) {
+				trajectoryContainer.replaceChildren();
+				steps.forEach((step) => {
+					const stepEl = document.createElement('div');
+					stepEl.className = `calc-step-pill is-${step.result}`;
+					stepEl.innerHTML = `<span>M${step.match} (${step.result.toUpperCase()})</span><strong>${step.delta > 0 ? '+' : ''}${step.delta}</strong><small>${step.rating.toLocaleString()} Elo</small>`;
+					trajectoryContainer.append(stepEl);
+				});
+			}
+		}
+
+		// Tier badge and meter
+		const activeRating = activeMode === 'series'
+			? Math.max(100, current + seriesSequence.reduce((acc, res) => acc + window.LEAGUE_CONFIG.calculateEloChange(current + acc, opponent, outcomes[res], kFactor), 0))
+			: projected;
+		const activeTier = window.LEAGUE_CONFIG.getTier(activeRating);
+		const activeNextTier = window.LEAGUE_CONFIG.tiers.find((item) => item.min > activeRating);
+
 		const badge = document.querySelector('#calc-tier-badge');
 		if (badge) {
-			badge.textContent = `${tier.name} Tier`;
-			badge.className = `calc-tier-badge ${tier.className}`;
+			badge.textContent = `${activeTier.name} Tier`;
+			badge.className = `calc-tier-badge ${activeTier.className}`;
 		}
-		document.querySelector('#calc-tier-next').textContent = nextTier
-			? `${Math.max(0, nextTier.min - projected)} pts to ${tierDescription(nextTier)}`
-			: 'You are in the highest tier.';
-		const tierStart = currentTier.min;
-		const tierEnd = nextTier ? nextTier.min : Math.max(projected, tierStart + 1);
-		const progress = nextTier
-			? Math.min(100, Math.max(0, ((projected - tierStart) / (tierEnd - tierStart)) * 100))
+		setText('#calc-tier-next', activeNextTier
+			? `${Math.max(0, activeNextTier.min - activeRating)} pts to ${tierDescription(activeNextTier)}`
+			: 'You are in the highest tier.');
+
+		const tierStart = activeTier.min;
+		const tierEnd = activeNextTier ? activeNextTier.min : Math.max(activeRating, tierStart + 1);
+		const progress = activeNextTier
+			? Math.min(100, Math.max(0, ((activeRating - tierStart) / (tierEnd - tierStart)) * 100))
 			: 100;
 		const meter = document.querySelector('#calc-tier-meter-fill');
 		if (meter) meter.style.width = `${progress}%`;
-		const track = document.querySelector('.calc-tier-meter-track');
-		if (track) track.setAttribute('aria-valuenow', String(Math.round(progress)));
+
+		// Win expectation calculations
+		const expectedScore = 1 / (1 + (10 ** ((opponent - current) / 400)));
+		const expectedPercent = Math.round(expectedScore * 100);
+		const opponentPercent = 100 - expectedPercent;
+
+		setText('#calc-your-expectation', `${expectedPercent}%`);
+		setText('#calc-opponent-expectation', `${opponentPercent}%`);
+		setText('#calc-your-matchup-rating', `${current.toLocaleString()} Elo`);
+		setText('#calc-opponent-matchup-rating', `${opponent.toLocaleString()} Elo`);
+
+		const matchupReadout = document.querySelector('#calc-matchup-readout');
+		const riskBadge = document.querySelector('#calc-risk-badge');
+		if (matchupReadout) {
+			const difference = current - opponent;
+			matchupReadout.textContent = Math.abs(difference) < 25 ? 'EVEN MATCH' : difference > 0 ? 'YOU FAVOURED' : 'OPPONENT FAVOURED';
+			matchupReadout.dataset.edge = Math.abs(difference) < 25 ? 'even' : difference > 0 ? 'you' : 'opponent';
+		}
+		if (riskBadge) {
+			if (expectedScore >= 0.7) {
+				riskBadge.textContent = 'High Risk / Defend Rating';
+				riskBadge.className = 'calc-risk-badge risk-high';
+			} else if (expectedScore <= 0.3) {
+				riskBadge.textContent = 'High Reward Underdog';
+				riskBadge.className = 'calc-risk-badge risk-reward';
+			} else {
+				riskBadge.textContent = 'Balanced Risk (50/50)';
+				riskBadge.className = 'calc-risk-badge risk-balanced';
+			}
+		}
+
+		const expectationFill = document.querySelector('#calc-expectation-fill');
+		if (expectationFill) expectationFill.style.width = `${expectedPercent}%`;
+
+		// Target Road to Next Tier Calculation
+		const milestonesContainer = document.querySelector('#calc-target-milestones');
+		if (milestonesContainer) {
+			milestonesContainer.replaceChildren();
+			window.LEAGUE_CONFIG.tiers.forEach((t) => {
+				const pointsNeeded = t.min - current;
+				const statusText = pointsNeeded <= 0 ? '✓ Achieved' : `${pointsNeeded} pts needed`;
+				let winsEstimate = 0;
+				if (pointsNeeded > 0) {
+					let simR = current;
+					while (simR < t.min && winsEstimate < 50) {
+						const winGain = window.LEAGUE_CONFIG.calculateEloChange(simR, opponent, 1.0, kFactor);
+						simR += Math.max(1, winGain);
+						winsEstimate++;
+					}
+				}
+				const row = document.createElement('div');
+				row.className = `target-milestone-row ${pointsNeeded <= 0 ? 'is-complete' : ''}`;
+				row.innerHTML = `
+					<div><strong>${t.name} Tier (${t.min}+)</strong><small>${statusText}</small></div>
+					<span>${pointsNeeded <= 0 ? 'Current' : `~${winsEstimate} ${winsEstimate === 1 ? 'win' : 'consecutive wins'}`}</span>
+				`;
+				milestonesContainer.append(row);
+			});
+		}
+
+		// Insight text
 		const insight = document.querySelector('#calc-insight-text');
 		if (insight) {
-			const expected = 1 / (1 + (10 ** ((opponent - current) / 400)));
-			insight.textContent = outcome === 'win' && expected < 0.5
-				? `You are the underdog. A win is projected to add ${Math.max(0, delta)} Elo.`
-				: `A ${outcome} is projected to ${delta >= 0 ? 'add' : 'subtract'} ${Math.abs(delta)} Elo at K=${kFactor}.`;
+			if (activeMode === 'series') {
+				insight.textContent = `Series simulation shows the cumulative rating after ${seriesSequence.length} matches against ${opponent.toLocaleString()} Elo rival.`;
+			} else {
+				insight.textContent = outcome === 'win' && expectedScore < 0.5
+					? `You are the underdog (${expectedPercent}% expected score). A win yields an impressive +${Math.max(0, delta)} Elo!`
+					: `A ${outcome} projects to ${delta >= 0 ? '+' : ''}${delta} Elo at K=${kFactor} against a ${opponent.toLocaleString()} rated player.`;
+			}
 		}
 	};
 
-	currentInput.addEventListener('input', render);
-	opponentInput.addEventListener('input', render);
+	const updateOpponentFromOffset = () => {
+		if (selectedOpponentOffset === null) return;
+		opponentInput.value = String(clampRating(Number(currentInput.value || window.LEAGUE_CONFIG.elo.initialRating) + selectedOpponentOffset));
+		if (presetSelect) presetSelect.value = '';
+	};
+
+	currentInput.addEventListener('input', () => {
+		updateOpponentFromOffset();
+		render();
+	});
+	opponentInput.addEventListener('input', () => {
+		selectedOpponentOffset = null;
+		ratingPresetButtons.forEach((button) => button.classList.remove('is-active'));
+		if (presetSelect) presetSelect.value = '';
+		render();
+	});
 	kFactorSelect.addEventListener('change', render);
+
+	ratingPresetButtons.forEach((button) => {
+		button.addEventListener('click', () => {
+			selectedOpponentOffset = Number(button.dataset.calcOpponentOffset);
+			updateOpponentFromOffset();
+			ratingPresetButtons.forEach((item) => item.classList.toggle('is-active', item === button));
+			render();
+		});
+	});
+
 	outcomeButtons.forEach((button) => {
 		button.addEventListener('click', () => {
 			outcome = button.dataset.outcome;
@@ -212,19 +1004,86 @@ const setupEloCalculator = () => {
 			render();
 		});
 	});
+
 	presetSelect?.addEventListener('change', () => {
 		if (presetSelect.value) {
-			opponentInput.value = presetSelect.value;
-			render();
+			selectedOpponentOffset = null;
+			opponentInput.value = String(clampRating(Number(presetSelect.value)));
+			ratingPresetButtons.forEach((button) => button.classList.remove('is-active'));
 		}
+		render();
 	});
 
+	// Mode switching: single / series / target
+	modeButtons.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			activeMode = btn.dataset.calcMode;
+			modeButtons.forEach((b) => {
+				const active = b === btn;
+				b.classList.toggle('is-active', active);
+				b.setAttribute('aria-selected', String(active));
+			});
+			const singleField = document.querySelector('#calc-single-outcome-field');
+			const seriesControls = document.querySelector('#calc-series-controls');
+			const trajectoryCard = document.querySelector('#calc-trajectory-card');
+			const targetCard = document.querySelector('#calc-target-card');
+			const stakeMatrix = document.querySelector('#calc-stake-matrix');
+
+			if (singleField) singleField.hidden = activeMode !== 'single';
+			if (seriesControls) seriesControls.hidden = activeMode !== 'series';
+			if (trajectoryCard) trajectoryCard.hidden = activeMode !== 'series';
+			if (targetCard) targetCard.hidden = activeMode !== 'target';
+			if (stakeMatrix) stakeMatrix.hidden = activeMode === 'target';
+
+			render();
+		});
+	});
+
+	// Series presets
+	document.querySelectorAll('.calc-series-btn[data-series]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			document.querySelectorAll('.calc-series-btn[data-series]').forEach((b) => b.classList.toggle('is-active', b === btn));
+			seriesSequence = [...(seriesPresets[btn.dataset.series] || ['win', 'win', 'win'])];
+			renderSeriesChips();
+			render();
+		});
+	});
+
+	// Share / Copy simulation
+	const shareBtn = document.querySelector('#calc-share-btn');
+	if (shareBtn) {
+		shareBtn.addEventListener('click', async () => {
+			const current = Number(currentInput.value);
+			const opponent = Number(opponentInput.value);
+			const k = Number(kFactorSelect.value);
+			const winChange = window.LEAGUE_CONFIG.calculateEloChange(current, opponent, 1.0, k);
+			const lossChange = window.LEAGUE_CONFIG.calculateEloChange(current, opponent, 0.0, k);
+			const text = `🎮 Tim eFootball Elo Simulation:\nYour Rating: ${current.toLocaleString()} Elo | Opponent: ${opponent.toLocaleString()} Elo (K=${k})\n` +
+				`• Win: ${winChange > 0 ? '+' : ''}${winChange} ➔ ${(current + winChange).toLocaleString()} Elo\n` +
+				`• Loss: ${lossChange} ➔ ${(current + lossChange).toLocaleString()} Elo\n` +
+				`Simulated on Tim eFootball League Hub.`;
+			try {
+				await navigator.clipboard.writeText(text);
+				const prev = shareBtn.innerHTML;
+				shareBtn.innerHTML = '<span>✓</span> Copied to Clipboard!';
+				setTimeout(() => { shareBtn.innerHTML = prev; }, 2000);
+			} catch {
+				alert(text);
+			}
+		});
+	}
+
+	renderSeriesChips();
 	render();
+
 	Promise.all([
 		fetch('/api/me', { credentials: 'same-origin', cache: 'no-store' }).then(async (response) => response.ok ? response.json() : null),
 		fetch('/api/rankings/live', { cache: 'no-store' }).then(async (response) => response.ok ? response.json() : null)
 	]).then(([profile, rankingData]) => {
-		if (profile?.authenticated && Number.isFinite(Number(profile.rating))) currentInput.value = String(profile.rating);
+		if (profile?.authenticated && Number.isFinite(Number(profile.rating))) {
+			currentInput.value = String(profile.rating);
+			updateOpponentFromOffset();
+		}
 		if (presetSelect && Array.isArray(rankingData?.players)) {
 			rankingData.players.forEach((player) => {
 				const option = document.createElement('option');
@@ -808,7 +1667,14 @@ if (rankingSearch && rankingDivision && rankingSort && rankingCount && leaderboa
 					playerLabel.className = 'rank-player';
 					const avatar = document.createElement('span');
 					avatar.className = 'rank-avatar avatar-gold';
-					avatar.textContent = player.gamerTag.slice(0, 1).toUpperCase();
+					if (player.avatarUrl) {
+						const image = document.createElement('img');
+						image.src = player.avatarUrl;
+						image.alt = '';
+						image.loading = 'lazy';
+						image.onerror = () => { image.remove(); avatar.textContent = player.gamerTag.slice(0, 1).toUpperCase(); };
+						avatar.append(image);
+					} else avatar.textContent = player.gamerTag.slice(0, 1).toUpperCase();
 					const identity = document.createElement('span');
 					const name = document.createElement('strong');
 					name.textContent = player.gamerTag;
@@ -1061,12 +1927,19 @@ if (matchesList) {
 		meta.append(event, approved);
 		const teams = document.createElement('div');
 		teams.className = 'match-list-teams result-teams';
-		const createPlayer = (name, badgeClass) => {
+		const createPlayer = (name, badgeClass, avatarUrl) => {
 			const player = document.createElement('div');
 			player.className = 'match-list-team';
 			const badge = document.createElement('span');
 			badge.className = 'matches-team-badge ' + badgeClass;
-			badge.textContent = (name || 'P').slice(0, 2).toUpperCase();
+			if (avatarUrl) {
+				const image = document.createElement('img');
+				image.src = avatarUrl;
+				image.alt = '';
+				image.loading = 'lazy';
+				image.onerror = () => { image.remove(); badge.textContent = (name || 'P').slice(0, 2).toUpperCase(); };
+				badge.append(image);
+			} else badge.textContent = (name || 'P').slice(0, 2).toUpperCase();
 			const tag = document.createElement('strong');
 			tag.textContent = name || 'Player';
 			player.append(badge, tag);
@@ -1081,9 +1954,9 @@ if (matchesList) {
 		const scoreTwo = document.createElement('b');
 		scoreTwo.textContent = String(match.opponentScore);
 		score.append(scoreOne, divider, scoreTwo);
-		const opponent = createPlayer(match.opponent, 'blue-badge');
+		const opponent = createPlayer(match.opponent, 'blue-badge', match.opponentAvatarUrl);
 		opponent.classList.add('away-team');
-		teams.append(createPlayer(match.challenger, 'gold-badge'), score, opponent);
+		teams.append(createPlayer(match.challenger, 'gold-badge', match.challengerAvatarUrl), score, opponent);
 		main.append(meta, teams);
 		const verified = document.createElement('span');
 		verified.className = 'result-verified-label';
@@ -1124,11 +1997,17 @@ if (matchesList) {
 				const score = document.createElement('span');
 				score.className = 'matches-versus';
 				score.textContent = String(firstResult.challengerScore) + ' - ' + String(firstResult.opponentScore);
-				const makeFeaturedPlayer = (name, badgeClass, side) => {
+				const makeFeaturedPlayer = (name, badgeClass, side, avatarUrl) => {
 					const player = document.createElement('div');
 					const badge = document.createElement('span');
 					badge.className = 'matches-team-badge ' + badgeClass;
-					badge.textContent = (name || 'P').slice(0, 2).toUpperCase();
+					if (avatarUrl) {
+						const image = document.createElement('img');
+						image.src = avatarUrl;
+						image.alt = '';
+						image.onerror = () => { image.remove(); badge.textContent = (name || 'P').slice(0, 2).toUpperCase(); };
+						badge.append(image);
+					} else badge.textContent = (name || 'P').slice(0, 2).toUpperCase();
 					const tag = document.createElement('strong');
 					tag.textContent = name || 'Player';
 					const label = document.createElement('small');
@@ -1140,9 +2019,9 @@ if (matchesList) {
 				if (featuredMatchTitle) {
 					featuredMatchTitle.hidden = false;
 					featuredMatchTitle.replaceChildren(
-						makeFeaturedPlayer(firstResult.challenger, 'gold-badge', 'Home'),
+						makeFeaturedPlayer(firstResult.challenger, 'gold-badge', 'Home', firstResult.challengerAvatarUrl),
 						score,
-						makeFeaturedPlayer(firstResult.opponent, 'blue-badge', 'Away')
+						makeFeaturedPlayer(firstResult.opponent, 'blue-badge', 'Away', firstResult.opponentAvatarUrl)
 					);
 				}
 			}
@@ -1334,6 +2213,15 @@ const renderPlayerDirectory = () => {
 		const cardTop = makeMatchElement('div', 'player-card-topline');
 		const avatar = makeMatchElement('span', `player-directory-avatar ${rating.className}`, player.gamerTag.slice(0, 1).toLocaleUpperCase());
 		avatar.setAttribute('aria-hidden', 'true');
+		if (player.avatarUrl) {
+			avatar.textContent = '';
+			const image = document.createElement('img');
+			image.src = player.avatarUrl;
+			image.alt = '';
+			image.loading = 'lazy';
+			image.onerror = () => { image.remove(); avatar.textContent = player.gamerTag.slice(0, 1).toLocaleUpperCase(); };
+			avatar.append(image);
+		}
 		const tier = makeMatchElement('span', `player-rating-tier ${rating.className}`, rating.label);
 		cardTop.append(avatar, tier);
 		const name = makeMatchElement('h4', 'player-directory-name', player.gamerTag);
@@ -1389,6 +2277,23 @@ const makeScoreForm = (match) => {
 		label.append(input);
 		form.append(label);
 	});
+	const scorelinePreview = makeMatchElement('p', 'scoreline-preview', 'Enter both scores to preview your result.');
+	scorelinePreview.setAttribute('aria-live', 'polite');
+	const updateScorelinePreview = () => {
+		const yourScore = form.elements.yourScore.value;
+		const opponentScore = form.elements.opponentScore.value;
+		if (yourScore === '' || opponentScore === '') {
+			scorelinePreview.textContent = 'Enter both scores to preview your result.';
+			scorelinePreview.dataset.outcome = '';
+			return;
+		}
+		const outcome = Number(yourScore) > Number(opponentScore) ? 'WIN' : Number(yourScore) < Number(opponentScore) ? 'LOSS' : 'DRAW';
+		scorelinePreview.textContent = `Your report: ${yourScore}–${opponentScore} · ${outcome}`;
+		scorelinePreview.dataset.outcome = outcome.toLowerCase();
+	};
+	form.elements.yourScore.addEventListener('input', updateScorelinePreview);
+	form.elements.opponentScore.addEventListener('input', updateScorelinePreview);
+	form.append(scorelinePreview);
 	const evidenceLabel = makeMatchElement('label', 'match-evidence-field', 'Scoreline screenshot (PNG, JPEG or WebP · max 5 MB)');
 	const evidence = document.createElement('input');
 	evidence.name = 'evidence';
@@ -1396,9 +2301,30 @@ const makeScoreForm = (match) => {
 	evidence.accept = 'image/png,image/jpeg,image/webp';
 	evidence.required = true;
 	evidenceLabel.append(evidence);
+	const evidencePreview = makeMatchElement('div', 'match-evidence-preview');
+	evidencePreview.hidden = true;
+	evidence.addEventListener('change', () => {
+		const file = evidence.files?.[0];
+		if (!file) {
+			evidencePreview.hidden = true;
+			evidencePreview.replaceChildren();
+			return;
+		}
+		if (file.size > 5 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+			evidence.value = '';
+			evidencePreview.hidden = true;
+			matchMessage(challengeStatusMessage, 'Choose a PNG, JPEG or WebP screenshot smaller than 5 MB.', true);
+			return;
+		}
+		const preview = document.createElement('img');
+		preview.alt = 'Selected match score screenshot preview';
+		preview.src = URL.createObjectURL(file);
+		evidencePreview.replaceChildren(preview, makeMatchElement('span', '', 'Screenshot ready to submit'));
+		evidencePreview.hidden = false;
+	});
 	const submit = makeMatchElement('button', 'challenge-secondary-button challenge-report-button', match.result ? 'Resubmit score & screenshot' : 'Submit score & screenshot');
 	submit.type = 'submit';
-	form.append(evidenceLabel, submit);
+	form.append(evidenceLabel, evidencePreview, submit);
 	return form;
 };
 
@@ -1667,7 +2593,6 @@ const loadChallengeData = async () => {
 	]);
 	currentUserAuthenticated = session.authenticated === true;
 	currentUserId = currentUserAuthenticated ? String(session.id || '') : '';
-	document.querySelector('#match-account-gate').hidden = currentUserAuthenticated;
 	directoryPlayers = playersResponse.players.filter((player) => !currentUserId || player.id !== currentUserId);
 	renderPlayerDirectory();
 	document.querySelector('#directory-updated').textContent = `Updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
@@ -1782,7 +2707,10 @@ if (challengeForm) {
 	});
 }
 
-const incomingMatchLink = new URLSearchParams(window.location.hash.slice(1));
+const incomingMatchLink = new URLSearchParams(window.location.search.slice(1));
+new URLSearchParams(window.location.hash.slice(1)).forEach((value, key) => {
+	if (!incomingMatchLink.has(key)) incomingMatchLink.set(key, value);
+});
 const incomingMatchId = incomingMatchLink.get('match');
 const incomingMatchToken = incomingMatchLink.get('access');
 const incomingOwnerToken = incomingMatchLink.get('owner');
@@ -2435,7 +3363,7 @@ if (cupPage) {
 }
 
 if ('serviceWorker' in navigator) {
-	navigator.serviceWorker.register('./sw.js?v=44').catch(() => {
+    navigator.serviceWorker.register('./sw.js?v=46').catch(() => {
 		// The interface remains usable when service workers are unavailable.
 	});
 }

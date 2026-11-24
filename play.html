@@ -8,9 +8,9 @@
     <title>How to Play | Tim eFootball League</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css?v=44">
+    <link rel="stylesheet" href="style.css?v=45">
     <script src="site-config.js"></script>
-    <script src="script.js?v=44" defer></script>
+    <script src="script.js?v=46" defer></script>
 </head>
 <body class="how-to-page">
     <header class="site-header">
@@ -19,7 +19,7 @@
                 <span class="brand-mark"><img src="favicon.png" alt=""></span>
                 <span class="brand-copy">
                     <span class="brand-name">Tim eFootball</span>
-                    <span class="brand-label">League <span>•</span> Est. 2024</span>
+                    <span class="brand-label">League <span>•</span> Est. 2026</span>
                 </span>
             </a>
 
@@ -171,20 +171,28 @@
                 <div>
                     <p class="eyebrow"><span class="eyebrow-line"></span> Tactical Masterclass</p>
                     <h2 id="pitch-title">Interactive Pitch &amp; Formation Builder.</h2>
-                    <p>Explore meta competitive formations, analyze team playstyles, and click any player node to inspect role duties and recommended player traits.</p>
+                    <p>Build a shape, compare playstyles, and select any position to see its job. Use these as tactical starting points—not fixed meta rules—and adapt them to your squad and the current game.</p>
                 </div>
             </div>
 
             <div class="pitch-builder-wrapper">
+                <div class="tactical-builder-topline">
+                    <div><span class="tactical-kicker">TACTICAL BOARD</span><strong id="tactical-formation-readout">4-2-1-3 <span>11 positions</span></strong></div>
+                    <span class="tactical-board-status" id="tactical-board-status" role="status" aria-live="polite">Select a position to inspect its role</span>
+                </div>
                 <div class="pitch-controls-bar">
                     <div class="formation-selector">
-                        <label for="formation-select">Formation:
+                        <label for="formation-select">Formation Shape:
                             <select id="formation-select">
-                                <option value="4-3-3">4-3-3 (Classic Wing Attack)</option>
-                                <option value="4-2-1-3" selected>4-2-1-3 (Meta Counter / Anchor)</option>
-                                <option value="4-2-2-2">4-2-2-2 (Dual AMF Overload)</option>
-                                <option value="3-2-4-1">3-2-4-1 (Modern Box Midfield)</option>
-                                <option value="5-2-1-2">5-2-1-2 (Defensive Lock &amp; Break)</option>
+                                <option value="4-2-1-3" selected>4-2-1-3 (Meta Counter / Anchor Pivot)</option>
+                                <option value="4-3-3">4-3-3 (Classic Wing Attack &amp; Triangle Mid)</option>
+                                <option value="4-1-2-3">4-1-2-3 (Dual AMF High Voltage Overload)</option>
+                                <option value="4-2-2-2">4-2-2-2 (Dual Wide AMF &amp; Twin Strikers)</option>
+                                <option value="4-4-2">4-4-2 (Two Banks of Four &amp; Partnership)</option>
+                                <option value="3-2-4-1">3-2-4-1 (Modern Box Midfield Overload)</option>
+                                <option value="3-4-3">3-4-3 (Wide Press &amp; High Flank Traps)</option>
+                                <option value="4-2-3-1">4-2-3-1 (Double Pivot &amp; Shadow AMF)</option>
+                                <option value="5-2-1-2">5-2-1-2 (Defensive Lock &amp; Fast Break)</option>
                             </select>
                         </label>
                     </div>
@@ -209,40 +217,227 @@
                             <div class="pitch-marking penalty-box-bottom"></div>
                             <div class="pitch-marking goal-box-bottom"></div>
 
+                            <span class="pitch-direction" aria-hidden="true">ATTACK</span>
                             <div id="pitch-players-layer" class="pitch-players-layer">
                                 <!-- 11 Interactive player tokens positioned dynamically -->
                             </div>
                         </div>
+
+                        <!-- Tactical Formation Synergy Bar -->
+                        <div class="formation-synergy-bar">
+                            <div><small>FORMATION STRENGTH</small><strong id="formation-strength">Central midfield transitions &amp; rapid wide wing releases</strong></div>
+                            <div><small>RECOMMENDED INSTRUCTION</small><strong id="formation-subtactic">Anchoring on DMF · Defensive on Fullbacks</strong></div>
+                        </div>
                     </div>
 
                     <div class="tactical-intel-panel">
+                        <!-- Playstyle Blueprint Card -->
                         <div class="playstyle-overview-card" id="playstyle-overview">
-                            <span class="tactical-kicker">TEAM PLAYSTYLE BLUEPRINT</span>
-                            <h3 id="tactical-playstyle-title">Quick Counter</h3>
-                            <p id="tactical-playstyle-desc">High defensive line, rapid forward transitions immediately upon winning possession. Wingers sprint behind opponent full-backs while CF pins center-backs.</p>
-                            <div class="tactical-stats-meters">
-                                <div class="tactical-stat">
-                                    <div class="stat-label-row"><span>Defensive Line Height</span><strong>High (85%)</strong></div>
-                                    <div class="stat-bar"><div class="stat-fill" id="stat-def-line" style="width: 85%"></div></div>
+                            <div class="card-glass-header">
+                                <div class="header-badge-group">
+                                    <span class="tactical-kicker">TEAM PLAYSTYLE BLUEPRINT</span>
+                                    <span class="active-system-pill" id="tactical-playstyle-badge">ACTIVE META SYSTEM</span>
                                 </div>
-                                <div class="stat-meta-row">
-                                    <span>Pressing Intensity: <strong id="stat-press">High / Aggressive</strong></span>
-                                    <span>Transition Speed: <strong id="stat-speed">Instant / Direct</strong></span>
+                                <div class="playstyle-title-row">
+                                    <span class="playstyle-emblem" id="tactical-playstyle-icon" aria-hidden="true">⚡</span>
+                                    <div>
+                                        <h3 id="tactical-playstyle-title">Quick Counter</h3>
+                                        <span class="playstyle-archetype-tag" id="tactical-playstyle-sub">High-Press Vertical Transition</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tactical-philosophy-box">
+                                <p id="tactical-playstyle-desc">High defensive line, rapid forward transitions immediately upon winning possession. Wingers sprint behind opponent full-backs while CF pins center-backs.</p>
+                            </div>
+
+                            <!-- Telemetry Meter Gauges -->
+                            <div class="tactical-telemetry-cluster">
+                                <div class="telemetry-item">
+                                    <div class="telemetry-top">
+                                        <span>Defensive Line Height</span>
+                                        <strong id="stat-line-label">High (85%)</strong>
+                                    </div>
+                                    <div class="telemetry-track"><div class="telemetry-bar-fill" id="stat-def-line" style="width: 85%"></div></div>
+                                </div>
+                                <div class="telemetry-metrics-grid">
+                                    <div class="metric-chip">
+                                        <small>PRESSING INTENSITY</small>
+                                        <strong id="stat-press">High · Aggressive</strong>
+                                    </div>
+                                    <div class="metric-chip">
+                                        <small>TRANSITION VELOCITY</small>
+                                        <strong id="stat-speed">Instant · Direct</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tactical Directives -->
+                            <div class="tactical-advice-grid">
+                                <div class="advice-card best-when">
+                                    <div class="advice-header"><span class="advice-icon">🎯</span><small>BEST APPLIED WHEN</small></div>
+                                    <strong id="tactical-best-when">You want to counter quickly</strong>
+                                </div>
+                                <div class="advice-card watch-for">
+                                    <div class="advice-header"><span class="advice-icon">⚠️</span><small>HIGH ALERT WATCH FOR</small></div>
+                                    <strong id="tactical-watch-for">Space behind the high line</strong>
+                                </div>
+                            </div>
+
+                            <!-- Matchup Edge & Vulnerability -->
+                            <div class="tactical-counter-blueprint">
+                                <div class="counter-badge counter-good">
+                                    <span class="badge-icon">🛡️</span>
+                                    <div>
+                                        <small>TACTICAL ADVANTAGE</small>
+                                        <strong id="tactical-counters-well">Possession Game &amp; Slow Build-up</strong>
+                                    </div>
+                                </div>
+                                <div class="counter-badge counter-warn">
+                                    <span class="badge-icon">⚡</span>
+                                    <div>
+                                        <small>COUNTER THREAT</small>
+                                        <strong id="tactical-counter-alert">Long Ball Counter &amp; Deep Drops</strong>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="player-role-detail-card" id="player-role-detail">
-                            <div class="role-header">
-                                <span class="role-tag" id="role-tag">CF · Tactical Assignment</span>
-                                <h4 id="role-title">CF · Goal Poacher</h4>
+                        <!-- Player Role & Controller Execution Card -->
+                        <div class="player-role-detail-card" id="player-role-detail" data-zone="atk">
+                            <div class="card-glass-header">
+                                <div class="header-badge-group">
+                                    <span class="role-tag" id="role-tag">CF · Tactical Role · ATTACK ZONE</span>
+                                    <span class="role-slot-pill" id="role-slot-pill">Selected Token</span>
+                                </div>
+                                <div class="role-title-row">
+                                    <span class="role-emblem" id="role-zone-emblem" aria-hidden="true">⚽</span>
+                                    <h4 id="role-title">CF · Goal Poacher</h4>
+                                </div>
                             </div>
-                            <p id="role-instruction" class="role-instruction">Shoulder of last man. Clinical direct finisher.</p>
-                            <div class="role-guidance">
-                                <strong>Recommended Traits &amp; Skills:</strong>
-                                <p id="role-traits">Finishing (90+), Acceleration, Knuckle Shot.</p>
+
+                            <!-- Directive Quote Box -->
+                            <div class="role-directive-box">
+                                <span class="directive-quote-bar"></span>
+                                <p id="role-instruction" class="role-instruction">Shoulder of last man. Clinical direct finisher.</p>
                             </div>
-                            <small class="role-tip">Click any position token on the pitch to inspect role responsibilities and meta builds.</small>
+
+                            <!-- Pro Traits & Attributes Chips -->
+                            <div class="role-traits-cluster">
+                                <span class="cluster-label">OPTIMAL SQUAD ATTRIBUTES &amp; SKILLS:</span>
+                                <div class="traits-chips-wrapper" id="role-traits-chips">
+                                    <span class="trait-chip">Finishing (90+)</span>
+                                    <span class="trait-chip">Acceleration</span>
+                                    <span class="trait-chip">Knuckle Shot</span>
+                                </div>
+                                <p id="role-traits" style="display:none;">Finishing (90+), Acceleration, Knuckle Shot.</p>
+                            </div>
+                            
+                            <!-- Pro Gamepad Controller Execution -->
+                            <div class="role-controls-box" id="role-controls-box">
+                                <div class="controls-header">
+                                    <span class="controls-kicker">🎮 PRO CONTROLLER EXECUTION</span>
+                                    <span class="controls-device-tag">PS5 / XBOX</span>
+                                </div>
+                                <div class="controls-grid" id="role-controls-grid">
+                                    <div class="ctrl-item">
+                                        <span class="ctrl-btn">R2 + ▢ / RT + X</span>
+                                        <div>
+                                            <strong>Stunning Shot</strong>
+                                            <small>Power strike from edge of box</small>
+                                        </div>
+                                    </div>
+                                    <div class="ctrl-item">
+                                        <span class="ctrl-btn">L2 / LT</span>
+                                        <div>
+                                            <strong>Manual Shielding</strong>
+                                            <small>Protect ball with body</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="role-footer-tip">
+                                <span class="tip-icon">💡</span>
+                                <small class="role-tip">Click any position token on the pitch board to inspect its assigned responsibilities, optimal player stats, and controller commands.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Match Situations & Dynamic In-Game Gameplan Presets -->
+                <div class="tactical-situations-section">
+                    <div class="situations-header">
+                        <span class="tactical-kicker">IN-GAME STRATEGIC PLAYBOOK</span>
+                        <h3>How to Adapt Live In-Game.</h3>
+                        <p>Real-time tactical pivots for match situations. Select a scenario to load the pro gameplan, mentality shift, and instructions:</p>
+                    </div>
+                    <div class="situation-pills" role="tablist" aria-label="Game Situations">
+                        <button type="button" class="situation-pill is-active" data-situation="chasing">
+                            <span class="sit-icon">⚡</span>
+                            <div>
+                                <strong>Chasing a Goal (70'+)</strong>
+                                <small>High Attack · Flood Penalty Box</small>
+                            </div>
+                        </button>
+                        <button type="button" class="situation-pill" data-situation="protecting">
+                            <span class="sit-icon">🛡️</span>
+                            <div>
+                                <strong>Protecting a 1-Goal Lead</strong>
+                                <small>Low Block · Kill Transition Pace</small>
+                            </div>
+                        </button>
+                        <button type="button" class="situation-pill" data-situation="low-block">
+                            <span class="sit-icon">🧱</span>
+                            <div>
+                                <strong>Breaking Down Low Block</strong>
+                                <small>Patient Overload · Edge Shots</small>
+                            </div>
+                        </button>
+                        <button type="button" class="situation-pill" data-situation="speed-spam">
+                            <span class="sit-icon">💨</span>
+                            <div>
+                                <strong>Neutralizing Fast Counters</strong>
+                                <small>Deep Drop · Cut Through Balls</small>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="situation-card" id="situation-card">
+                        <div class="situation-grid">
+                            <div class="situation-plan-module">
+                                <div class="module-header">
+                                    <small>RECOMMENDED SYSTEM</small>
+                                    <span class="module-tag">TACTICAL SHIFT</span>
+                                </div>
+                                <strong id="situation-system">4-1-2-3 · Quick Counter</strong>
+                                <p id="situation-desc">Switch attacking mentality up (+1 or +2 on D-pad). Sub on fresh super-subs with high acceleration on both wings.</p>
+                            </div>
+                            <div class="situation-subtactics-module">
+                                <div class="module-header">
+                                    <small>ADVANCED INSTRUCTIONS TO APPLY</small>
+                                    <span class="module-tag">IN-GAME PAUSE</span>
+                                </div>
+                                <ul id="situation-instructions" class="instruction-cards-list">
+                                    <li><strong>Attacking Fullbacks:</strong> Send LB/RB forward into the flanks</li>
+                                    <li><strong>Counter Target:</strong> Keep CF high to pin center backs</li>
+                                </ul>
+                            </div>
+                            <div class="situation-dpad-module">
+                                <div class="module-header">
+                                    <small>D-PAD ATTACK LEVEL</small>
+                                    <span class="module-tag">REAL-TIME D-PAD</span>
+                                </div>
+                                <div class="dpad-visual-gauge">
+                                    <div class="dpad-levels-bar">
+                                        <span class="dpad-step step-def2" data-dpad-step="-2">DEF 2</span>
+                                        <span class="dpad-step step-def1" data-dpad-step="-1">DEF 1</span>
+                                        <span class="dpad-step step-bal" data-dpad-step="0">BAL</span>
+                                        <span class="dpad-step step-atk1 is-active" data-dpad-step="1">ATK 1</span>
+                                        <span class="dpad-step step-atk2 is-active" data-dpad-step="2">ATK 2</span>
+                                    </div>
+                                    <span class="dpad-level-badge red" id="situation-dpad">+1 or +2 Red (Ultra Attacking)</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
