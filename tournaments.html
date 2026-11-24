@@ -8,7 +8,7 @@
     <title>Tournaments &amp; Competitions | Tim eFootball League</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css?v=45">
+    <link rel="stylesheet" href="style.css?v=48">
     <script src="site-config.js"></script>
     <script src="script.js?v=46" defer></script>
     <style>
@@ -704,7 +704,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="member-experience.css?v=1">
+    <link rel="stylesheet" href="member-experience.css?v=2">
 </head>
 <body class="tournaments-page">
     <header class="site-header">
@@ -937,6 +937,7 @@
                     <span style="font-size: 0.8rem; color: #94a3b8;">Tournament data is loaded from the league database.</span>
                 </div>
                 <div style="display: flex; gap: 10px;">
+                    <button type="button" class="tourn-detail-btn" id="modal-event-checkin-btn" hidden>Check in for event</button>
                     <button type="button" class="tourn-reg-btn" id="modal-event-action-btn">
                         ⚡ Register now
                     </button>
@@ -970,9 +971,11 @@
     (() => {
         let allTournaments = [];
         let myInterestIds = new Set();
+        let myCheckInIds = new Set();
         let currentFilter = 'all';
         let searchQuery = '';
         let currentActiveTournId = null;
+        let viewerTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
         const grid = document.getElementById('tournament-grid');
         const searchInput = document.getElementById('tourn-search-input');
@@ -987,6 +990,12 @@
         const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         })[character]);
+        const formatSchedule = (event) => {
+            if (!event.startsAt) return event.dates || 'To be announced';
+            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: viewerTimeZone, timeZoneName: 'short' };
+            try { return new Date(event.startsAt).toLocaleString(undefined, options); }
+            catch { return new Date(event.startsAt).toLocaleString(undefined, { ...options, timeZone: undefined }); }
+        };
         closeBtn?.addEventListener('click', () => detailDialog.close());
         detailDialog?.addEventListener('click', (e) => {
             if (e.target === detailDialog) detailDialog.close();
@@ -1011,12 +1020,15 @@
 
                 if (myRes && myRes.ok) {
                     const myData = await myRes.json();
+                    if (myData.timeZone) viewerTimeZone = myData.timeZone;
                     if (myData.ok && myData.interestIds) {
                         myInterestIds = new Set(myData.interestIds);
+                        myCheckInIds = new Set((myData.tournaments || []).filter(event => event.checkedInAt).map(event => event.id));
                         renderMyInterests(myData.tournaments || []);
                     }
                 } else {
                     myInterestIds = new Set();
+                    myCheckInIds = new Set();
                     myPanel.hidden = true;
                 }
 
@@ -1050,7 +1062,7 @@
             document.getElementById('featured-cup-status').lastChild.textContent = ` ${cup.status || 'Coming Soon'}`;
             document.getElementById('featured-cup-format').textContent = cup.format || 'TBC';
             document.getElementById('featured-cup-capacity').textContent = cup.slots || 'TBC';
-            document.getElementById('featured-cup-dates').textContent = cup.dates || 'TBC';
+            document.getElementById('featured-cup-dates').textContent = formatSchedule(cup) || 'TBC';
         };
 
         const renderMyInterests = (tournaments) => {
@@ -1090,6 +1102,10 @@
 
             grid.innerHTML = filtered.map(t => {
                 const isInterested = myInterestIds.has(t.id);
+                const isCheckedIn = myCheckInIds.has(t.id);
+                const registeredCount = Number(t.registeredCount || 0);
+                const slotLimit = Number.parseInt(String(t.slots || ''), 10);
+                const capacityPercent = Number.isSafeInteger(slotLimit) && slotLimit > 0 ? Math.min(100, Math.round(registeredCount / slotLimit * 100)) : 0;
                 const registrationOpen = t.registrationOpen === true && t.status === 'Registration Open';
                 const statusCls = t.status === 'Registration Open' ? 'open' : t.status === 'In Progress' ? 'live' : t.status === 'Completed' ? 'completed' : 'upcoming';
 
@@ -1111,8 +1127,8 @@
 
                     <div class="tourn-specs-list">
                         <div><span>Format:</span> <strong>${escapeHtml(t.format || 'To be announced')}</strong></div>
-                        <div><span>Capacity:</span> <strong>${escapeHtml(t.slots || 'To be announced')}</strong></div>
-                        <div><span>Schedule:</span> <strong>${escapeHtml(t.dates || 'To be announced')}</strong></div>
+                        <div><span>Capacity:</span> <strong>${registeredCount} registered / ${escapeHtml(t.slots || 'Unlimited')}</strong>${capacityPercent ? `<span class="tourn-capacity-track" aria-label="${capacityPercent}% full"><i style="width:${capacityPercent}%"></i></span>` : ''}</div>
+                        <div><span>Schedule${t.startsAt ? ` · ${escapeHtml(viewerTimeZone)}` : ''}:</span> <strong>${escapeHtml(formatSchedule(t))}</strong></div>
                         ${t.eventType ? `<div><span>Event type:</span> <strong>${escapeHtml(t.eventType)}</strong></div>` : ''}
                         ${t.platform ? `<div><span>Platform:</span> <strong>${escapeHtml(t.platform)}</strong></div>` : ''}
                         ${t.prizePool ? `<div><span>Prize:</span> <strong>${escapeHtml(t.prizePool)}</strong></div>` : ''}
@@ -1120,6 +1136,7 @@
                     </div>
 
                     <div class="tourn-card-footer">
+                        ${isInterested && t.checkInOpen ? `<button type="button" class="tourn-detail-btn ${isCheckedIn ? 'is-checked-in' : ''}" data-check-in="${escapeHtml(t.id)}" ${isCheckedIn ? 'disabled' : ''}>${isCheckedIn ? '✓ Checked in' : 'Check in for event'}</button>` : ''}
                         <button type="button" class="tourn-reg-btn ${isInterested ? 'is-registered' : ''}" data-register-btn="${escapeHtml(t.id)}" ${!isInterested && !registrationOpen ? 'disabled' : ''}>
                             ${isInterested ? '✓ Withdraw registration' : registrationOpen ? '⚡ Register' : 'Registration closed'}
                         </button>
@@ -1140,7 +1157,7 @@
 
             document.getElementById('modal-event-badge').textContent = t.badge || 'EVENT';
             document.getElementById('modal-event-title').textContent = t.title;
-            document.getElementById('modal-event-kicker').textContent = t.kicker || t.dates || 'Tournament event';
+            document.getElementById('modal-event-kicker').textContent = t.kicker || formatSchedule(t) || 'Tournament event';
             document.getElementById('modal-event-status').textContent = t.status || 'Status not set';
             document.getElementById('modal-event-format').textContent = t.format || 'Not specified';
             document.getElementById('modal-event-slots').textContent = t.slots || 'Not specified';
@@ -1170,6 +1187,12 @@
             actionBtn.disabled = !isInterested && !registrationOpen;
             actionBtn.textContent = isInterested ? '✓ Withdraw registration' : registrationOpen ? '⚡ Register now' : 'Registration closed';
 
+            const checkInBtn = document.getElementById('modal-event-checkin-btn');
+            checkInBtn.hidden = !isInterested || !t.checkInOpen;
+            checkInBtn.dataset.checkIn = tournId;
+            checkInBtn.disabled = myCheckInIds.has(tournId);
+            checkInBtn.textContent = myCheckInIds.has(tournId) ? '✓ Checked in' : 'Check in for event';
+
             // Fetch live participants
             const tbody = document.getElementById('modal-event-participants-body');
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#94a3b8;">Loading confirmed seeds…</td></tr>';
@@ -1191,7 +1214,7 @@
                             <td><strong style="color: ${idx < 3 ? '#f4b72f' : '#94a3b8'};">#${idx + 1}</strong></td>
                             <td><span class="tournament-participant"><span class="tournament-participant-avatar">${p.avatarUrl ? `<img src="${escapeHtml(p.avatarUrl)}" alt="" loading="lazy">` : escapeHtml(String(p.gamerTag || 'P').slice(0, 1).toUpperCase())}</span><strong>${escapeHtml(p.gamerTag)}</strong></span></td>
                             <td><strong style="color: #38bdf8;">${Number(p.rating || 1000).toLocaleString()} Elo</strong></td>
-                            <td style="color: #64748b; font-size: 0.76rem;">${p.registeredAt ? new Date(p.registeredAt).toLocaleDateString() : 'Registered'}</td>
+                            <td style="color: #64748b; font-size: 0.76rem;">${p.checkedIn ? '✓ Checked in' : p.registeredAt ? `Joined ${new Date(p.registeredAt).toLocaleDateString()}` : 'Registered'}</td>
                         </tr>
                     `).join('');
                 }
@@ -1204,6 +1227,7 @@
             const retry = event.target.closest('[data-retry-participants]');
             if (retry) openEventModal(retry.dataset.retryParticipants);
         });
+        document.getElementById('modal-event-checkin-btn')?.addEventListener('click', (event) => handleCheckIn(event.currentTarget));
 
         // Modal Action Button (Register from within modal)
         document.getElementById('modal-event-action-btn')?.addEventListener('click', async () => {
@@ -1261,6 +1285,11 @@
 
         // Grid delegation (clicking card or enter button opens modal)
         grid.addEventListener('click', (e) => {
+            const checkInBtn = e.target.closest('[data-check-in]');
+            if (checkInBtn) {
+                handleCheckIn(checkInBtn);
+                return;
+            }
             const regBtn = e.target.closest('[data-register-btn]');
             if (regBtn) {
                 handleRegister(regBtn);
@@ -1316,6 +1345,28 @@
             } catch (err) {
                 alert(err.message || 'Connection error. Please try again.');
                 btn.disabled = false;
+            }
+        };
+
+        const handleCheckIn = async (btn) => {
+            const tid = btn.dataset.checkIn;
+            btn.disabled = true;
+            btn.textContent = 'Confirming check-in…';
+            try {
+                const response = await fetch(`/api/tournaments/${encodeURIComponent(tid)}/check-in`, { method: 'POST', credentials: 'same-origin' });
+                const data = await response.json().catch(() => ({}));
+                if (response.status === 401) {
+                    window.location.href = `login.html?next=${encodeURIComponent(`tournaments.html#event=${tid}`)}`;
+                    return;
+                }
+                if (!response.ok) throw new Error(data.message || 'Check-in could not be completed.');
+                myCheckInIds.add(tid);
+                await loadData();
+                if (detailDialog.open && currentActiveTournId === tid) openEventModal(tid);
+            } catch (error) {
+                alert(error.message || 'Check-in could not be completed.');
+                btn.disabled = false;
+                btn.textContent = 'Check in for event';
             }
         };
 

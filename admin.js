@@ -820,6 +820,7 @@
             });
             feedback.textContent = '✓ Announcement published live across all pages!';
             showToast('Broadcast banner is now live sitewide!');
+            loadAdminActivity();
         } catch (err) {
             feedback.textContent = `Error: ${err.message}`;
         }
@@ -835,6 +836,17 @@
         if (featuredCupInput.checked) titleInput.value = 'Tim League Cup 2026';
     };
     document.getElementById('t-featured-cup')?.addEventListener('change', syncFeaturedCupTitle);
+    const syncTournamentPreview = () => {
+        const value = (id, fallback) => document.getElementById(id)?.value.trim() || fallback;
+        document.getElementById('t-preview-title').textContent = value('t-title', 'Your event title');
+        document.getElementById('t-preview-status').textContent = value('t-status', 'Coming Soon');
+        document.getElementById('t-preview-format').textContent = value('t-format', 'Format will appear here');
+        const localStart = document.getElementById('t-starts-at')?.value;
+        const schedule = localStart ? new Date(localStart).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : value('t-dates', 'Schedule to be announced');
+        document.getElementById('t-preview-meta').textContent = `${schedule} · ${value('t-slots', 'Unlimited places')}`;
+    };
+    document.getElementById('form-tournament')?.addEventListener('input', syncTournamentPreview);
+    document.getElementById('form-tournament')?.addEventListener('change', syncTournamentPreview);
 
     const loadTournaments = async () => {
         const grid = document.getElementById('tournaments-cards-grid');
@@ -906,7 +918,7 @@
         document.getElementById('roster-tournament-title').textContent = `${t.title} — Competitors`;
         document.getElementById('roster-tournament-subtitle').textContent = `Format: ${t.format} · Schedule: ${t.dates || 'TBC'}`;
         const tbody = document.getElementById('roster-tbody');
-        tbody.innerHTML = '<tr><td colspan="6" class="table-loading">Loading registered players…</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="table-loading">Loading registered players…</td></tr>';
         modalTournamentRoster.showModal();
 
         try {
@@ -914,7 +926,7 @@
             const participants = data.participants || [];
 
             if (!participants.length) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 25px; color: #94a3b8;">No registered players yet for this event.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color: #94a3b8;">No registered players yet for this event.</td></tr>';
                 return;
             }
 
@@ -925,13 +937,14 @@
                     <td><small style="color: #cbd5e1;">Private</small></td>
                     <td><strong class="user-elo-val">${p.rating.toLocaleString()}</strong></td>
                     <td><small>${p.wins}W–${p.draws}D–${p.losses}L</small></td>
+                    <td><small>${p.checkedInAt ? `Checked in ${escapeHtml(new Date(p.checkedInAt).toLocaleString())}` : 'Not checked in'}</small></td>
                     <td class="text-right">
                         <button type="button" class="btn-action delete" data-remove-player="${encodeURIComponent(p.id)}" data-player-tag="${escapeHtml(p.gamerTag)}" style="padding: 4px 8px; font-size: 0.72rem;">Remove</button>
                     </td>
                 </tr>
             `).join('');
         } catch (err) {
-            tbody.innerHTML = `<tr><td colspan="6" class="table-error">Error loading roster: ${err.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="table-error">Error loading roster: ${err.message}</td></tr>`;
         }
     };
 
@@ -951,6 +964,7 @@
                 showToast(res.message || 'Player removed from roster.');
                 openTournamentRoster(currentRosterTournId);
                 loadTournaments();
+                loadAdminActivity();
             } catch (err) {
                 alert(`Error: ${err.message}`);
             }
@@ -965,6 +979,7 @@
         document.getElementById('form-tournament').reset();
         syncFeaturedCupTitle();
         document.getElementById('tournament-feedback').textContent = '';
+        syncTournamentPreview();
         modalTournament.showModal();
     });
 
@@ -993,6 +1008,7 @@
             document.getElementById('t-event-type').value = t.eventType || '';
             document.getElementById('t-platform').value = t.platform || '';
             document.getElementById('t-dates').value = '';
+            document.getElementById('t-starts-at').value = '';
             document.getElementById('t-prize').value = '';
             document.getElementById('t-prize-details').value = '';
             document.getElementById('t-min-elo').value = t.minElo ?? '';
@@ -1001,11 +1017,13 @@
             document.getElementById('t-desc').value = '';
             document.getElementById('t-rules').value = '';
             document.getElementById('t-reg-open').checked = false;
+            document.getElementById('t-checkin-open').checked = false;
             document.getElementById('t-published').checked = false;
             document.getElementById('t-featured-cup').checked = false;
             syncFeaturedCupTitle();
             document.getElementById('tournament-feedback').textContent = 'Format, capacity, and Elo limits were copied. Add the event-specific details before saving.';
-            modalTournament.showModal();
+            syncTournamentPreview();
+        modalTournament.showModal();
             return;
         }
 
@@ -1030,6 +1048,7 @@
             document.getElementById('t-event-type').value = t.eventType || '';
             document.getElementById('t-platform').value = t.platform || '';
             document.getElementById('t-dates').value = t.dates || '';
+            document.getElementById('t-starts-at').value = t.startsAt ? new Date(new Date(t.startsAt).getTime() - new Date(t.startsAt).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
             document.getElementById('t-prize').value = t.prizePool || '';
             document.getElementById('t-prize-details').value = t.prizeDetails || '';
             document.getElementById('t-min-elo').value = t.minElo || '';
@@ -1038,12 +1057,14 @@
             document.getElementById('t-desc').value = t.desc || '';
             document.getElementById('t-rules').value = t.rules || '';
             document.getElementById('t-reg-open').checked = Boolean(t.registrationOpen);
+            document.getElementById('t-checkin-open').checked = Boolean(t.checkInOpen);
             document.getElementById('t-published').checked = t.published !== false;
             document.getElementById('t-featured-cup').checked = Boolean(t.featuredCup);
             syncFeaturedCupTitle();
             document.getElementById('tournament-feedback').textContent = '';
 
-            modalTournament.showModal();
+            syncTournamentPreview();
+        modalTournament.showModal();
         }
 
         if (btnToggle) {
@@ -1057,6 +1078,7 @@
                 });
                 showToast(`Registration ${!current ? 'opened' : 'closed'}!`);
                 loadTournaments();
+                loadAdminActivity();
             } catch (err) {
                 alert(`Error toggling registration: ${err.message}`);
             }
@@ -1071,6 +1093,7 @@
                     });
                     showToast('Tournament deleted.');
                     loadTournaments();
+                    loadAdminActivity();
                 } catch (err) {
                     alert(`Error: ${err.message}`);
                 }
@@ -1083,6 +1106,9 @@
         e.preventDefault();
         const editId = document.getElementById('tournament-edit-id').value;
         const feedback = document.getElementById('tournament-feedback');
+        const submitButton = document.getElementById('tournament-submit-btn');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Saving…';
         feedback.textContent = 'Saving tournament…';
         feedback.className = 'modal-feedback';
 
@@ -1096,6 +1122,7 @@
             eventType: document.getElementById('t-event-type').value.trim(),
             platform: document.getElementById('t-platform').value.trim(),
             dates: document.getElementById('t-dates').value.trim(),
+            startsAt: document.getElementById('t-starts-at').value ? new Date(document.getElementById('t-starts-at').value).toISOString() : null,
             prizePool: document.getElementById('t-prize').value.trim(),
             prizeDetails: document.getElementById('t-prize-details').value.trim(),
             minElo: document.getElementById('t-min-elo').value ? Number(document.getElementById('t-min-elo').value) : null,
@@ -1105,6 +1132,7 @@
             rules: document.getElementById('t-rules').value.trim(),
             registrationOpen: document.getElementById('t-reg-open').checked ||
                 document.getElementById('t-status').value === 'Registration Open',
+            checkInOpen: document.getElementById('t-checkin-open').checked,
             published: document.getElementById('t-published').checked,
             featuredCup: document.getElementById('t-featured-cup').checked
         };
@@ -1119,9 +1147,13 @@
             showToast(res.message || 'Tournament saved!');
             modalTournament.close();
             loadTournaments();
+            loadAdminActivity();
         } catch (err) {
             feedback.textContent = err.message;
             feedback.className = 'modal-feedback error';
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Save Tournament';
         }
     });
 
@@ -1315,10 +1347,22 @@
         }
     });
 
+    const loadAdminActivity = async () => {
+        const list = document.getElementById('admin-activity-list');
+        if (!list) return;
+        try {
+            const data = await adminFetch('/api/admin/activity?limit=30');
+            list.innerHTML = data.activity?.length ? data.activity.map((entry) => `
+                <li><span class="activity-action">${escapeHtml(entry.action)}</span><div><strong>${escapeHtml(entry.summary)}</strong><small>${escapeHtml(entry.entity)} · ${escapeHtml(entry.actor)} · ${escapeHtml(new Date(entry.createdAt).toLocaleString())}</small></div></li>
+            `).join('') : '<li>No publishing changes recorded yet.</li>';
+        } catch (error) {
+            list.innerHTML = `<li class="activity-error">Could not load activity: ${escapeHtml(error.message)}</li>`;
+        }
+    };
+
     // Initial Data Load
     const loadInitialData = async () => {
-        await loadOverview();
-        await loadUsers();
+        await Promise.all([loadOverview(), loadUsers(), loadAdminActivity()]);
     };
 
     // Run Auth Check on startup

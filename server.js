@@ -76,6 +76,15 @@ database.exec(`
     name TEXT PRIMARY KEY,
     completed_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS admin_activity (
+    id TEXT PRIMARY KEY,
+    actor TEXT NOT NULL,
+    action TEXT NOT NULL,
+    entity TEXT NOT NULL,
+    entity_id TEXT NOT NULL DEFAULT '',
+    summary TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
   CREATE TABLE IF NOT EXISTS player_reports (
     id TEXT PRIMARY KEY,
     match_id TEXT NOT NULL,
@@ -446,6 +455,7 @@ const publicProfile = (user) => {
     gamerTag: user.gamerTag,
     platform: user.platform || null,
     country: user.country || null,
+    timeZone: user.timeZone || null,
     clubName: user.clubName || null,
     avatarUrl: user.avatar?.file ? `/api/players/${encodeURIComponent(user.id)}/avatar?v=${encodeURIComponent(user.avatar.updatedAt || '')}` : null,
     rating: user.rating,
@@ -615,6 +625,12 @@ const requireAdmin = (req, res, next) => {
     return res.status(403).json({ message: 'Admin authentication required. Please sign in with an admin account or provide an admin key.' });
   }
   next();
+};
+const recordAdminActivity = (req, action, entity, entityId, summary) => {
+  const actor = findSessionUser(req, readUsers())?.email || 'Admin key';
+  database.prepare(`INSERT INTO admin_activity (id, actor, action, entity, entity_id, summary, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)`).run(crypto.randomUUID(), actor, action, entity, String(entityId || ''), String(summary || '').slice(0, 240), new Date().toISOString());
+  database.exec(`DELETE FROM admin_activity WHERE id NOT IN (SELECT id FROM admin_activity ORDER BY created_at DESC LIMIT 500)`);
 };
 
 const ownerReviewAuthorized = (req) => isAdminRequest(req);
@@ -1119,6 +1135,9 @@ app.get('/api/me', (req, res) => {
     gamerName: user.gamerTag || user.gamerName,
     gamerTag: user.gamerTag || user.gamerName,
     avatarUrl: publicProfile(user).avatarUrl,
+    platform: user.platform || null,
+    country: user.country || null,
+    timeZone: user.timeZone || null,
     wins: user.wins,
     draws: user.draws,
     losses: user.losses,
@@ -1406,6 +1425,21 @@ app.patch('/api/profile', (req, res) => {
   if (duplicate) return res.status(409).json({ message: 'That gamer tag is already in use.' });
   user.firstName = firstName;
   user.gamerTag = gamerTag;
+  if (Object.hasOwn(req.body, 'platform')) {
+    const platform = String(req.body.platform || '').trim();
+    if (platform && !['Mobile', 'Console', 'PC'].includes(platform)) return res.status(400).json({ message: 'Choose Mobile, Console, or PC as your platform.' });
+    user.platform = platform || null;
+  }
+  if (Object.hasOwn(req.body, 'country')) {
+    const country = String(req.body.country || '').trim();
+    if (country.length > 60) return res.status(400).json({ message: 'Country must be 60 characters or fewer.' });
+    user.country = country || null;
+  }
+  if (Object.hasOwn(req.body, 'timeZone')) {
+    const timeZone = String(req.body.timeZone || '').trim();
+    if (timeZone && !normalizedTimeZone(timeZone)) return res.status(400).json({ message: 'Enter a valid time zone, such as Africa/Lagos.' });
+    user.timeZone = timeZone || null;
+  }
   if (Object.hasOwn(req.body, 'avatarData')) {
     if (req.body.avatarData === null) {
       if (user.avatar?.file && /^photo-[\w-]+\.(png|jpg|webp)$/.test(user.avatar.file)) {
@@ -2863,6 +2897,14 @@ app.delete('/api/admin/matches/:id', requireAdmin, (req, res) => {
 });
 
 // 14. Admin Live Content Operations
+app.get('/api/admin/activity', requireAdmin, (req, res) => {
+  const limit = Math.min(100, Math.max(1, Number.parseInt(String(req.query.limit || '40'), 10) || 40));
+  const activity = database.prepare(`SELECT id, actor, action, entity, entity_id AS entityId, summary, created_at AS createdAt
+    FROM admin_activity ORDER BY created_at DESC LIMIT ?`).all(limit);
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.json({ ok: true, activity });
+});
+
 app.get('/api/admin/content', requireAdmin, (req, res) => {
   res.json({
     ok: true,
@@ -2882,6 +2924,7 @@ app.put('/api/admin/content/:key', requireAdmin, (req, res) => {
   const data = req.body;
   if (!data || typeof data !== 'object') return res.status(400).json({ message: 'Content data must be a valid JSON object or array.' });
   setSiteContent(key, data);
+  recordAdminActivity(req, 'updated', 'site content', key, `Updated ${key} content`);
   res.json({ ok: true, key, message: `Content for ${key} updated live.` });
 });
 
@@ -2905,7 +2948,12 @@ app.get('/api/site/announcement', (req, res) => {
 app.get('/api/site/tournaments', (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=30');
   const tournaments = getSiteContent('tournaments', []);
-  res.json({ ok: true, tournaments: tournaments.filter((tournament) => tournament.published !== false) });
+  const users = readUsers();
+  const visible = tournaments.filter((tournament) => tournament.published !== false).map((tournament) => ({
+    ...tournament,
+    registeredCount: Object.values(users).filter((candidate) => candidate.verified && candidate.tournamentInterests?.[tournament.id]).length
+  }));
+  res.json({ ok: true, tournaments: visible });
 });
 
 app.get('/api/site/cup', (req, res) => {
@@ -2967,10 +3015,11 @@ app.get('/api/site/live-streams', (req, res) => {
 // Admin: Create tournament
 app.post('/api/admin/tournaments', requireAdmin, (req, res) => {
   const tournaments = getSiteContent('tournaments', []);
-  const { title, kicker, badge, format, slots, status, dates, desc, registrationOpen, prizePool, prizeDetails, eventType, platform, rules, minElo, maxElo, entryLink, featuredCup, published } = req.body || {};
+  const { title, kicker, badge, format, slots, status, dates, startsAt, desc, registrationOpen, checkInOpen, prizePool, prizeDetails, eventType, platform, rules, minElo, maxElo, entryLink, featuredCup, published } = req.body || {};
   const isFeaturedCup = featuredCup === true;
   if (published !== undefined && typeof published !== 'boolean') return res.status(400).json({ message: 'Tournament visibility must be set to published or draft.' });
   if (!title || !format) return res.status(400).json({ message: 'Title and format are required.' });
+  if (startsAt && !Number.isFinite(Date.parse(startsAt))) return res.status(400).json({ message: 'Choose a valid event start date and time.' });
   const cleanTitle = isFeaturedCup ? 'Tim League Cup 2026' : String(title).trim().slice(0, 80);
   const cleanFormat = String(format).trim().slice(0, 100);
   const tournamentStatus = ['Registration Open', 'Coming Soon', 'In Progress', 'Completed', 'Cancelled'].includes(status) ? status : 'Coming Soon';
@@ -2997,9 +3046,11 @@ app.post('/api/admin/tournaments', requireAdmin, (req, res) => {
     eventType: String(eventType || '').trim().slice(0, 50),
     platform: String(platform || '').trim().slice(0, 80),
     dates: String(dates || 'TBC').trim().slice(0, 100),
+    startsAt: startsAt && Number.isFinite(Date.parse(startsAt)) ? new Date(startsAt).toISOString() : null,
     desc: String(desc || '').trim().slice(0, 500),
     rules: String(rules || '').trim().slice(0, 3000),
     registrationOpen: tournamentStatus === 'Registration Open' && registrationOpen === true,
+    checkInOpen: checkInOpen === true,
     featuredCup: isFeaturedCup,
     prizePool: String(prizePool || '').trim().slice(0, 100),
     prizeDetails: String(prizeDetails || '').trim().slice(0, 1000),
@@ -3010,6 +3061,7 @@ app.post('/api/admin/tournaments', requireAdmin, (req, res) => {
   };
   tournaments.push(newT);
   setSiteContent('tournaments', tournaments);
+  recordAdminActivity(req, 'created', 'tournament', newT.id, `Created ${newT.title} · ${newT.published ? 'published' : 'draft'}`);
   res.status(201).json({ ok: true, tournament: newT, message: `Tournament "${newT.title}" created successfully.` });
 });
 
@@ -3018,7 +3070,7 @@ app.put('/api/admin/tournaments/:id', requireAdmin, (req, res) => {
   const tournaments = getSiteContent('tournaments', []);
   const idx = tournaments.findIndex(t => t.id === req.params.id);
   if (idx === -1) return res.status(404).json({ message: 'Tournament not found.' });
-  const { title, kicker, badge, format, slots, status, dates, desc, registrationOpen, prizePool, prizeDetails, eventType, platform, rules, minElo, maxElo, entryLink, featuredCup, published } = req.body || {};
+  const { title, kicker, badge, format, slots, status, dates, startsAt, desc, registrationOpen, checkInOpen, prizePool, prizeDetails, eventType, platform, rules, minElo, maxElo, entryLink, featuredCup, published } = req.body || {};
   const t = tournaments[idx];
   if (published !== undefined && typeof published !== 'boolean') return res.status(400).json({ message: 'Tournament visibility must be set to published or draft.' });
   const isFeaturedCup = featuredCup === undefined ? Boolean(t.featuredCup) : featuredCup === true;
@@ -3040,8 +3092,13 @@ app.put('/api/admin/tournaments/:id', requireAdmin, (req, res) => {
   if (slots !== undefined) t.slots = String(slots).trim();
   if (status && ['Registration Open', 'Coming Soon', 'In Progress', 'Completed', 'Cancelled'].includes(status)) t.status = status;
   if (dates !== undefined) t.dates = String(dates).trim().slice(0, 100);
+  if (startsAt !== undefined) {
+    if (startsAt && !Number.isFinite(Date.parse(startsAt))) return res.status(400).json({ message: 'Choose a valid event start date and time.' });
+    t.startsAt = startsAt ? new Date(startsAt).toISOString() : null;
+  }
   if (desc !== undefined) t.desc = String(desc).trim().slice(0, 500);
   if (registrationOpen !== undefined) t.registrationOpen = Boolean(registrationOpen);
+  if (checkInOpen !== undefined) t.checkInOpen = Boolean(checkInOpen);
   if (featuredCup !== undefined) t.featuredCup = isFeaturedCup;
   if (published !== undefined) t.published = published;
   if (eventType !== undefined) t.eventType = String(eventType).trim().slice(0, 50);
@@ -3058,6 +3115,7 @@ app.put('/api/admin/tournaments/:id', requireAdmin, (req, res) => {
   }
   t.updatedAt = new Date().toISOString();
   setSiteContent('tournaments', tournaments);
+  recordAdminActivity(req, 'updated', 'tournament', t.id, `Updated ${t.title} · ${t.published ? 'published' : 'draft'}`);
   res.json({ ok: true, tournament: t, message: `Tournament "${t.title}" updated live.` });
 });
 
@@ -3068,6 +3126,7 @@ app.delete('/api/admin/tournaments/:id', requireAdmin, (req, res) => {
   if (idx === -1) return res.status(404).json({ message: 'Tournament not found.' });
   const removed = tournaments.splice(idx, 1)[0];
   setSiteContent('tournaments', tournaments);
+  recordAdminActivity(req, 'deleted', 'tournament', removed.id, `Deleted ${removed.title}`);
   res.json({ ok: true, message: `Tournament "${removed.title}" deleted.` });
 });
 
@@ -3110,6 +3169,26 @@ app.post('/api/tournaments/:id/register-interest', (req, res) => {
   res.json({ ok: true, registered: true, message: `Registration confirmed for ${tourn.title}.` });
 });
 
+app.post('/api/tournaments/:id/check-in', (req, res) => {
+  const users = readUsers();
+  const user = findSessionUser(req, users);
+  if (!user) return res.status(401).json({ message: 'Sign in to check in to this tournament.' });
+  const tournaments = getSiteContent('tournaments', []);
+  const tournament = tournaments.find((event) => event.id === req.params.id && event.published !== false);
+  if (!tournament) return res.status(404).json({ message: 'Tournament not found.' });
+  let entry = user.tournamentInterests?.[tournament.id];
+  if (!entry) return res.status(409).json({ message: 'Register for this tournament before checking in.' });
+  if (typeof entry !== 'object') {
+    entry = { registeredAt: null, tournamentTitle: tournament.title };
+    user.tournamentInterests[tournament.id] = entry;
+  }
+  if (!tournament.checkInOpen) return res.status(409).json({ message: 'Check-in has not opened for this tournament yet.' });
+  if (entry.checkedInAt) return res.json({ ok: true, checkedIn: true, checkedInAt: entry.checkedInAt, message: 'You are already checked in.' });
+  entry.checkedInAt = new Date().toISOString();
+  writeUsers(users);
+  res.json({ ok: true, checkedIn: true, checkedInAt: entry.checkedInAt, message: `Check-in confirmed for ${tournament.title}.` });
+});
+
 // User: Get my tournament interests
 app.get('/api/me/tournaments', (req, res) => {
   const users = readUsers();
@@ -3119,8 +3198,8 @@ app.get('/api/me/tournaments', (req, res) => {
   const tournaments = getSiteContent('tournaments', []);
   const myTournaments = tournaments
     .filter(t => t.published !== false && interests[t.id])
-    .map(t => ({ ...t, registeredAt: interests[t.id].registeredAt }));
-  res.json({ ok: true, tournaments: myTournaments, interestIds: myTournaments.map((tournament) => tournament.id) });
+    .map(t => ({ ...t, registeredAt: interests[t.id].registeredAt, checkedInAt: interests[t.id].checkedInAt || null }));
+  res.json({ ok: true, timeZone: user.timeZone || null, tournaments: myTournaments, interestIds: myTournaments.map((tournament) => tournament.id) });
 });
 
 // Public: Get single tournament with public participants
@@ -3137,17 +3216,20 @@ app.get('/api/site/tournaments/:id', (req, res) => {
         gamerTag: u.gamerTag || u.gamerName || 'Player',
         avatarUrl: publicMatchProfile(u).avatarUrl,
         rating: u.rating || 1000,
-        registeredAt: u.tournamentInterests[tourn.id].registeredAt || null
+        registeredAt: u.tournamentInterests[tourn.id].registeredAt || null,
+        checkedIn: Boolean(u.tournamentInterests[tourn.id].checkedInAt)
       });
     }
   }
   participants.sort((a, b) => (b.rating || 1000) - (a.rating || 1000));
 
+  const entryCount = participants.length;
+
   res.json({
     ok: true,
     tournament: tourn,
     participants,
-    totalParticipants: participants.length
+    totalParticipants: entryCount
   });
 });
 
@@ -3174,7 +3256,8 @@ app.get('/api/admin/tournaments/:id/participants', requireAdmin, (req, res) => {
         wins: u.wins || 0,
         draws: u.draws || 0,
         losses: u.losses || 0,
-        registeredAt: u.tournamentInterests[tourn.id].registeredAt || null
+        registeredAt: u.tournamentInterests[tourn.id].registeredAt || null,
+        checkedInAt: u.tournamentInterests[tourn.id].checkedInAt || null
       });
     }
   }

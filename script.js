@@ -1,6 +1,23 @@
 const menuToggle = document.querySelector('.menu-toggle');
 const navigation = document.querySelector('.navigation');
 
+// Keep player identity visible when a stored avatar cannot be fetched after deployment.
+document.addEventListener('error', (event) => {
+	const image = event.target;
+	if (!(image instanceof HTMLImageElement)) return;
+	const frame = image.closest('.rank-avatar, .player-directory-avatar, .matches-team-badge, .tournament-participant-avatar, .profile-avatar-lg, .profile-photo-preview, .profile-history-avatar');
+	if (!frame || frame.dataset.avatarFallbackApplied === 'true') return;
+	frame.dataset.avatarFallbackApplied = 'true';
+	const label = (image.dataset.fallback || image.alt || '').replace(/profile photo|current profile photo/ig, '').trim();
+	image.remove();
+	if (frame.classList.contains('profile-history-avatar')) {
+		frame.replaceWith(Object.assign(document.createElement('span'), { className: 'profile-history-avatar avatar-initial-fallback', textContent: label.charAt(0).toUpperCase() || 'P' }));
+	} else {
+		frame.textContent = label.charAt(0).toUpperCase() || 'P';
+		frame.setAttribute('aria-label', `${label || 'Player'} photo unavailable`);
+	}
+}, true);
+
 if (!document.querySelector('.skip-link')) {
 	const main = document.querySelector('main');
 	if (main && !main.id) main.id = 'main-content';
@@ -3363,7 +3380,7 @@ if (cupPage) {
 }
 
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=46').catch(() => {
+    navigator.serviceWorker.register('./sw.js?v=47').catch(() => {
 		// The interface remains usable when service workers are unavailable.
 	});
 }

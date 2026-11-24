@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tim-league-shell-v47';
+const CACHE_NAME = 'tim-league-shell-v48';
 const APP_SHELL = [
   './login.html',
   './signup.html',

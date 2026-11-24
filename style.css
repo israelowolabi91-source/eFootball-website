@@ -10751,6 +10751,9 @@ body {
 	}
 }
 
+/* Shared keyboard and reduced-motion accessibility preferences. */
+:focus-visible { outline: 3px solid #7dd3fc; outline-offset: 3px; }
+
 .clubs-showcase {
 	width: min(1180px, calc(100% - 48px));
 	margin: 0 auto;

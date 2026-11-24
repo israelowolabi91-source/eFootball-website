@@ -8,8 +8,8 @@
     <meta name="description" content="Your personal eFootball League dashboard — stats, match history, Elo rating, rank, and account settings.">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="style.css?v=47">
-    <link rel="stylesheet" href="member-experience.css?v=1">
+    <link rel="stylesheet" href="style.css?v=48">
+    <link rel="stylesheet" href="member-experience.css?v=2">
     <script src="site-config.js"></script>
     <script src="script.js?v=46" defer></script>
     <style>
@@ -284,7 +284,7 @@
         @media (max-width: 600px) { .edit-profile-form { grid-template-columns: 1fr; } }
         .edit-field { display: flex; flex-direction: column; gap: 6px; }
         .edit-field label { font-size: 0.78rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
-        .edit-field input {
+        .edit-field input, .edit-field select {
             background: rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 8px;
@@ -294,7 +294,7 @@
             outline: none;
             transition: border-color 0.15s;
         }
-        .edit-field input:focus { border-color: rgba(244,183,47,0.5); }
+        .edit-field input:focus, .edit-field select:focus { border-color: rgba(244,183,47,0.5); }
         .edit-profile-actions { grid-column: 1/-1; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         .save-profile-btn {
             background: linear-gradient(135deg, #f4b72f, #e69920);
@@ -427,6 +427,34 @@
             return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         };
 
+        // Normalize browser-readable image formats into compact WebP for reliable uploads.
+        const photoToDataUrl = async (file) => {
+            if (!file.type.startsWith('image/')) throw new Error('Choose an image file for your player photo.');
+            if (file.size > 20 * 1024 * 1024) throw new Error('Choose a photo smaller than 20 MB.');
+            let bitmap;
+            try { bitmap = await createImageBitmap(file); }
+            catch { throw new Error('This image format is not supported by your browser. Try saving it as JPG or PNG.'); }
+            try {
+                const scale = Math.min(1, 1200 / Math.max(bitmap.width, bitmap.height));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+                canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+                canvas.getContext('2d', { alpha: false }).drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                for (const quality of [0.88, 0.76, 0.62]) {
+                    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
+                    if (blob && blob.size <= 2 * 1024 * 1024) {
+                        return await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = () => resolve(reader.result);
+                            reader.onerror = () => reject(new Error('Could not prepare the selected photo.'));
+                            reader.readAsDataURL(blob);
+                        });
+                    }
+                }
+                throw new Error('This photo could not be compressed enough. Choose a smaller image.');
+            } finally { bitmap.close?.(); }
+        };
+
         const renderProfile = async () => {
             try {
                 // Fetch all data in parallel
@@ -457,6 +485,8 @@
                 const gamerTag = me.gamerTag || me.gamerName || 'Player';
                 const name = me.name || me.firstName || 'Player';
                 const avatarUrl = me.avatarUrl || '';
+                const profileSteps = [Boolean(gamerTag && gamerTag.length >= 3), Boolean(me.platform), Boolean(me.timeZone), Boolean(avatarUrl)];
+                const profileProgress = profileSteps.filter(Boolean).length;
                 const tier = tierInfo(rating);
                 const eloPercent = Math.min(100, Math.max(5, Math.round(((rating - 500) / 2000) * 100)));
 
@@ -538,6 +568,7 @@
                             <button type="button" role="tab" data-profile-tab="settings">Settings</button>
                         </div>
                         <div class="profile-section-card" data-profile-panel="overview" role="tabpanel">
+                            ${profileProgress < profileSteps.length ? `<section class="profile-setup-card" aria-labelledby="profile-setup-title"><div><p class="eyebrow">PLAYER SETUP · ${profileProgress}/${profileSteps.length}</p><h3 id="profile-setup-title">Make your profile match-ready</h3><p>Help opponents and event organizers recognize you and coordinate match times.</p></div><div class="profile-setup-progress" role="progressbar" aria-valuenow="${profileProgress}" aria-valuemin="0" aria-valuemax="${profileSteps.length}" aria-label="Profile setup ${profileProgress} of ${profileSteps.length} complete"><i style="width:${profileProgress / profileSteps.length * 100}%"></i></div><ul><li class="${profileSteps[0] ? 'is-done' : ''}">Gamer tag</li><li class="${profileSteps[1] ? 'is-done' : ''}">Platform</li><li class="${profileSteps[2] ? 'is-done' : ''}">Time zone</li><li class="${profileSteps[3] ? 'is-done' : ''}">Player photo</li></ul><button type="button" class="profile-setup-action" data-open-profile-settings>Complete profile details <span aria-hidden="true">→</span></button></section>` : ''}
                             <div class="profile-section-header">
                                 <h2>📈 Season performance</h2>
                                 <a href="profile.html#records">View verified record →</a>
@@ -607,7 +638,7 @@
                                     <div class="profile-photo-editor">
                                         <div class="profile-photo-preview" id="profile-photo-preview">${avatarUrl ? `<img src="${escapeHtml(avatarUrl)}" alt="Current profile photo">` : `<span>${escapeHtml(gamerTag.slice(0, 1).toUpperCase())}</span>`}</div>
                                         <div class="profile-photo-controls">
-                                            <input type="file" id="edit-avatar-photo" accept="image/png,image/jpeg,image/webp">
+                                            <input type="file" id="edit-avatar-photo" accept="image/*">
                                             <small>PNG, JPEG or WebP · up to 2 MB. This photo appears beside your name across the league.</small>
                                             <button type="button" class="profile-photo-remove" id="remove-avatar-photo" ${avatarUrl ? '' : 'hidden'}>Remove photo</button>
                                         </div>
@@ -620,6 +651,18 @@
                                 <div class="edit-field">
                                     <label for="edit-gamertag">Gamer tag</label>
                                     <input type="text" id="edit-gamertag" name="gamerTag" value="${escapeHtml(gamerTag)}" minlength="3" maxlength="32" autocomplete="nickname">
+                                </div>
+                                <div class="edit-field">
+                                    <label for="edit-platform">Platform</label>
+                                    <select id="edit-platform" name="platform"><option value="">Choose platform</option><option value="Mobile" ${me.platform === 'Mobile' ? 'selected' : ''}>Mobile</option><option value="Console" ${me.platform === 'Console' ? 'selected' : ''}>Console</option><option value="PC" ${me.platform === 'PC' ? 'selected' : ''}>PC</option></select>
+                                </div>
+                                <div class="edit-field">
+                                    <label for="edit-time-zone">Time zone</label>
+                                    <input type="text" id="edit-time-zone" name="timeZone" value="${escapeHtml(me.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || '')}" maxlength="100" placeholder="Africa/Lagos" autocomplete="off">
+                                </div>
+                                <div class="edit-field">
+                                    <label for="edit-country">Country (optional)</label>
+                                    <input type="text" id="edit-country" name="country" value="${escapeHtml(me.country || '')}" maxlength="60" autocomplete="country-name">
                                 </div>
                                 <div class="edit-field" style="grid-column:1/-1">
                                     <label>Email address</label>
@@ -669,6 +712,11 @@
                     });
                 });
                 selectProfileTab(location.hash.slice(1));
+                shell.querySelectorAll('[data-open-profile-settings]').forEach((button) => button.addEventListener('click', () => {
+                    selectProfileTab('settings');
+                    history.replaceState(null, '', '#settings');
+                    shell.querySelector('#edit-platform')?.focus();
+                }));
 
                 // Logout handler
                 document.getElementById('profile-logout-btn')?.addEventListener('click', async () => {
@@ -690,9 +738,9 @@
                     if (!file) return;
                     removeProfilePhoto = false;
                     document.getElementById('remove-avatar-photo').hidden = false;
-                    if (file.size > 2 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+                    if (!file.type.startsWith('image/') || file.size > 20 * 1024 * 1024) {
                         photoInput.value = '';
-                        document.getElementById('profile-form-status').textContent = 'Choose a PNG, JPEG or WebP photo up to 2 MB.';
+                        document.getElementById('profile-form-status').textContent = 'Choose an image photo smaller than 20 MB.';
                         return;
                     }
                     const preview = document.createElement('img');
@@ -720,18 +768,16 @@
                     status.textContent = 'Saving…';
                     status.style.color = '#fbbf24';
                     try {
-                        const payload = { firstName, gamerTag };
+                        const payload = {
+                            firstName,
+                            gamerTag,
+                            platform: document.getElementById('edit-platform').value,
+                            country: document.getElementById('edit-country').value.trim(),
+                            timeZone: document.getElementById('edit-time-zone').value.trim() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+                        };
                         const avatarFile = photoInput?.files?.[0];
                         if (avatarFile) {
-                            if (avatarFile.size > 2 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(avatarFile.type)) {
-                                throw new Error('Choose a PNG, JPEG or WebP photo up to 2 MB.');
-                            }
-                            payload.avatarData = await new Promise((resolve, reject) => {
-                                const reader = new FileReader();
-                                reader.onload = () => resolve(reader.result);
-                                reader.onerror = () => reject(new Error('Could not read the selected photo.'));
-                                reader.readAsDataURL(avatarFile);
-                            });
+                            payload.avatarData = await photoToDataUrl(avatarFile);
                         } else if (removeProfilePhoto) {
                             payload.avatarData = null;
                         }
@@ -747,6 +793,7 @@
                         status.style.color = '#4ade80';
                         // Update displayed name/tag
                         document.getElementById('profile-display-name').textContent = firstName;
+                        shell.querySelector('.profile-gamertag-lg').textContent = `@${gamerTag}`;
                         const bigAvatar = document.getElementById('profile-avatar-lg');
                         bigAvatar.replaceChildren();
                         if (data.profile.avatarUrl) {
@@ -767,6 +814,16 @@
                         removeProfilePhoto = false;
                         if (photoInput) photoInput.value = '';
                         document.getElementById('remove-avatar-photo').hidden = !data.profile.avatarUrl;
+                        const setupCard = shell.querySelector('.profile-setup-card');
+                        if (setupCard) {
+                            const complete = [gamerTag.length >= 3, Boolean(payload.platform), Boolean(payload.timeZone), Boolean(data.profile.avatarUrl)];
+                            const completed = complete.filter(Boolean).length;
+                            setupCard.querySelector('[role="progressbar"]').setAttribute('aria-valuenow', String(completed));
+                            setupCard.querySelector('.profile-setup-progress i').style.width = `${completed / complete.length * 100}%`;
+                            setupCard.querySelectorAll('li').forEach((item, index) => item.classList.toggle('is-done', complete[index]));
+                            setupCard.querySelector('.eyebrow').textContent = `PLAYER SETUP · ${completed}/${complete.length}`;
+                            if (completed === complete.length) setupCard.remove();
+                        }
                     } catch (err) {
                         status.textContent = err.message;
                         status.style.color = '#f87171';

@@ -14,6 +14,8 @@ services:
         value: production
       - key: DATA_DIR
         value: /var/data
+      - key: PROFILE_PHOTO_DIR
+        value: /var/data/player-photos
       - key: OWNER_EMAIL
         sync: false
       - key: OWNER_REVIEW_TOKEN

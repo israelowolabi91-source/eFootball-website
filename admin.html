@@ -6,8 +6,8 @@
     <title>Admin Operations Console | Tim eFootball League</title>
     <meta name="description" content="Master administrative management console for Tim eFootball League. Live control over player accounts, matches, Elo ratings, tournaments, and broadcast announcements.">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css?v=45">
-    <link rel="stylesheet" href="admin.css?v=1">
+    <link rel="stylesheet" href="style.css?v=48">
+    <link rel="stylesheet" href="admin.css?v=2">
 </head>
 <body class="admin-page">
     <!-- Top Announcement Bar (Preview / Live) -->
@@ -253,6 +253,11 @@
                         </div>
                     </div>
                 </div>
+                <section class="admin-activity-card" aria-labelledby="admin-activity-title">
+                    <div class="card-title-row"><h3 id="admin-activity-title">Recent publishing activity</h3><span class="admin-card-kicker">AUDIT TRAIL</span></div>
+                    <p class="admin-card-intro">A record of tournament and site content changes made by administrators.</p>
+                    <ol id="admin-activity-list" class="admin-activity-list"><li>Loading recent changes…</li></ol>
+                </section>
             </section>
 
             <!-- TAB 2: PLAYERS & USERS (LIVE CRUD) -->
@@ -874,6 +879,11 @@
                     </div>
                 </div>
                 <div class="form-field">
+                    <label for="t-starts-at">Exact event start (optional)</label>
+                    <input type="datetime-local" id="t-starts-at" aria-describedby="t-starts-at-hint">
+                    <small class="field-hint" id="t-starts-at-hint">Entered in your local time and shown to each player in their saved time zone.</small>
+                </div>
+                <div class="form-field">
                     <label for="t-prize-details">Prize breakdown / rewards
                         <textarea id="t-prize-details" rows="3" placeholder="List placements, rewards, and any special honors..." maxlength="1000" style="resize:vertical;min-height:75px"></textarea>
                     </label>
@@ -913,6 +923,14 @@
                     </label>
                 </div>
                 <div class="form-field-switch">
+                    <label class="switch-label" for="t-checkin-open">
+                        <input type="checkbox" id="t-checkin-open">
+                        <span class="switch-slider"></span>
+                        <strong>Open player check-in</strong>
+                    </label>
+                    <small class="field-hint">Registered players can confirm they are ready for event day.</small>
+                </div>
+                <div class="form-field-switch">
                     <label class="switch-label" for="t-published">
                         <input type="checkbox" id="t-published" checked>
                         <span class="switch-slider"></span>
@@ -927,6 +945,12 @@
                         <strong>Feature this event as the League Cup</strong>
                     </label>
                 </div>
+                <section class="tournament-live-preview" aria-label="Tournament event preview">
+                    <span>PLAYER PAGE PREVIEW</span>
+                    <strong id="t-preview-title">Your event title</strong>
+                    <p><b id="t-preview-status">Coming Soon</b> · <span id="t-preview-format">Format will appear here</span></p>
+                    <small id="t-preview-meta">Schedule and capacity will appear here</small>
+                </section>
                 <div class="modal-actions">
                     <button type="submit" class="admin-submit-btn primary" id="tournament-submit-btn">Save Tournament</button>
                     <button type="button" class="admin-cancel-btn" data-close-modal>Cancel</button>
@@ -956,11 +980,12 @@
                                 <th>Email (private)</th>
                                 <th>Elo</th>
                                 <th>Record</th>
+                                <th>Check-in</th>
                                 <th class="text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody id="roster-tbody">
-                            <tr><td colspan="6" class="table-loading">Loading registered players…</td></tr>
+                            <tr><td colspan="7" class="table-loading">Loading registered players…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -974,6 +999,6 @@
     <!-- Toast Notification Overlay -->
     <div class="admin-toast-container" id="admin-toast-container" aria-live="polite"></div>
 
-    <script src="admin.js?v=44" defer></script>
+    <script src="admin.js?v=45" defer></script>
 </body>
 </html>

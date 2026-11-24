@@ -314,3 +314,20 @@
 @media (prefers-reduced-motion: reduce) {
 	.admin-page *, .admin-page *::before, .admin-page *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+ .tournament-live-preview { display:grid; gap:6px; margin:14px 0; padding:16px 18px; border:1px solid rgba(244,183,47,.24); border-radius:15px; background:radial-gradient(circle at 100% 0,rgba(56,189,248,.1),transparent 42%),linear-gradient(135deg,#102440,#0a172b); }
+ .tournament-live-preview > span { color:#f4b72f; font-size:.62rem; font-weight:850; letter-spacing:.13em; }
+ .tournament-live-preview > strong { color:#f8fafc; font-size:1.05rem; }
+ .tournament-live-preview p,.tournament-live-preview small { margin:0; color:#a7b6c9; }
+ .tournament-live-preview p { font-size:.82rem; }
+ .tournament-live-preview p b { color:#86efac; }
+ @media (max-width:600px) { .tournament-live-preview { padding:14px; } }
+.admin-activity-card { margin-top:22px; padding:22px; border:1px solid rgba(148,163,184,.13); border-radius:18px; background:rgba(9,23,43,.72); }
+.admin-activity-list { display:grid; gap:0; max-height:390px; overflow:auto; margin:14px 0 0; padding:0; list-style:none; }
+.admin-activity-list li { display:grid; grid-template-columns:82px minmax(0,1fr); gap:12px; align-items:start; padding:12px 0; border-top:1px solid rgba(148,163,184,.1); color:#94a3b8; font-size:.78rem; }
+.admin-activity-list li > div { min-width:0; }
+.admin-activity-list strong,.admin-activity-list small { display:block; }
+.admin-activity-list strong { color:#e2e8f0; font-size:.82rem; }
+.admin-activity-list small { margin-top:4px; color:#8292a8; }
+.activity-action { width:max-content; padding:4px 8px; border-radius:99px; color:#7dd3fc; background:rgba(56,189,248,.08); font-size:.68rem; font-weight:800; text-transform:uppercase; }
+.admin-activity-list .activity-error { display:block; color:#fca5a5; }
+@media (max-width:600px) { .admin-activity-card { padding:16px; } .admin-activity-list li { grid-template-columns:1fr; gap:6px; } }
