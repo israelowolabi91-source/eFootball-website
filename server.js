@@ -641,7 +641,10 @@ const isPublicRankingPlayer = (user) => {
   const isDemoProfile = user.demo === true || user.isDemo === true || user.testAccount === true ||
     user.isTestAccount === true || ['demo', 'sample', 'test'].includes(role) ||
     ['demo', 'sample', 'test'].includes(accountType);
-  return user.verified && safeEmail(String(user.email || '')) && user.gamerTag &&
+  const email = String(user.email || '').trim().toLowerCase();
+  const configuredOwnerEmail = String(OWNER_EMAIL || '').trim().toLowerCase();
+  return user.verified && safeEmail(email) && user.gamerTag &&
+    (!configuredOwnerEmail || email !== configuredOwnerEmail) &&
     role !== 'admin' && !isDemoProfile;
 };
 const validScore = (value) => Number.isSafeInteger(value) && value >= 0 && value <= 99;
@@ -780,12 +783,22 @@ const sendEmail = async ({ to, subject, html }) => {
 };
 
 const emailLayout = (title, message, link, actionLabel, firstName = '', linkNote = 'This link expires in 30 minutes. If you did not request this, you can ignore this email.') => `
-  <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#10213f">
-    <h1 style="color:#102b52">Tim eFootball League</h1>
-    <h2>${escapeHtml(title)}</h2>
-    <p style="line-height:1.6">${firstName ? `Hi ${escapeHtml(firstName)}, ` : ''}${escapeHtml(message)}</p>
-    <p><a href="${escapeHtml(link)}" style="display:inline-block;padding:13px 18px;background:#f4b72f;color:#07152d;text-decoration:none;font-weight:bold;border-radius:5px">${escapeHtml(actionLabel)}</a></p>
-    <p style="font-size:12px;color:#6b7890">${escapeHtml(linkNote)}</p>
+  <div style="margin:0;padding:28px 12px;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#15243b">
+    <div style="max-width:600px;margin:0 auto;background:#fff;border:1px solid #dce4ee;border-radius:16px;overflow:hidden">
+      <div style="padding:24px 28px;background:#071a31;color:#fff;border-bottom:4px solid #f4b72f">
+        <p style="margin:0;color:#f4c85e;font-size:11px;font-weight:bold;letter-spacing:2px">TIM EFOOTBALL LEAGUE</p>
+        <h1 style="margin:12px 0 0;font-size:25px;line-height:1.25;color:#fff">${escapeHtml(title)}</h1>
+      </div>
+      <div style="padding:28px">
+        <p style="margin:0 0 18px;font-size:16px;line-height:1.7">${firstName ? `Hi ${escapeHtml(firstName)}, ` : ''}${escapeHtml(message)}</p>
+        <div style="margin:22px 0;padding:17px 18px;background:#f5f8fc;border:1px solid #e2e9f2;border-radius:10px">
+          <p style="margin:0;color:#52647c;font-size:13px;line-height:1.6"><strong style="color:#15243b">Next step</strong><br>Open your private match page to review the details and respond to the invitation.</p>
+        </div>
+        <p style="margin:25px 0;text-align:center"><a href="${escapeHtml(link)}" style="display:inline-block;padding:15px 24px;background:#f4b72f;color:#07152d;text-decoration:none;font-weight:bold;font-size:15px;border-radius:8px">${escapeHtml(actionLabel)}</a></p>
+        <p style="margin:0;color:#66758a;font-size:12px;line-height:1.65">${escapeHtml(linkNote)}</p>
+      </div>
+      <div style="padding:16px 28px;background:#f8fafc;border-top:1px solid #e5ebf2;color:#8290a2;font-size:11px;line-height:1.5">Tim eFootball League · Match updates and invitations</div>
+    </div>
   </div>
 `;
 
@@ -2009,6 +2022,8 @@ app.post('/api/matches/:id/result', async (req, res) => {
   const sessionUser = findSessionUser(req, users);
   const email = sessionUser?.email;
   if (!match || !email) return res.status(401).json({ message: 'Sign in with your verified account to report this match score.' });
+  if (![match.challengerEmail, match.opponentEmail].includes(email)) return res.status(403).json({ message: 'Only players in this match can submit a result.' });
+  if (!sessionUser.verified) return res.status(403).json({ message: 'Verify your email address before reporting a match result.' });
   if (!['accepted', 'awaiting-opponent', 'disputed', 'rejected'].includes(match.status)) return res.status(409).json({ message: 'This match is not ready for a result report.' });
   if (Date.now() < Date.parse(match.scheduledAt)) return res.status(400).json({ message: 'You can report the score after the scheduled kick-off time.' });
   if (!validScore(req.body.yourScore) || !validScore(req.body.opponentScore)) return res.status(400).json({ message: 'Enter whole-number scores from 0 to 99.' });
@@ -2051,30 +2066,10 @@ app.post('/api/matches/:id/result', async (req, res) => {
     );
 
     if (scoresMatch && bothHaveEvidence) {
-      match.status = 'approved';
+      match.status = 'pending-owner';
       match.result.challengerScore = report.challengerScore;
       match.result.opponentScore = report.opponentScore;
-      match.result.approvedAt = new Date().toISOString();
-      match.result.approvedBy = 'system:auto-approval';
-      match.result.reviewNote = 'Auto-approved: both player score reports and screenshots matched.';
-
-      const challenger = users[match.challengerEmail];
-      const opponent = users[match.opponentEmail];
-      if (challenger && opponent) {
-        // Enforce max 2 ranked matches counted per 24 hours between the same two opponents (anti-farming protection)
-        const recentRankedCount = countRecentRankedMatches(matches, match.challengerEmail, match.opponentEmail, match.id);
-        const isRankedEligible = match.ranked && recentRankedCount < 2;
-
-        const ratingChanges = applyMatchOutcome(challenger, opponent, report.challengerScore, report.opponentScore, isRankedEligible);
-        if (ratingChanges) {
-          match.result.ratingChanges = ratingChanges;
-        } else if (match.ranked && !isRankedEligible) {
-          match.result.ratingChanges = null;
-          match.result.farmCapApplied = true;
-        }
-        writeUsers(users);
-      }
-      autoApproved = true;
+      match.result.reviewNote = 'Both player reports and screenshots matched. Awaiting administrator verification.';
     } else {
       match.status = 'disputed';
     }
@@ -2122,12 +2117,12 @@ app.post('/api/matches/:id/result', async (req, res) => {
       }));
       writeMatches(matches);
     }
-  } else if (match.status === 'disputed' && OWNER_EMAIL && OWNER_REVIEW_TOKEN.length >= 32) {
+  } else if (['disputed', 'pending-owner'].includes(match.status) && OWNER_EMAIL && OWNER_REVIEW_TOKEN.length >= 32) {
     try {
       await sendEmail({
         to: OWNER_EMAIL,
         subject: `Disputed match result needs review: ${users[match.challengerEmail]?.gamerTag || 'Player'} vs ${users[match.opponentEmail]?.gamerTag || 'Player'}`,
-        html: emailLayout('Disputed match result awaiting review', `The score reports submitted by the players do not match. Review both screenshots and decide the verified score in the owner panel.`, `${BASE_URL}/matches.html?owner=${encodeURIComponent(OWNER_REVIEW_TOKEN)}#challenges`, 'Review result', '', 'This private owner link grants access to match review. Keep it secret; change OWNER_REVIEW_TOKEN to revoke old links.')
+        html: emailLayout(match.status === 'disputed' ? 'Disputed match result awaiting review' : 'Player result awaiting verification', `Review both player screenshots and verify the final score in the owner panel. ${match.status === 'disputed' ? 'The submitted score reports differ.' : 'Both submitted score reports match.'}`, `${BASE_URL}/matches.html?owner=${encodeURIComponent(OWNER_REVIEW_TOKEN)}#challenges`, 'Review result', '', 'This private owner link grants access to match review. Keep it secret; change OWNER_REVIEW_TOKEN to revoke old links.')
       });
       ownerNotified = true;
     } catch (error) {
@@ -2148,6 +2143,8 @@ app.post('/api/matches/:id/result', async (req, res) => {
       ? 'Both reports and screenshots matched! Match result auto-approved.'
       : match.status === 'disputed'
         ? `The reports differ.${ownerNotified ? ' The owner has been notified to review both screenshots.' : ' Pending owner review of screenshots.'}`
+        : match.status === 'pending-owner'
+          ? `Both reports and screenshots match.${ownerNotified ? ' The administrator will verify the result before it is approved.' : ' The result is awaiting administrator verification.'}`
         : `Score submitted.${opponentNotified === false ? ' Opponent email delivery failed.' : ' Waiting for your opponent to confirm with their own report.'}`,
     ownerReviewConfigured
   });
@@ -2346,8 +2343,10 @@ app.post('/api/admin/matches/:id/decision', async (req, res) => {
   const matches = readMatches();
   const match = matches[req.params.id];
   if (!match || !['pending-owner', 'disputed'].includes(match.status) || !match.result?.reports) return res.status(404).json({ message: 'This result is no longer awaiting review.' });
-  const reports = Object.values(match.result.reports);
+  const reports = [match.result.reports[match.challengerEmail], match.result.reports[match.opponentEmail]].filter(Boolean);
   if (reports.length < 2) return res.status(409).json({ message: 'Both players must submit a score and screenshot before owner review.' });
+  const reportsAgree = reports[0].challengerScore === reports[1].challengerScore && reports[0].opponentScore === reports[1].opponentScore;
+  if (match.status === 'pending-owner' && !reportsAgree) return res.status(409).json({ message: 'The player reports do not match. Review this as a disputed result before approval.' });
   if (decision === 'reject') {
     const reason = String(req.body.reason || '').trim();
     if (reason.length < 5 || reason.length > 500) return res.status(400).json({ message: 'Provide a review note between 5 and 500 characters.' });

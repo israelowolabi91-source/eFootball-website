@@ -2336,7 +2336,12 @@ const makeScoreForm = (match) => {
 		const preview = document.createElement('img');
 		preview.alt = 'Selected match score screenshot preview';
 		preview.src = URL.createObjectURL(file);
-		evidencePreview.replaceChildren(preview, makeMatchElement('span', '', 'Screenshot ready to submit'));
+		const dimensions = makeMatchElement('span', 'match-evidence-dimensions', 'Loading image preview…');
+		preview.addEventListener('load', () => {
+			const orientation = preview.naturalWidth > preview.naturalHeight ? 'Landscape' : preview.naturalWidth < preview.naturalHeight ? 'Portrait' : 'Square';
+			dimensions.textContent = `${orientation} screenshot · ${preview.naturalWidth} × ${preview.naturalHeight} · ready to submit`;
+		});
+		evidencePreview.replaceChildren(preview, dimensions);
 		evidencePreview.hidden = false;
 	});
 	const submit = makeMatchElement('button', 'challenge-secondary-button challenge-report-button', match.result ? 'Resubmit score & screenshot' : 'Submit score & screenshot');
@@ -2432,6 +2437,7 @@ const makeMatchChat = (match) => {
 	return section;
 };
 
+let applyPrivateMatchFilters = () => {};
 const renderMatchCards = (matches) => {
 	const list = document.querySelector('#my-matches-list');
 	chatPollers.forEach((timer) => window.clearInterval(timer));
@@ -2441,6 +2447,10 @@ const renderMatchCards = (matches) => {
 		list.append(makeMatchElement('p', 'challenge-list-empty', 'Your invitations and match reports appear here after you sign in.'));
 		return;
 	}
+	const search = document.querySelector('#private-match-search');
+	const filter = document.querySelector('#match-status-filter');
+	const count = document.querySelector('#match-visible-count');
+	const cards = [];
 	matches.forEach((match) => {
 		const other = match.isChallenger ? match.opponent : match.challenger;
 		const card = makeMatchElement('article', 'challenge-match-card');
@@ -2509,7 +2519,25 @@ const renderMatchCards = (matches) => {
 			card.append(makeMatchChat(match));
 		}
 		list.append(card);
+		cards.push({ card, match, other });
 	});
+	applyPrivateMatchFilters = () => {
+		const query = (search?.value || '').trim().toLocaleLowerCase();
+		const mode = filter?.value || 'all';
+		let shown = 0;
+		cards.forEach(({ card, match, other }) => {
+			const terminal = ['approved', 'declined', 'cancelled'].includes(match.status);
+			const scheduled = ['accepted', 'awaiting-opponent'].includes(match.status);
+			const matchesMode = mode === 'all' || (mode === 'active' && !terminal) || (mode === 'scheduled' && scheduled) || (mode === 'finished' && terminal);
+			const matchesQuery = !query || `${other.gamerTag} ${match.ranked ? 'ranked xp' : 'friendly'}`.toLocaleLowerCase().includes(query);
+			card.hidden = !(matchesMode && matchesQuery);
+			if (!card.hidden) shown++;
+		});
+		if (count) count.textContent = `${shown} of ${cards.length} matches`;
+	};
+	if (search && !search.dataset.bound) { search.addEventListener('input', () => applyPrivateMatchFilters()); search.dataset.bound = 'true'; }
+	if (filter && !filter.dataset.bound) { filter.addEventListener('change', () => applyPrivateMatchFilters()); filter.dataset.bound = 'true'; }
+	applyPrivateMatchFilters();
 };
 
 const renderOwnerReviews = (matches) => {
@@ -3038,6 +3066,8 @@ if (homeDashboardStatus) {
 				} else {
 					result.topPlayers.forEach((player) => {
 						const row = makeNode('tr');
+						row.className = 'home-ranking-row-enter';
+						row.style.setProperty('--rank-stagger', `${Math.min(Number(player.rank || 1) - 1, 7) * 75}ms`);
 						[player.rank, player.gamerTag, Number(player.rating || 0).toLocaleString(), `${player.wins || 0}–${player.draws || 0}–${player.losses || 0}`]
 							.forEach((value) => row.append(makeNode('td', '', value)));
 						playerTable.append(row);

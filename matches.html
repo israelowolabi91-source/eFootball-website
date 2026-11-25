@@ -78,7 +78,7 @@
             <div class="challenge-centre-heading">
                 <p class="eyebrow"><span class="eyebrow-line"></span> Player challenge centre</p>
                 <h2 id="challenge-centre-title">Make the next match yours.</h2>
-                <p>Send a private invitation to a verified player. The invited player signs in to accept or decline. After kick-off, both players submit the score and screenshot: matching reports auto-approve, while mismatches go to admin review. Both players are notified of the approved score and any Elo change.</p>
+                <p>Send a private invitation to a verified player. After kick-off, both players submit the score and a screenshot. Matching reports and mismatches are reviewed by an administrator before the result is approved and added to the verified results.</p>
             </div>
 
             <div class="challenge-workspace" id="challenge-workspace">
@@ -167,7 +167,7 @@
                         <label>Public stream link <span class="field-hint">Optional · visible to everyone once accepted</span>
                             <input name="streamUrl" type="url" maxlength="500" placeholder="https://www.youtube.com/...">
                         </label>
-                        <label class="ranked-choice"><input name="ranked" type="checkbox"><span><strong>Ranked match</strong><small>Approved ranked results change Elo; matching score reports and screenshots auto-approve.</small></span></label>
+                        <label class="ranked-choice"><input name="ranked" type="checkbox"><span><strong>Ranked match</strong><small>Approved ranked results update XP. Every score and screenshot is checked by an administrator first.</small></span></label>
                         <p class="challenge-dialog-note">A private invitation link will be sent to each player’s saved email address. Neither address will be displayed. If you add a stream link, it becomes public after the opponent accepts. If a player does not appear within 20 minutes of kick-off, the other player can submit a walkover claim.</p>
                         <div class="challenge-dialog-actions">
                             <button class="challenge-secondary-button" type="button" data-close-challenge>Cancel</button>
@@ -179,6 +179,11 @@
                 <section class="challenge-panel my-matches-panel" aria-labelledby="my-matches-title">
                     <div class="my-matches-heading">
                         <div><p class="eyebrow"><span class="eyebrow-line"></span> Private match links</p><h4 id="my-matches-title">Invitations &amp; scheduled matches</h4></div>
+                    </div>
+                    <div class="match-organizer" aria-label="Find and filter private matches">
+                        <label class="match-search"><span>Search private matches</span><input id="private-match-search" type="search" placeholder="Player name or match type" autocomplete="off"></label>
+                        <label><span>Show</span><select id="match-status-filter"><option value="all">All matches</option><option value="active">Needs attention</option><option value="scheduled">Scheduled</option><option value="finished">Finished</option></select></label>
+                        <span id="match-visible-count" class="match-visible-count" aria-live="polite"></span>
                     </div>
                     <div class="my-matches-list" id="my-matches-list"><p class="challenge-list-empty">Sign in to see your invitations and scheduled matches.</p></div>
                 </section>
