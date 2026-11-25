@@ -302,6 +302,42 @@
 .admin-bracket-wrapper { border: 1px solid var(--admin-line); border-radius: 17px; background: rgba(10,27,48,.72); }
 .admin-bracket-card { border-color: var(--admin-line); border-radius: 12px; background: #102642; }
 
+/* Finishing touches for dense admin work surfaces. */
+.admin-header { border-bottom:1px solid rgba(172,197,229,.1); background:rgba(6,18,33,.92); backdrop-filter:blur(18px); }
+.admin-status-pill { border-color:rgba(99,212,164,.2); background:rgba(99,212,164,.07); }
+.admin-tabs-nav { scrollbar-width:thin; scrollbar-color:rgba(244,183,47,.35) transparent; }
+.admin-tab { flex:0 0 auto; }
+.admin-tab.is-active { box-shadow:0 7px 20px rgba(0,0,0,.15),inset 0 1px rgba(255,255,255,.07); }
+.admin-pane-header { border-bottom-color:rgba(172,197,229,.12); }
+.admin-table-container { scrollbar-color:rgba(244,183,47,.34) rgba(5,16,30,.6); scrollbar-width:thin; }
+.admin-table { border-collapse:separate; border-spacing:0; }
+.admin-table thead { position:sticky; top:0; z-index:2; }
+.admin-table th { white-space:nowrap; background:#10243d; }
+.admin-table tbody tr { transition:background .14s ease; }
+.admin-table tbody tr:nth-child(even) { background:rgba(255,255,255,.012); }
+.admin-table tbody tr:hover { background:rgba(244,183,47,.055); }
+.admin-toolbar { gap:10px; }
+.admin-search-field:focus-within,.admin-filter-group select:focus-visible,.admin-toolbar select:focus-visible { border-color:rgba(244,183,47,.65); outline:3px solid rgba(244,183,47,.1); }
+.admin-page input[type="checkbox"],.admin-page input[type="radio"] { accent-color:#f4b72f; }
+.admin-modal,.admin-auth-card { border-color:rgba(244,183,47,.18); }
+.admin-auth-dialog { max-width:min(92vw,520px); }
+.admin-auth-card { padding:clamp(22px,4vw,36px); }
+.admin-auth-form { gap:15px; }
+.admin-auth-form input { min-height:46px; }
+.admin-toast { animation:admin-toast-in .2s ease-out both; }
+@keyframes admin-toast-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.admin-bracket-wrapper { overflow:auto; scrollbar-width:thin; scrollbar-color:rgba(244,183,47,.32) transparent; }
+@media (max-width:760px) {
+	.admin-tabs-nav { scroll-snap-type:x proximity; }
+	.admin-tab { scroll-snap-align:start; }
+	.admin-table th,.admin-table td { padding:11px 10px; }
+	.admin-toolbar { align-items:stretch; }
+}
+@media (prefers-reduced-motion:reduce) {
+	.admin-toast { animation:none; }
+	.admin-table tbody tr { transition:none; }
+}
+
 @media (max-width: 1050px) {
 	.admin-tabs-nav { overflow-x: auto; justify-content: flex-start; }
 	.admin-tab { flex: 0 0 auto; }

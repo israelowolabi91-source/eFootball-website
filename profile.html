@@ -428,8 +428,13 @@
         };
 
         // Normalize browser-readable image formats into compact WebP for reliable uploads.
+        const isImageFile = (file) => {
+            const imageMime = /^image\//i.test(file.type || '');
+            const imageExtension = /\.(avif|bmp|gif|heic|heif|ico|jfif|jpe?g|png|svg|tif?f|webp)$/i.test(file.name || '');
+            return imageMime || imageExtension;
+        };
         const photoToDataUrl = async (file) => {
-            if (!file.type.startsWith('image/')) throw new Error('Choose an image file for your player photo.');
+            if (!isImageFile(file)) throw new Error('Choose an image file for your player photo.');
             if (file.size > 20 * 1024 * 1024) throw new Error('Choose a photo smaller than 20 MB.');
             let bitmap;
             try {
@@ -749,7 +754,7 @@
                     if (!file) return;
                     removeProfilePhoto = false;
                     const status = document.getElementById('profile-form-status');
-                    if (!file.type.startsWith('image/') || file.size > 20 * 1024 * 1024) {
+                    if (!isImageFile(file) || file.size > 20 * 1024 * 1024) {
                         photoInput.value = '';
                         status.textContent = 'Choose an image smaller than 20 MB.';
                         return;

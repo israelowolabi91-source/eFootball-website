@@ -2546,6 +2546,9 @@ app.post('/api/admin/logout', (req, res) => {
 
 // 2. Admin Session Check
 app.get('/api/admin/session', requireAdmin, (req, res) => {
+  const adminToken = readCookie(req, ADMIN_SESSION_COOKIE);
+  const expiry = adminToken && adminConsoleSessions.get(hashToken(adminToken));
+  if (!expiry || expiry <= Date.now()) return res.status(401).json({ message: 'Dedicated admin console sign-in required.' });
   const users = readUsers();
   const sessionUser = findSessionUser(req, users) || (OWNER_EMAIL ? users[OWNER_EMAIL] : null);
   res.json({
