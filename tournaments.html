@@ -817,7 +817,7 @@
                 <p>Review the posted event details, register while entry is open, and wait for the organizer’s confirmation.</p>
             </div>
             <div class="guide-steps">
-                <article><span>01</span><h3>Verify Profile</h3><p>Ensure your gamer tag and verified email are linked so organizers can confirm your Elo rating.</p></article>
+                <article><span>01</span><h3>Verify Profile</h3><p>Ensure your gamer tag and verified email are linked so organizers can confirm your XP rating.</p></article>
                 <article><span>02</span><h3>Register</h3><p>Use your verified account to register for events that are accepting entries.</p></article>
                 <article><span>03</span><h3>Coordinate Match</h3><p>Access your private fixture link in the Match Centre to arrange kickoff times with your opponent.</p></article>
                 <article><span>04</span><h3>Report the result</h3><p>Follow the event’s instructions and wait for any required result approval before rankings change.</p></article>
@@ -833,7 +833,7 @@
             <div class="faq-list">
                 <details>
                     <summary>How are tournament seeds determined?<span aria-hidden="true">＋</span></summary>
-                    <p>Tournament seeding directly reflects your verified Elo rating on the leaderboard at the qualification cutoff date. Top seeds receive favorable bracket placements.</p>
+                    <p>Tournament seeding directly reflects your verified XP rating on the leaderboard at the qualification cutoff date. Top seeds receive favorable bracket placements.</p>
                 </details>
                 <details>
                     <summary>What happens if my opponent disconnects or fails to show?<span aria-hidden="true">＋</span></summary>
@@ -841,7 +841,7 @@
                 </details>
                 <details>
                     <summary>Are tournament fixtures ranked?<span aria-hidden="true">＋</span></summary>
-                    <p>Check the event details. Only eligible, approved ranked results affect player Elo; tournament placement alone does not.</p>
+                    <p>Check the event details. Only eligible, approved ranked results affect player XP; tournament placement alone does not.</p>
                 </details>
                 <details>
                     <summary>Can I participate in multiple competitions concurrently?<span aria-hidden="true">＋</span></summary>
@@ -920,7 +920,7 @@
                             <tr>
                                 <th>Seed</th>
                                 <th>Player</th>
-                                <th>Elo Rating</th>
+                                <th>XP Rating</th>
                                 <th>Signed Up</th>
                             </tr>
                         </thead>
@@ -1132,7 +1132,7 @@
                         ${t.eventType ? `<div><span>Event type:</span> <strong>${escapeHtml(t.eventType)}</strong></div>` : ''}
                         ${t.platform ? `<div><span>Platform:</span> <strong>${escapeHtml(t.platform)}</strong></div>` : ''}
                         ${t.prizePool ? `<div><span>Prize:</span> <strong>${escapeHtml(t.prizePool)}</strong></div>` : ''}
-                        ${t.minElo || t.maxElo ? `<div style="grid-column: 1/-1;"><span>Rating Requirement:</span> <strong>${t.minElo ? escapeHtml(t.minElo) + '+' : 'Any'} ${t.maxElo ? 'to ' + escapeHtml(t.maxElo) + ' Elo' : ''}</strong></div>` : ''}
+                        ${t.minXP || t.maxXP ? `<div style="grid-column: 1/-1;"><span>Rating Requirement:</span> <strong>${t.minXP ? escapeHtml(t.minXP) + '+' : 'Any'} ${t.maxXP ? 'to ' + escapeHtml(t.maxXP) + ' XP' : ''}</strong></div>` : ''}
                     </div>
 
                     <div class="tourn-card-footer">
@@ -1213,7 +1213,7 @@
                         <tr>
                             <td><strong style="color: ${idx < 3 ? '#f4b72f' : '#94a3b8'};">#${idx + 1}</strong></td>
                             <td><span class="tournament-participant"><span class="tournament-participant-avatar">${p.avatarUrl ? `<img src="${escapeHtml(p.avatarUrl)}" alt="" loading="lazy">` : escapeHtml(String(p.gamerTag || 'P').slice(0, 1).toUpperCase())}</span><strong>${escapeHtml(p.gamerTag)}</strong></span></td>
-                            <td><strong style="color: #38bdf8;">${Number(p.rating || 1000).toLocaleString()} Elo</strong></td>
+                            <td><strong style="color: #38bdf8;">${Number(p.rating || 1000).toLocaleString()} XP</strong></td>
                             <td style="color: #64748b; font-size: 0.76rem;">${p.checkedIn ? '✓ Checked in' : p.registeredAt ? `Joined ${new Date(p.registeredAt).toLocaleDateString()}` : 'Registered'}</td>
                         </tr>
                     `).join('');

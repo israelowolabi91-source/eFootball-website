@@ -837,11 +837,11 @@ const setupEloCalculator = () => {
 		};
 
 		setText('#stake-win-delta', `${winChange > 0 ? '+' : ''}${winChange}`);
-		setText('#stake-win-proj', `${Math.max(100, current + winChange).toLocaleString()} Elo`);
+		setText('#stake-win-proj', `${Math.max(100, current + winChange).toLocaleString()} XP`);
 		setText('#stake-draw-delta', `${drawChange > 0 ? '+' : ''}${drawChange}`);
-		setText('#stake-draw-proj', `${Math.max(100, current + drawChange).toLocaleString()} Elo`);
+		setText('#stake-draw-proj', `${Math.max(100, current + drawChange).toLocaleString()} XP`);
 		setText('#stake-loss-delta', `${lossChange}`);
-		setText('#stake-loss-proj', `${Math.max(100, current + lossChange).toLocaleString()} Elo`);
+		setText('#stake-loss-proj', `${Math.max(100, current + lossChange).toLocaleString()} XP`);
 
 		// Standard single-match outcome projection
 		const change = window.LEAGUE_CONFIG.calculateEloChange(current, opponent, outcomes[outcome], kFactor);
@@ -857,7 +857,7 @@ const setupEloCalculator = () => {
 			deltaOutput.classList.remove('calc-delta-pop');
 			window.requestAnimationFrame(() => deltaOutput.classList.add('calc-delta-pop'));
 			setText('#calc-delta-headline', 'PROJECTED RATING CHANGE');
-			setText('#calc-projected-rating', `New Rating: ${projected.toLocaleString()} Elo`);
+			setText('#calc-projected-rating', `New Rating: ${projected.toLocaleString()} XP`);
 		} else if (activeMode === 'series') {
 			// Compute series trajectory step by step
 			let runningRating = current;
@@ -872,8 +872,8 @@ const setupEloCalculator = () => {
 			deltaOutput.classList.toggle('positive', netSeriesDelta >= 0);
 			deltaOutput.classList.toggle('negative', netSeriesDelta < 0);
 			setText('#calc-delta-headline', `SERIES NET CHANGE (${seriesSequence.length} MATCHES)`);
-			setText('#calc-projected-rating', `Series Final Rating: ${runningRating.toLocaleString()} Elo`);
-			setText('#calc-trajectory-net', `${netSeriesDelta > 0 ? '+' : ''}${netSeriesDelta} Elo Net · Ending at ${runningRating.toLocaleString()}`);
+			setText('#calc-projected-rating', `Series Final Rating: ${runningRating.toLocaleString()} XP`);
+			setText('#calc-trajectory-net', `${netSeriesDelta > 0 ? '+' : ''}${netSeriesDelta} XP Net · Ending at ${runningRating.toLocaleString()}`);
 
 			const trajectoryContainer = document.querySelector('#calc-trajectory-steps');
 			if (trajectoryContainer) {
@@ -881,7 +881,7 @@ const setupEloCalculator = () => {
 				steps.forEach((step) => {
 					const stepEl = document.createElement('div');
 					stepEl.className = `calc-step-pill is-${step.result}`;
-					stepEl.innerHTML = `<span>M${step.match} (${step.result.toUpperCase()})</span><strong>${step.delta > 0 ? '+' : ''}${step.delta}</strong><small>${step.rating.toLocaleString()} Elo</small>`;
+					stepEl.innerHTML = `<span>M${step.match} (${step.result.toUpperCase()})</span><strong>${step.delta > 0 ? '+' : ''}${step.delta}</strong><small>${step.rating.toLocaleString()} XP</small>`;
 					trajectoryContainer.append(stepEl);
 				});
 			}
@@ -918,8 +918,8 @@ const setupEloCalculator = () => {
 
 		setText('#calc-your-expectation', `${expectedPercent}%`);
 		setText('#calc-opponent-expectation', `${opponentPercent}%`);
-		setText('#calc-your-matchup-rating', `${current.toLocaleString()} Elo`);
-		setText('#calc-opponent-matchup-rating', `${opponent.toLocaleString()} Elo`);
+		setText('#calc-your-matchup-rating', `${current.toLocaleString()} XP`);
+		setText('#calc-opponent-matchup-rating', `${opponent.toLocaleString()} XP`);
 
 		const matchupReadout = document.querySelector('#calc-matchup-readout');
 		const riskBadge = document.querySelector('#calc-risk-badge');
@@ -974,11 +974,11 @@ const setupEloCalculator = () => {
 		const insight = document.querySelector('#calc-insight-text');
 		if (insight) {
 			if (activeMode === 'series') {
-				insight.textContent = `Series simulation shows the cumulative rating after ${seriesSequence.length} matches against ${opponent.toLocaleString()} Elo rival.`;
+				insight.textContent = `Series simulation shows the cumulative rating after ${seriesSequence.length} matches against ${opponent.toLocaleString()} XP rival.`;
 			} else {
 				insight.textContent = outcome === 'win' && expectedScore < 0.5
-					? `You are the underdog (${expectedPercent}% expected score). A win yields an impressive +${Math.max(0, delta)} Elo!`
-					: `A ${outcome} projects to ${delta >= 0 ? '+' : ''}${delta} Elo at K=${kFactor} against a ${opponent.toLocaleString()} rated player.`;
+					? `You are the underdog (${expectedPercent}% expected score). A win yields an impressive +${Math.max(0, delta)} XP!`
+					: `A ${outcome} projects to ${delta >= 0 ? '+' : ''}${delta} XP at K=${kFactor} against a ${opponent.toLocaleString()} rated player.`;
 			}
 		}
 	};
@@ -1075,9 +1075,9 @@ const setupEloCalculator = () => {
 			const k = Number(kFactorSelect.value);
 			const winChange = window.LEAGUE_CONFIG.calculateEloChange(current, opponent, 1.0, k);
 			const lossChange = window.LEAGUE_CONFIG.calculateEloChange(current, opponent, 0.0, k);
-			const text = `🎮 Tim eFootball Elo Simulation:\nYour Rating: ${current.toLocaleString()} Elo | Opponent: ${opponent.toLocaleString()} Elo (K=${k})\n` +
-				`• Win: ${winChange > 0 ? '+' : ''}${winChange} ➔ ${(current + winChange).toLocaleString()} Elo\n` +
-				`• Loss: ${lossChange} ➔ ${(current + lossChange).toLocaleString()} Elo\n` +
+			const text = `🎮 Tim eFootball XP Simulation:\nYour Rating: ${current.toLocaleString()} XP | Opponent: ${opponent.toLocaleString()} XP (K=${k})\n` +
+				`• Win: ${winChange > 0 ? '+' : ''}${winChange} ➔ ${(current + winChange).toLocaleString()} XP\n` +
+				`• Loss: ${lossChange} ➔ ${(current + lossChange).toLocaleString()} XP\n` +
 				`Simulated on Tim eFootball League Hub.`;
 			try {
 				await navigator.clipboard.writeText(text);
@@ -1105,7 +1105,7 @@ const setupEloCalculator = () => {
 			rankingData.players.forEach((player) => {
 				const option = document.createElement('option');
 				option.value = String(player.rating);
-				option.textContent = `${player.gamerTag} · ${Number(player.rating).toLocaleString()} Elo`;
+				option.textContent = `${player.gamerTag} · ${Number(player.rating).toLocaleString()} XP`;
 				presetSelect.append(option);
 			});
 		}
@@ -1749,8 +1749,8 @@ if (rankingSearch && rankingDivision && rankingSort && rankingCount && leaderboa
 				setText('#rank-top-player', topPlayer?.gamerTag || 'No players');
 				const topRating = document.querySelector('#rank-top-rating');
 				if (topRating) {
-					if (topPlayer) animateRankingValue(topRating, Number(topPlayer.rating) || 1000, ' Elo');
-					else topRating.textContent = '— Elo';
+					if (topPlayer) animateRankingValue(topRating, Number(topPlayer.rating) || 1000, ' XP');
+					else topRating.textContent = '— XP';
 				}
 				setText('#rank-top-position', topPlayer ? '#01' : '—');
 				const playerTotal = document.querySelector('#rank-player-total');
@@ -1812,7 +1812,7 @@ if (rankedClubsGrid) {
 			const stats = document.createElement('div');
 			stats.className = 'club-record-stats';
 			[
-				['Average Elo', Number(club.averageRating || 0).toLocaleString()],
+				['Average XP', Number(club.averageRating || 0).toLocaleString()],
 				['Member record', club.record || '0–0–0']
 			].forEach(([label, value]) => {
 				const item = document.createElement('span');
@@ -1841,7 +1841,7 @@ if (rankedClubsGrid) {
 			const data = await response.json().catch(() => ({}));
 			if (!response.ok) throw new Error(data.message || 'Club records could not be loaded.');
 			renderClubs(data.clubs || []);
-			status.textContent = 'Club standings are calculated from verified members’ saved Elo and records.';
+			status.textContent = 'Club standings are calculated from verified members’ saved XP and records.';
 		} catch (error) {
 			status.textContent = `Club records could not be loaded: ${error.message}`;
 			rankedClubsGrid.replaceChildren();
@@ -2243,7 +2243,7 @@ const renderPlayerDirectory = () => {
 		cardTop.append(avatar, tier);
 		const name = makeMatchElement('h4', 'player-directory-name', player.gamerTag);
 		const ratingLine = makeMatchElement('p', 'player-directory-rating');
-		ratingLine.append(makeMatchElement('strong', '', Number(player.rating).toLocaleString()), makeMatchElement('span', '', 'ELO rating'));
+		ratingLine.append(makeMatchElement('strong', '', Number(player.rating).toLocaleString()), makeMatchElement('span', '', 'XP'));
 		const stats = makeMatchElement('dl', 'player-directory-stats');
 		const statItems = [
 			['Ranked record', `${player.wins}–${player.draws}–${player.losses}`],
@@ -2458,7 +2458,7 @@ const renderMatchCards = (matches) => {
 		const title = makeMatchElement('div');
 		title.append(
 			makeMatchElement('strong', '', `${match.isChallenger ? 'You' : other.gamerTag} vs ${match.isChallenger ? other.gamerTag : 'you'}`),
-			makeMatchElement('span', 'challenge-match-type', match.ranked ? 'Ranked · Elo' : 'Friendly')
+			makeMatchElement('span', 'challenge-match-type', match.ranked ? 'Ranked · XP' : 'Friendly')
 		);
 		heading.append(title, makeMatchElement('span', `challenge-match-status status-${match.status}`, challengeStatusText(match.status, match)));
 		card.append(heading, makeMatchElement('p', 'challenge-match-time', `${formatChallengeTime(match.scheduledAt)} · your local time · reminder ${match.reminderMinutes >= 1440 ? '24 hours' : `${match.reminderMinutes} minutes`} before`));
@@ -2476,11 +2476,11 @@ const renderMatchCards = (matches) => {
 			const otherScore = match.isChallenger ? match.result.opponentScore : match.result.challengerScore;
 			card.append(makeMatchElement('p', 'challenge-final-score', `Approved score: ${ownScore} – ${otherScore}`));
 			const delta = match.isChallenger ? match.result.ratingChanges?.challenger : match.result.ratingChanges?.opponent;
-			if (match.ranked && Number.isFinite(delta)) card.append(makeMatchElement('p', 'challenge-rating-change', `Ranked Elo change: ${delta > 0 ? '+' : ''}${delta}`));
+			if (match.ranked && Number.isFinite(delta)) card.append(makeMatchElement('p', 'challenge-rating-change', `Ranked XP change: ${delta > 0 ? '+' : ''}${delta}`));
 			else if (match.ranked && match.result.farmCapApplied) {
-				card.append(makeMatchElement('p', 'challenge-awaiting-note', 'This approved result did not change Elo because the daily limit for this opponent was reached.'));
+				card.append(makeMatchElement('p', 'challenge-awaiting-note', 'This approved result did not change XP because the daily limit for this opponent was reached.'));
 			} else if (!match.ranked) {
-				card.append(makeMatchElement('p', 'challenge-awaiting-note', 'Friendly result approved · Elo ratings are unchanged.'));
+				card.append(makeMatchElement('p', 'challenge-awaiting-note', 'Friendly result approved · XP ratings are unchanged.'));
 			}
 		}
 		const actions = makeMatchElement('div', 'challenge-match-actions');
@@ -2502,7 +2502,7 @@ const renderMatchCards = (matches) => {
 			card.append(makeMatchElement('p', 'challenge-awaiting-note', 'Your score and screenshot are saved. Waiting for the other player to submit their own report.'));
 		} else if (match.canReport && ['accepted', 'awaiting-opponent', 'disputed', 'rejected'].includes(match.status) && Date.now() >= Date.parse(match.scheduledAt)) {
 			card.append(makeScoreForm(match));
-			if (match.status === 'disputed') card.append(makeMatchElement('p', 'challenge-warning', 'Your reports do not match. Submit the correct final score with a screenshot; disputed results are reviewed before Elo changes.'));
+			if (match.status === 'disputed') card.append(makeMatchElement('p', 'challenge-warning', 'Your reports do not match. Submit the correct final score with a screenshot; disputed results are reviewed before XP changes.'));
 		} else if (['awaiting-opponent', 'disputed', 'pending-owner'].includes(match.status)) {
 			card.append(makeMatchElement('p', 'challenge-awaiting-note', 'Both players must report the same score with a screenshot. The owner then reviews the evidence.'));
 		}
@@ -2708,7 +2708,7 @@ if (challengeForm) {
 		}
 		opponentInput.value = player.id;
 		document.querySelector('#challenge-dialog-title').textContent = `Challenge ${player.gamerTag}`;
-		document.querySelector('#challenge-dialog-player-summary').textContent = `${player.rating.toLocaleString()} Elo · ${player.rankedMatches} approved ranked matches · private invitation sent to the profile email`;
+		document.querySelector('#challenge-dialog-player-summary').textContent = `${player.rating.toLocaleString()} XP · ${player.rankedMatches} approved ranked matches · private invitation sent to the profile email`;
 		updateEarliestKickoff();
 		challengeDialog.showModal();
 	});
@@ -2816,7 +2816,7 @@ document.querySelector('#my-matches-list')?.addEventListener('click', async (eve
 	const button = event.target.closest('[data-match-action]');
 	if (!button) return;
 	const action = button.dataset.matchAction;
-	if (action === 'walkover' && !window.confirm('Only continue if your opponent did not appear within 20 minutes of kick-off. This immediately records a 3–0 walkover and may update ranked Elo. Do you want to submit the claim?')) return;
+	if (action === 'walkover' && !window.confirm('Only continue if your opponent did not appear within 20 minutes of kick-off. This immediately records a 3–0 walkover and may update ranked XP. Do you want to submit the claim?')) return;
 	button.disabled = true;
 	try {
 		if (action === 'accept' || action === 'decline') {
@@ -2977,7 +2977,7 @@ document.querySelector('#owner-review-list')?.addEventListener('submit', async (
 		matchMessage(challengeStatusMessage, decision === 'reject'
 			? `Result rejected and the players were asked to submit fresh evidence.${notification}`
 			: response.ranked
-				? `Ranked result approved. Elo: challenger ${response.ratingChanges.challenger > 0 ? '+' : ''}${response.ratingChanges.challenger}, opponent ${response.ratingChanges.opponent > 0 ? '+' : ''}${response.ratingChanges.opponent}.${notification}`
+				? `Ranked result approved. XP: challenger ${response.ratingChanges.challenger > 0 ? '+' : ''}${response.ratingChanges.challenger}, opponent ${response.ratingChanges.opponent > 0 ? '+' : ''}${response.ratingChanges.opponent}.${notification}`
 				: `Friendly result approved. No ratings were changed.${notification}`);
 		await loadChallengeData();
 	} catch (error) {
@@ -3093,7 +3093,7 @@ if (homeDashboardStatus) {
 						card.append(header, makeNode('h3', '', club.name));
 						const stats = makeNode('div', 'club-record-stats');
 						[
-							['Average Elo', Number(club.averageRating || 0).toLocaleString()],
+							['Average XP', Number(club.averageRating || 0).toLocaleString()],
 							['Member record', club.record || '0–0–0']
 						].forEach(([label, value]) => {
 							const stat = makeNode('span');
@@ -3199,21 +3199,37 @@ if (homeDashboardStatus) {
 				updateText('#dash-stat-streak', personal.streak ? `${personal.streak.count} ${personal.streak.outcome}${personal.streak.count === 1 ? '' : 's'}` : 'No streak');
 				updateText('#dash-user-rank', personal.rank ? `#${String(personal.rank).padStart(2, '0')}` : '—');
 				updateText('#dash-user-caption', `of ${Number(personal.rankedPlayers || 0).toLocaleString()} verified players`);
-				updateText('#dash-user-rating', `${Number(personal.rating || 0).toLocaleString()} Elo`);
+				updateText('#dash-user-rating', `${Number(personal.rating || 0).toLocaleString()} XP`);
 				updateText('#dash-user-tier', window.LEAGUE_CONFIG.getTier(personal.rating).name);
 				const progress = document.querySelector('#dash-user-bar');
 				if (progress) progress.style.width = `${personal.rankedPlayers ? Math.max(4, (1 - (personal.rank - 1) / personal.rankedPlayers) * 100) : 0}%`;
 				updateText('#team-name', personal.gamerTag || 'You');
-				updateText('#team-initial', (personal.gamerTag || 'Y').slice(0, 1).toUpperCase());
+				const setHomeMatchAvatar = (selector, url, label) => {
+					const frame = document.querySelector(selector);
+					if (!frame) return;
+					frame.replaceChildren();
+					frame.setAttribute('aria-label', `${label} profile image`);
+					if (url) {
+						const image = document.createElement('img');
+						image.src = url;
+						image.alt = '';
+						image.loading = 'lazy';
+						image.dataset.fallback = label;
+						frame.append(image);
+					} else frame.textContent = (label || '?').slice(0, 1).toUpperCase();
+				};
+				setHomeMatchAvatar('#team-initial', personal.avatarUrl, personal.gamerTag || 'You');
 				if (personal.nextMatch) {
 					updateText('#home-match-badge', personal.nextMatch.status);
 					updateText('#home-match-comp', personal.nextMatch.competition);
 					updateText('#home-match-type', 'Confirmed match');
 					updateText('#opponent-name', personal.nextMatch.opponent);
-					updateText('#opponent-initial', personal.nextMatch.opponent.slice(0, 2).toUpperCase());
+					setHomeMatchAvatar('#opponent-initial', personal.nextMatch.opponentAvatarUrl, personal.nextMatch.opponent);
 					updateText('#home-match-schedule', formatDate(personal.nextMatch.scheduledAt));
 				} else {
 					updateText('#home-match-badge', 'No match scheduled');
+					updateText('#opponent-name', 'No opponent yet');
+					setHomeMatchAvatar('#opponent-initial', null, 'Opponent');
 					updateText('#home-match-schedule', 'Create or accept a challenge in the Match Centre.');
 				}
 			} else {
@@ -3244,7 +3260,7 @@ if (homeDashboardStatus) {
 					summary.append(makeNode('small', '', formatDate(match.approvedAt)));
 					row.append(summary);
 					if (match.ratingChange !== null && match.ratingChange !== undefined) {
-						row.append(makeNode('span', 'result-rating', `${match.ratingChange > 0 ? '+' : ''}${match.ratingChange} Elo`));
+						row.append(makeNode('span', 'result-rating', `${match.ratingChange > 0 ? '+' : ''}${match.ratingChange} XP`));
 					}
 					container.append(row);
 				});

@@ -259,6 +259,39 @@
 .admin-toast-container { z-index: 80; }
 .admin-toast { border: 1px solid var(--admin-line); border-radius: 12px; background: #122844; color: #edf3fb; box-shadow: 0 16px 44px rgba(0,0,0,.35); }
 
+/* Dashboard polish: clearer hierarchy, stronger status cues, and room for growth. */
+.admin-overview-pane .admin-pane-header { gap:24px; padding:clamp(20px,3vw,34px); border:1px solid rgba(172,197,229,.12); border-radius:20px; background:radial-gradient(ellipse at 100% 0,rgba(244,183,47,.1),transparent 38%),linear-gradient(145deg,rgba(18,40,68,.94),rgba(8,23,42,.92)); box-shadow:0 20px 55px rgba(0,0,0,.2); }
+.admin-overview-pane .admin-pane-header h2 { font-size:clamp(1.7rem,3vw,2.5rem); letter-spacing:-.045em; }
+.admin-quick-actions { display:flex; flex-wrap:wrap; gap:9px; }
+.admin-quick-actions > * { min-height:42px; }
+.admin-stats-grid { gap:14px; }
+.admin-stat-card { position:relative; overflow:hidden; min-height:126px; padding:20px; border:1px solid rgba(172,197,229,.13); border-radius:16px; background:linear-gradient(145deg,rgba(17,39,66,.96),rgba(9,24,43,.94)); box-shadow:0 14px 34px rgba(0,0,0,.16); transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease; }
+.admin-stat-card::after { position:absolute; right:-32px; bottom:-58px; width:120px; height:120px; border:1px solid rgba(244,183,47,.12); border-radius:50%; content:""; pointer-events:none; }
+.admin-stat-card:hover { transform:translateY(-3px); border-color:rgba(244,183,47,.3); box-shadow:0 20px 42px rgba(0,0,0,.24); }
+.admin-stat-card .stat-value { font-size:clamp(1.5rem,2.5vw,2rem); letter-spacing:-.04em; }
+.admin-overview-card,.admin-activity-card { border:1px solid rgba(172,197,229,.12); border-radius:17px; background:linear-gradient(150deg,rgba(16,37,63,.91),rgba(8,23,42,.94)); box-shadow:0 16px 38px rgba(0,0,0,.14); }
+.admin-controls-list li { padding:15px 0; border-color:rgba(172,197,229,.1); }
+.admin-controls-list li p { max-width:520px; line-height:1.55; }
+.admin-btn-sm,.admin-action-btn,.admin-shortcut { transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease; }
+.admin-btn-sm:focus-visible,.admin-action-btn:focus-visible,.admin-shortcut:focus-visible,.admin-tab:focus-visible { outline:3px solid rgba(244,183,47,.72); outline-offset:3px; }
+.admin-tab-pane { animation:admin-pane-enter .24s ease-out both; }
+@keyframes admin-pane-enter { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+@media (max-width:760px) {
+	.admin-overview-pane .admin-pane-header { align-items:flex-start; flex-direction:column; }
+	.admin-quick-actions { width:100%; }
+	.admin-quick-actions > * { flex:1 1 145px; }
+	.admin-shortcut-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:480px) {
+	.admin-shortcut-grid { grid-template-columns:1fr; }
+	.admin-stat-card { min-height:108px; padding:15px; }
+}
+@media (prefers-reduced-motion:reduce) {
+	.admin-stat-card,.admin-btn-sm,.admin-action-btn,.admin-shortcut { transition:none; }
+	.admin-stat-card:hover { transform:none; }
+	.admin-tab-pane { animation:none; }
+}
+
 .admin-auth-dialog { border: 0; background: transparent; color: #edf3fb; }
 .admin-auth-card { border: 1px solid rgba(172,197,229,.22); border-radius: 22px; background: linear-gradient(150deg,#132a47,#09182b); box-shadow: 0 30px 100px rgba(0,0,0,.6); }
 .admin-auth-header p { color: #9eafc5; }

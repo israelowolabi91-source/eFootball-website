@@ -29,6 +29,9 @@ const OWNER_EMAIL = String(process.env.OWNER_EMAIL || '').trim().toLowerCase();
 const OWNER_REVIEW_TOKEN = String(process.env.OWNER_REVIEW_TOKEN || '');
 const ADMIN_KEY = String(process.env.ADMIN_KEY || '').trim();
 const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || '').trim();
+const ADMIN_CONSOLE_PASSWORD = String(process.env.ADMIN_CONSOLE_PASSWORD || '');
+const ADMIN_SESSION_COOKIE = 'tim_admin_console';
+const adminConsoleSessions = new Map();
 const SESSION_COOKIE = 'tim_league_session';
 const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
 const LOGIN_LOCKOUT_MS = 15 * 60 * 1000;
@@ -325,7 +328,7 @@ if (!starterTournamentMigration) {
         desc: 'The season showpiece is back. Win your way through the bracket and claim the League Cup champion feature on your profile.',
         rules: 'Register with a verified account. Play each round by the published deadline. Both players submit the final score and a match screenshot. Admins review disputed reports.',
         registrationOpen: true, featuredCup: true, published: true, prizePool: 'Champion profile feature',
-        prizeDetails: 'The winner is featured on the League Cup page and in the season recap.', minElo: null, maxElo: null, entryLink: ''
+        prizeDetails: 'The winner is featured on the League Cup page and in the season recap.', minXP: null, maxXP: null, entryLink: ''
       },
       {
         id: 'neon-night-blitz-2026', title: 'Neon Night Blitz', kicker: 'Fast fixtures. Bright lights.', badge: 'BLITZ',
@@ -334,16 +337,16 @@ if (!starterTournamentMigration) {
         desc: 'A quick-fire evening tournament for players who want a full mini-season in one weekend. Pairings keep close records facing each other.',
         rules: 'Four scheduled rounds. Report every result with a screenshot in Match Centre. Standings use wins, then goal difference, then goals scored.',
         registrationOpen: true, featuredCup: false, published: true, prizePool: 'Neon Night winner feature',
-        prizeDetails: 'Top finishers receive a public tournament recap mention.', minElo: null, maxElo: null, entryLink: ''
+        prizeDetails: 'Top finishers receive a public tournament recap mention.', minXP: null, maxXP: null, entryLink: ''
       },
       {
         id: 'underdog-uprising-2026', title: 'Underdog Uprising', kicker: 'The next name on the leaderboard.', badge: 'RISING',
         format: '16-player knockout', slots: '16 players', status: 'Coming Soon',
         eventType: 'Rising Players Cup', platform: 'All platforms', dates: 'Dec 12–19, 2026',
         desc: 'A level playing field for developing competitors. Build a run, upset a seed, and earn your first big tournament story.',
-        rules: 'Open to players rated 1,399 Elo or below when registration closes. Verified profile and screenshot-backed result reports are required.',
+        rules: 'Open to players rated 1,399 XP or below when registration closes. Verified profile and screenshot-backed result reports are required.',
         registrationOpen: false, featuredCup: false, published: true, prizePool: 'Breakthrough player feature',
-        prizeDetails: 'The finalist with the biggest rating rise receives a season recap feature.', minElo: null, maxElo: 1399, entryLink: ''
+        prizeDetails: 'The finalist with the biggest rating rise receives a season recap feature.', minXP: null, maxXP: 1399, entryLink: ''
       },
       {
         id: 'derby-day-ladder-2026', title: 'Derby Day: Rivalry Ladder', kicker: 'Choose a rival. Settle it on the pitch.', badge: 'DERBY',
@@ -352,16 +355,16 @@ if (!starterTournamentMigration) {
         desc: 'A social ladder built around head-to-head rivalries. Play three different opponents and climb the event table with every verified result.',
         rules: 'Each player receives up to three fixtures. Both opponents report the same score and submit a screenshot. Standings are settled by wins and goal difference.',
         registrationOpen: false, featuredCup: false, published: true, prizePool: 'Rivalry Week spotlight',
-        prizeDetails: 'The ladder leader and closest rivalry are highlighted in the event recap.', minElo: null, maxElo: null, entryLink: ''
+        prizeDetails: 'The ladder leader and closest rivalry are highlighted in the event recap.', minXP: null, maxXP: null, entryLink: ''
       },
       {
         id: 'golden-boot-gauntlet-2026', title: 'Golden Boot Gauntlet', kicker: 'Attack first. Keep the receipts.', badge: 'GOALS',
         format: 'Five-match scoring challenge', slots: 'Open entry', status: 'Coming Soon',
         eventType: 'Community Challenge', platform: 'All platforms', dates: 'Jan 2–10, 2027',
-        desc: 'A friendly scoring race focused on goals, not Elo. Bring your sharpest attack and submit verified match results for the event board.',
+        desc: 'A friendly scoring race focused on goals, not XP. Bring your sharpest attack and submit verified match results for the event board.',
         rules: 'Play up to five event fixtures. Only approved match reports count. Ties are broken by goals scored, then goal difference.',
         registrationOpen: false, featuredCup: false, published: true, prizePool: 'Golden Boot profile badge',
-        prizeDetails: 'The top scorer is featured in the community recap.', minElo: null, maxElo: null, entryLink: ''
+        prizeDetails: 'The top scorer is featured in the community recap.', minXP: null, maxXP: null, entryLink: ''
       }
     ];
   const mergedTournaments = Array.isArray(existingTournaments) ? [...existingTournaments] : [];
@@ -581,6 +584,9 @@ const normalizePublicStreamUrl = (value) => {
   return url.toString();
 };
 const isAdminRequest = (req) => {
+  const adminSessionToken = readCookie(req, ADMIN_SESSION_COOKIE);
+  const adminSessionExpiry = adminSessionToken && adminConsoleSessions.get(hashToken(adminSessionToken));
+  if (adminSessionExpiry && adminSessionExpiry > Date.now()) return true;
   // 1. Header Admin Key
   const headerKey = req.get('x-admin-key') || req.get('x-owner-review-token');
   if (headerKey) {
@@ -950,9 +956,6 @@ app.get('/verify-email.html', (req, res) => {
   res.sendFile(path.join(ROOT, 'login.html'));
 });
 app.get(['/admin', '/admin.html'], (req, res, next) => {
-  const sessionUser = findSessionUser(req, readUsers());
-  const isOwner = Boolean(sessionUser && OWNER_EMAIL && sessionUser.email.toLowerCase() === OWNER_EMAIL);
-  if (!sessionUser || (sessionUser.role !== 'admin' && !isOwner)) return res.sendStatus(404);
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.sendFile(path.join(ROOT, 'admin.html'), (error) => {
     if (error) next(error);
@@ -1497,7 +1500,7 @@ app.get('/api/rankings/live', (req, res) => {
   res.json({
     players: players.map((player, index) => ({ rank: index + 1, ...publicMatchProfile(player) })),
     updatedAt: new Date().toISOString(),
-    ratingSystem: `Elo, K=${LEAGUE_CONFIG.elo.rankedKFactor}; new profiles start at ${LEAGUE_CONFIG.elo.initialRating}.`
+    ratingSystem: `XP, K=${LEAGUE_CONFIG.elo.rankedKFactor}; new profiles start at ${LEAGUE_CONFIG.elo.initialRating}.`
   });
 });
 
@@ -1591,6 +1594,8 @@ app.get('/api/site/dashboard', (req, res) => {
       nextMatch: nextMatch ? {
         id: nextMatch.id,
         opponent: nextOpponent?.gamerTag || 'Opponent',
+        opponentAvatarUrl: nextOpponent ? publicMatchProfile(nextOpponent).avatarUrl : null,
+        playerAvatarUrl: publicMatchProfile(signedInUser).avatarUrl,
         scheduledAt: nextMatch.scheduledAt,
         competition: nextMatch.competition || 'open',
         status: nextMatch.status
@@ -1978,7 +1983,7 @@ const applyMatchOutcome = (challenger, opponent, challengerScore, opponentScore,
     opponent.rating = Math.max(100, opponent.rating + opponentChange);
     challenger.rankedMatches = (challenger.rankedMatches || 0) + 1;
     opponent.rankedMatches = (opponent.rankedMatches || 0) + 1;
-    ratingChanges = { challenger: challengerChange, opponent: opponentChange, system: `Elo K=${LEAGUE_CONFIG.elo.rankedKFactor}` };
+    ratingChanges = { challenger: challengerChange, opponent: opponentChange, system: `XP K=${LEAGUE_CONFIG.elo.rankedKFactor}` };
   }
 
   if (!isRanked) return ratingChanges;
@@ -2101,8 +2106,8 @@ app.post('/api/matches/:id/result', async (req, res) => {
     if (challenger && opponent) {
       const summary = `${challenger.gamerTag} ${report.challengerScore} – ${report.opponentScore} ${opponent.gamerTag}`;
       const eloNote = match.result.ratingChanges
-        ? ` Elo updates: ${challenger.gamerTag} (${match.result.ratingChanges.challenger > 0 ? '+' : ''}${match.result.ratingChanges.challenger}), ${opponent.gamerTag} (${match.result.ratingChanges.opponent > 0 ? '+' : ''}${match.result.ratingChanges.opponent}).`
-        : (match.result.farmCapApplied ? ' (Daily ranked Elo match cap reached between these opponents; no additional Elo change applied).' : '');
+        ? ` XP updates: ${challenger.gamerTag} (${match.result.ratingChanges.challenger > 0 ? '+' : ''}${match.result.ratingChanges.challenger}), ${opponent.gamerTag} (${match.result.ratingChanges.opponent > 0 ? '+' : ''}${match.result.ratingChanges.opponent}).`
+        : (match.result.farmCapApplied ? ' (Daily ranked XP match cap reached between these opponents; no additional XP change applied).' : '');
       await Promise.all([challenger, opponent].map(async (player) => {
         try {
           return await notifyMatchParticipant(match, player, {
@@ -2402,7 +2407,7 @@ app.post('/api/admin/matches/:id/decision', async (req, res) => {
     opponent.rating += opponentChange;
     challenger.rankedMatches += 1;
     opponent.rankedMatches += 1;
-    match.result.ratingChanges = { challenger: challengerChange, opponent: opponentChange, system: `Elo K=${LEAGUE_CONFIG.elo.rankedKFactor}` };
+    match.result.ratingChanges = { challenger: challengerChange, opponent: opponentChange, system: `XP K=${LEAGUE_CONFIG.elo.rankedKFactor}` };
     if (challengerScore > opponentScore) {
       challenger.wins += 1;
       opponent.losses += 1;
@@ -2422,7 +2427,7 @@ app.post('/api/admin/matches/:id/decision', async (req, res) => {
       return await notifyMatchParticipant(match, recipient, {
         subject: 'Your match result was approved',
         title: 'Match result approved',
-        message: `The owner approved the final score ${challenger.gamerTag} ${challengerScore} – ${opponentScore} ${opponent.gamerTag}.${match.ranked ? ` Ranked Elo changes: ${challenger.gamerTag} ${match.result.ratingChanges.challenger > 0 ? '+' : ''}${match.result.ratingChanges.challenger}; ${opponent.gamerTag} ${match.result.ratingChanges.opponent > 0 ? '+' : ''}${match.result.ratingChanges.opponent}.` : ' This friendly result did not change Elo ratings.'}`
+        message: `The owner approved the final score ${challenger.gamerTag} ${challengerScore} – ${opponentScore} ${opponent.gamerTag}.${match.ranked ? ` Ranked XP changes: ${challenger.gamerTag} ${match.result.ratingChanges.challenger > 0 ? '+' : ''}${match.result.ratingChanges.challenger}; ${opponent.gamerTag} ${match.result.ratingChanges.opponent > 0 ? '+' : ''}${match.result.ratingChanges.opponent}.` : ' This friendly result did not change XP ratings.'}`
       });
     } catch (error) {
       console.error(`Result approval email failed for match ${match.id} to ${recipient.email}:`, error);
@@ -2440,6 +2445,15 @@ app.post('/api/admin/matches/:id/decision', async (req, res) => {
 // 1. Admin Login (Key or Email+Password)
 app.post('/api/admin/login', adminLoginRateLimit, async (req, res) => {
   const { key, email, password } = req.body || {};
+
+  if (password && ADMIN_CONSOLE_PASSWORD && safeTokenEqual(String(password), ADMIN_CONSOLE_PASSWORD)) {
+    const token = createToken();
+    const ttl = 8 * 60 * 60 * 1000;
+    adminConsoleSessions.set(hashToken(token), Date.now() + ttl);
+    const secure = process.env.NODE_ENV === 'production' || req.secure;
+    res.setHeader('Set-Cookie', `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(ttl / 1000)}${secure ? '; Secure' : ''}`);
+    return res.json({ ok: true, admin: true, user: { gamerTag: 'Administrator', role: 'admin' } });
+  }
 
   // Check Master Token / Secret Admin Password
   const enteredKey = String(key || '').trim();
@@ -2522,6 +2536,14 @@ app.post('/api/admin/login', adminLoginRateLimit, async (req, res) => {
   return res.status(400).json({ message: 'Invalid master secret password or admin credentials.' });
 });
 
+app.post('/api/admin/logout', (req, res) => {
+  const token = readCookie(req, ADMIN_SESSION_COOKIE);
+  if (token) adminConsoleSessions.delete(hashToken(token));
+  const secure = process.env.NODE_ENV === 'production' || req.secure;
+  res.setHeader('Set-Cookie', `${ADMIN_SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure ? '; Secure' : ''}`);
+  res.json({ ok: true });
+});
+
 // 2. Admin Session Check
 app.get('/api/admin/session', requireAdmin, (req, res) => {
   const users = readUsers();
@@ -2529,7 +2551,7 @@ app.get('/api/admin/session', requireAdmin, (req, res) => {
   res.json({
     ok: true,
     isAdmin: true,
-    user: sessionUser ? publicProfile(sessionUser) : { gamerTag: 'Admin', role: 'admin' }
+    user: sessionUser ? publicProfile(sessionUser) : { gamerTag: 'Administrator', role: 'admin' }
   });
 });
 
@@ -2882,7 +2904,7 @@ app.post('/api/admin/matches/:id/force-approve', requireAdmin, (req, res) => {
 
   match.status = 'approved';
   writeMatches(matches);
-  res.json({ ok: true, status: 'approved', ratingChanges, message: `Match force-approved (${challengerScore}–${opponentScore}). Elo updated live.` });
+  res.json({ ok: true, status: 'approved', ratingChanges, message: `Match force-approved (${challengerScore}–${opponentScore}). XP updated live.` });
 });
 
 // 13. Admin Delete Match
@@ -3014,7 +3036,7 @@ app.get('/api/site/live-streams', (req, res) => {
 // Admin: Create tournament
 app.post('/api/admin/tournaments', requireAdmin, (req, res) => {
   const tournaments = getSiteContent('tournaments', []);
-  const { title, kicker, badge, format, slots, status, dates, startsAt, desc, registrationOpen, checkInOpen, prizePool, prizeDetails, eventType, platform, rules, minElo, maxElo, entryLink, featuredCup, published } = req.body || {};
+  const { title, kicker, badge, format, slots, status, dates, startsAt, desc, registrationOpen, checkInOpen, prizePool, prizeDetails, eventType, platform, rules, minXP, maxXP, entryLink, featuredCup, published } = req.body || {};
   const isFeaturedCup = featuredCup === true;
   if (published !== undefined && typeof published !== 'boolean') return res.status(400).json({ message: 'Tournament visibility must be set to published or draft.' });
   if (!title || !format) return res.status(400).json({ message: 'Title and format are required.' });
@@ -3022,13 +3044,13 @@ app.post('/api/admin/tournaments', requireAdmin, (req, res) => {
   const cleanTitle = isFeaturedCup ? 'Tim League Cup 2026' : String(title).trim().slice(0, 80);
   const cleanFormat = String(format).trim().slice(0, 100);
   const tournamentStatus = ['Registration Open', 'Coming Soon', 'In Progress', 'Completed', 'Cancelled'].includes(status) ? status : 'Coming Soon';
-  const cleanMinElo = minElo === null || minElo === '' || minElo === undefined ? null : Number(minElo);
-  const cleanMaxElo = maxElo === null || maxElo === '' || maxElo === undefined ? null : Number(maxElo);
+  const cleanMinXP = minXP === null || minXP === '' || minXP === undefined ? null : Number(minXP);
+  const cleanMaxXP = maxXP === null || maxXP === '' || maxXP === undefined ? null : Number(maxXP);
   if (!cleanTitle || !cleanFormat) return res.status(400).json({ message: 'Tournament title and format cannot be blank.' });
-  if ((cleanMinElo !== null && (!Number.isSafeInteger(cleanMinElo) || cleanMinElo < 0 || cleanMinElo > 3000)) ||
-      (cleanMaxElo !== null && (!Number.isSafeInteger(cleanMaxElo) || cleanMaxElo < 0 || cleanMaxElo > 3000)) ||
-      (cleanMinElo !== null && cleanMaxElo !== null && cleanMinElo > cleanMaxElo)) {
-    return res.status(400).json({ message: 'Enter valid Elo limits from 0 to 3,000, with minimum no greater than maximum.' });
+  if ((cleanMinXP !== null && (!Number.isSafeInteger(cleanMinXP) || cleanMinXP < 0 || cleanMinXP > 3000)) ||
+      (cleanMaxXP !== null && (!Number.isSafeInteger(cleanMaxXP) || cleanMaxXP < 0 || cleanMaxXP > 3000)) ||
+      (cleanMinXP !== null && cleanMaxXP !== null && cleanMinXP > cleanMaxXP)) {
+    return res.status(400).json({ message: 'Enter valid XP limits from 0 to 3,000, with minimum no greater than maximum.' });
   }
   if (isFeaturedCup && tournaments.some((event) => event.featuredCup)) {
     return res.status(409).json({ message: 'Only one tournament can be featured as the League Cup. Edit the existing League Cup event instead.' });
@@ -3053,8 +3075,8 @@ app.post('/api/admin/tournaments', requireAdmin, (req, res) => {
     featuredCup: isFeaturedCup,
     prizePool: String(prizePool || '').trim().slice(0, 100),
     prizeDetails: String(prizeDetails || '').trim().slice(0, 1000),
-    minElo: cleanMinElo,
-    maxElo: cleanMaxElo,
+    minXP: cleanMinXP,
+    maxXP: cleanMaxXP,
     entryLink: String(entryLink || '').trim().slice(0, 200),
     createdAt: new Date().toISOString()
   };
@@ -3069,16 +3091,16 @@ app.put('/api/admin/tournaments/:id', requireAdmin, (req, res) => {
   const tournaments = getSiteContent('tournaments', []);
   const idx = tournaments.findIndex(t => t.id === req.params.id);
   if (idx === -1) return res.status(404).json({ message: 'Tournament not found.' });
-  const { title, kicker, badge, format, slots, status, dates, startsAt, desc, registrationOpen, checkInOpen, prizePool, prizeDetails, eventType, platform, rules, minElo, maxElo, entryLink, featuredCup, published } = req.body || {};
+  const { title, kicker, badge, format, slots, status, dates, startsAt, desc, registrationOpen, checkInOpen, prizePool, prizeDetails, eventType, platform, rules, minXP, maxXP, entryLink, featuredCup, published } = req.body || {};
   const t = tournaments[idx];
   if (published !== undefined && typeof published !== 'boolean') return res.status(400).json({ message: 'Tournament visibility must be set to published or draft.' });
   const isFeaturedCup = featuredCup === undefined ? Boolean(t.featuredCup) : featuredCup === true;
-  const cleanMinElo = minElo === undefined ? t.minElo ?? null : minElo === null || minElo === '' ? null : Number(minElo);
-  const cleanMaxElo = maxElo === undefined ? t.maxElo ?? null : maxElo === null || maxElo === '' ? null : Number(maxElo);
-  if ((cleanMinElo !== null && (!Number.isSafeInteger(cleanMinElo) || cleanMinElo < 0 || cleanMinElo > 3000)) ||
-      (cleanMaxElo !== null && (!Number.isSafeInteger(cleanMaxElo) || cleanMaxElo < 0 || cleanMaxElo > 3000)) ||
-      (cleanMinElo !== null && cleanMaxElo !== null && cleanMinElo > cleanMaxElo)) {
-    return res.status(400).json({ message: 'Enter valid Elo limits from 0 to 3,000, with minimum no greater than maximum.' });
+  const cleanMinXP = minXP === undefined ? t.minXP ?? null : minXP === null || minXP === '' ? null : Number(minXP);
+  const cleanMaxXP = maxXP === undefined ? t.maxXP ?? null : maxXP === null || maxXP === '' ? null : Number(maxXP);
+  if ((cleanMinXP !== null && (!Number.isSafeInteger(cleanMinXP) || cleanMinXP < 0 || cleanMinXP > 3000)) ||
+      (cleanMaxXP !== null && (!Number.isSafeInteger(cleanMaxXP) || cleanMaxXP < 0 || cleanMaxXP > 3000)) ||
+      (cleanMinXP !== null && cleanMaxXP !== null && cleanMinXP > cleanMaxXP)) {
+    return res.status(400).json({ message: 'Enter valid XP limits from 0 to 3,000, with minimum no greater than maximum.' });
   }
   if (isFeaturedCup && tournaments.some((event) => event.id !== t.id && event.featuredCup)) {
     return res.status(409).json({ message: 'Only one tournament can be featured as the League Cup. Remove the current League Cup designation first.' });
@@ -3152,11 +3174,11 @@ app.post('/api/tournaments/:id/register-interest', (req, res) => {
     return res.status(409).json({ message: 'Registration for this tournament is closed.' });
   }
   const rating = Number(user.rating) || 1000;
-  if (Number.isFinite(tourn.minElo) && rating < tourn.minElo) {
-    return res.status(403).json({ message: `This tournament requires at least ${tourn.minElo} Elo.` });
+  if (Number.isFinite(tourn.minXP) && rating < tourn.minXP) {
+    return res.status(403).json({ message: `This tournament requires at least ${tourn.minElo} XP.` });
   }
-  if (Number.isFinite(tourn.maxElo) && rating > tourn.maxElo) {
-    return res.status(403).json({ message: `This tournament is limited to ${tourn.maxElo} Elo.` });
+  if (Number.isFinite(tourn.maxXP) && rating > tourn.maxXP) {
+    return res.status(403).json({ message: `This tournament is limited to ${tourn.maxElo} XP.` });
   }
   const slotLimit = Number.parseInt(String(tourn.slots || ''), 10);
   const registeredCount = Object.values(users).filter((candidate) => candidate.verified && candidate.tournamentInterests?.[tournId]).length;
@@ -3322,3 +3344,4 @@ app.listen(PORT, () => {
   console.log(`Tim eFootball League running at ${BASE_URL}`);
   console.log(mailer ? 'Email delivery: SMTP enabled' : 'Email delivery: disabled (configure SMTP settings in .env)');
 });
+

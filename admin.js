@@ -122,7 +122,6 @@
     // Password login
     document.getElementById('admin-password-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('admin-email').value.trim();
         const password = document.getElementById('admin-password').value;
         authMessage.textContent = 'Authenticating…';
         authMessage.className = 'admin-auth-message';
@@ -132,11 +131,12 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'same-origin',
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ password })
             });
             const data = await result.json();
             if (!result.ok) throw new Error(data.message || 'Invalid administrator credentials.');
 
+            document.getElementById('admin-password').value = '';
             adminUser = data.user;
             hideAuthDialog();
             showToast('Signed in successfully.');
@@ -180,9 +180,9 @@
         sessionStorage.removeItem('tim_admin_key');
         localStorage.removeItem('tim_admin_key');
         try {
-            await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+            await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
         } catch {}
-        window.location.href = 'index.html';
+        window.location.href = 'admin.html';
     });
 
     const loadPlayerReports = async () => {
@@ -256,6 +256,7 @@
 
     const openAdminTab = (name) => document.querySelector(`.admin-tab[data-tab="${name}"]`)?.click();
     document.getElementById('btn-goto-tournaments')?.addEventListener('click', () => openAdminTab('tournaments'));
+    document.getElementById('btn-quick-clubs')?.addEventListener('click', () => openAdminTab('clubs'));
     document.getElementById('btn-goto-bracket')?.addEventListener('click', () => openAdminTab('bracket'));
 
     // Let operators jump between the seven work areas without leaving the keyboard.
@@ -297,7 +298,7 @@
 
             if (stats.topPlayer) {
                 document.getElementById('stat-top-player').textContent = stats.topPlayer.gamerTag;
-                document.getElementById('stat-top-player-elo').textContent = `${stats.topPlayer.rating} Elo · ${stats.topPlayer.wins} wins`;
+                document.getElementById('stat-top-player-elo').textContent = `${stats.topPlayer.rating} XP · ${stats.topPlayer.wins} wins`;
             } else {
                 document.getElementById('stat-top-player').textContent = '—';
                 document.getElementById('stat-top-player-elo').textContent = 'No player data';
@@ -613,9 +614,9 @@
             document.getElementById('edit-match-id').value = match.id;
             document.getElementById('match-modal-participants').innerHTML = `
                 <div class="modal-h2h-row">
-                    <span>${escapeHtml(match.challenger.gamerTag)} (${match.challenger.rating} Elo)</span>
+                    <span>${escapeHtml(match.challenger.gamerTag)} (${match.challenger.rating} XP)</span>
                     <strong>VS</strong>
-                    <span>${escapeHtml(match.opponent.gamerTag)} (${match.opponent.rating} Elo)</span>
+                    <span>${escapeHtml(match.opponent.gamerTag)} (${match.opponent.rating} XP)</span>
                 </div>
             `;
             document.getElementById('edit-match-challenger-score').value = match.scores ? match.scores.challenger : 0;
@@ -690,8 +691,8 @@
         selectO.innerHTML = '';
 
         cachedUsers.forEach((u) => {
-            selectC.add(new Option(`${u.gamerTag} (${u.rating} Elo)`, u.id));
-            selectO.add(new Option(`${u.gamerTag} (${u.rating} Elo)`, u.id));
+            selectC.add(new Option(`${u.gamerTag} (${u.rating} XP)`, u.id));
+            selectO.add(new Option(`${u.gamerTag} (${u.rating} XP)`, u.id));
         });
         if (cachedUsers.length > 1) {
             selectO.selectedIndex = 1;
@@ -889,7 +890,7 @@
                         <div><span>Registered:</span> <strong style="color: #f4b72f;">★ ${interestCount} players</strong></div>
                         ${t.featuredCup ? '<div><span>Public page:</span> <strong>League Cup</strong></div>' : ''}
                         ${t.prizePool ? `<div><span>Prize:</span> <strong>${escapeHtml(t.prizePool)}</strong></div>` : ''}
-                        ${t.minElo || t.maxElo ? `<div><span>Elo Req:</span> <strong>${t.minElo ? escapeHtml(t.minElo) + '+' : 'Any'} ${t.maxElo ? 'to ' + escapeHtml(t.maxElo) : ''}</strong></div>` : ''}
+                        ${t.minElo || t.maxElo ? `<div><span>XP Req:</span> <strong>${t.minElo ? escapeHtml(t.minElo) + '+' : 'Any'} ${t.maxElo ? 'to ' + escapeHtml(t.maxElo) : ''}</strong></div>` : ''}
                     </div>
                     <div class="event-actions">
                         <button type="button" class="btn-action edit" data-edit-tourn="${escapeHtml(t.id)}">Edit</button>
@@ -1021,7 +1022,7 @@
             document.getElementById('t-published').checked = false;
             document.getElementById('t-featured-cup').checked = false;
             syncFeaturedCupTitle();
-            document.getElementById('tournament-feedback').textContent = 'Format, capacity, and Elo limits were copied. Add the event-specific details before saving.';
+            document.getElementById('tournament-feedback').textContent = 'Format, capacity, and XP limits were copied. Add the event-specific details before saving.';
             syncTournamentPreview();
         modalTournament.showModal();
             return;
@@ -1369,3 +1370,4 @@
     checkAdminSession();
 
 })();
+

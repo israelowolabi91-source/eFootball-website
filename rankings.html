@@ -60,7 +60,7 @@
             <aside class="season-scoreboard" aria-label="Live leaderboard summary">
                 <div class="scoreboard-topline"><span>Live standings</span><span class="snapshot-tag"><i></i> Database</span></div>
                 <p class="scoreboard-label">Highest rated player</p>
-                <div class="scoreboard-champion"><span class="champion-crown" aria-hidden="true">♛</span><span><small>TOP PLAYER</small><strong id="rank-top-player">Loading…</strong><em id="rank-top-rating">— Elo</em></span><b id="rank-top-position">—</b></div>
+                <div class="scoreboard-champion"><span class="champion-crown" aria-hidden="true">♛</span><span><small>TOP PLAYER</small><strong id="rank-top-player">Loading…</strong><em id="rank-top-rating">— XP</em></span><b id="rank-top-position">—</b></div>
                 <div class="scoreboard-race"><span>Verified accounts</span><strong id="rank-player-total">—</strong><small>Player account records</small></div>
                 <div class="season-scoreboard-footer"><span>Approved ranked matches <strong id="rank-match-total">—</strong></span></div>
             </aside>
@@ -105,7 +105,7 @@
             <div class="leaderboard-panel" id="players-panel" role="tabpanel" aria-labelledby="players-tab">
                 <div class="leaderboard-table-scroll">
                     <table class="leaderboard-table">
-                        <thead id="leaderboard-thead"><tr><th scope="col" id="col-rank">Rank</th><th scope="col" id="col-subject">Player</th><th scope="col" id="col-rating">Elo rating</th><th scope="col" id="col-record">Ranked W–D–L</th><th scope="col" id="col-matches">Ranked matches</th></tr></thead>
+                        <thead id="leaderboard-thead"><tr><th scope="col" id="col-rank">Rank</th><th scope="col" id="col-subject">Player</th><th scope="col" id="col-rating">XP rating</th><th scope="col" id="col-record">Ranked W–D–L</th><th scope="col" id="col-matches">Ranked matches</th></tr></thead>
                         <tbody id="player-rankings">
                             <tr><td colspan="5">Loading verified player records…</td></tr>
                         </tbody>
@@ -145,7 +145,7 @@
         <section class="elo-calc-section" id="elo-calculator" aria-labelledby="calculator-title">
             <div class="calc-header">
                 <p class="eyebrow"><span class="eyebrow-line"></span> Rating simulator</p>
-                <h2 id="calculator-title">Interactive Elo Calculator &amp; Tier Simulator.</h2>
+                <h2 id="calculator-title">Interactive XP Calculator &amp; Tier Simulator.</h2>
                 <p>Estimate rating changes and tier progress with the official league rating equation and shared tier thresholds.</p>
                 <div class="calc-mode-selector" role="tablist" aria-label="Simulation Mode">
                     <button type="button" class="calc-mode-btn is-active" data-calc-mode="single" aria-selected="true">⚡ Single Match Projection</button>
@@ -158,14 +158,14 @@
                 <div class="calc-grid">
                     <div class="calc-inputs">
                         <div class="calc-field">
-                            <label for="calc-user-rating">Your Current Elo Rating
+                            <label for="calc-user-rating">Your Current XP Rating
                                 <input type="number" id="calc-user-rating" min="100" max="3000" value="1000" step="1" inputmode="numeric">
                             </label>
-                            <small class="field-hint">Defaults to your profile Elo when logged in.</small>
+                            <small class="field-hint">Defaults to your profile XP when logged in.</small>
                         </div>
 
                         <div class="calc-field">
-                            <label for="calc-opponent-rating">Opponent Elo Rating
+                            <label for="calc-opponent-rating">Opponent XP Rating
                                 <input type="number" id="calc-opponent-rating" min="100" max="3000" value="1000" step="1" inputmode="numeric">
                             </label>
                             <div class="calc-quick-pick">
@@ -224,12 +224,12 @@
                                 <span class="calc-risk-badge" id="calc-risk-badge">Balanced Risk</span>
                             </div>
                             <div class="calc-matchup-players">
-                                <div><small>YOUR EXPECTED SCORE</small><strong id="calc-your-expectation">50%</strong><span id="calc-your-matchup-rating">1,000 Elo</span></div>
+                                <div><small>YOUR EXPECTED SCORE</small><strong id="calc-your-expectation">50%</strong><span id="calc-your-matchup-rating">1,000 XP</span></div>
                                 <span class="calc-matchup-divider" aria-hidden="true">VS</span>
-                                <div><small>OPPONENT EXPECTED SCORE</small><strong id="calc-opponent-expectation">50%</strong><span id="calc-opponent-matchup-rating">1,000 Elo</span></div>
+                                <div><small>OPPONENT EXPECTED SCORE</small><strong id="calc-opponent-expectation">50%</strong><span id="calc-opponent-matchup-rating">1,000 XP</span></div>
                             </div>
-                            <div class="calc-expectation-track" role="progressbar" aria-label="Expected Elo score for you" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span id="calc-expectation-fill"></span></div>
-                            <p class="calc-expectation-caption">Expected score share based on standard Elo mathematics (logistic probability curve).</p>
+                            <div class="calc-expectation-track" role="progressbar" aria-label="Expected XP score for you" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span id="calc-expectation-fill"></span></div>
+                            <p class="calc-expectation-caption">Expected score share based on standard XP mathematics (logistic probability curve).</p>
                         </div>
 
                         <!-- Live 3-Way Stake Matrix -->
@@ -237,31 +237,31 @@
                             <div class="stake-col stake-win">
                                 <span class="stake-label">WIN</span>
                                 <strong class="stake-delta" id="stake-win-delta">+16</strong>
-                                <span class="stake-proj" id="stake-win-proj">1,016 Elo</span>
+                                <span class="stake-proj" id="stake-win-proj">1,016 XP</span>
                             </div>
                             <div class="stake-col stake-draw">
                                 <span class="stake-label">DRAW</span>
                                 <strong class="stake-delta" id="stake-draw-delta">±0</strong>
-                                <span class="stake-proj" id="stake-draw-proj">1,000 Elo</span>
+                                <span class="stake-proj" id="stake-draw-proj">1,000 XP</span>
                             </div>
                             <div class="stake-col stake-loss">
                                 <span class="stake-label">LOSS</span>
                                 <strong class="stake-delta" id="stake-loss-delta">-16</strong>
-                                <span class="stake-proj" id="stake-loss-proj">984 Elo</span>
+                                <span class="stake-proj" id="stake-loss-proj">984 XP</span>
                             </div>
                         </div>
 
                         <div class="calc-delta-box" id="calc-delta-box">
                             <span class="calc-delta-label" id="calc-delta-headline">PROJECTED RATING CHANGE</span>
                             <strong class="calc-delta-val" id="calc-delta" aria-live="polite">+16</strong>
-                            <span class="calc-projected-rating" id="calc-projected-rating">New Rating: 1,016 Elo</span>
+                            <span class="calc-projected-rating" id="calc-projected-rating">New Rating: 1,016 XP</span>
                         </div>
 
                         <!-- Series Trajectory Card (active in Series Mode) -->
                         <div class="calc-trajectory-card" id="calc-trajectory-card" hidden>
                             <div class="calc-trajectory-topline">
                                 <span>SERIES TRAJECTORY</span>
-                                <strong id="calc-trajectory-net">+45 Elo Net</strong>
+                                <strong id="calc-trajectory-net">+45 XP Net</strong>
                             </div>
                             <div class="calc-trajectory-steps" id="calc-trajectory-steps"></div>
                         </div>
