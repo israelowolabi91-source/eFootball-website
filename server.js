@@ -544,6 +544,12 @@ const safeTokenEqual = (expectedHash, providedToken) => {
   const storedHash = Buffer.from(expectedHash, 'hex');
   return providedHash.length === storedHash.length && crypto.timingSafeEqual(providedHash, storedHash);
 };
+const safeSecretEqual = (expectedSecret, providedSecret) => {
+  if (typeof expectedSecret !== 'string' || typeof providedSecret !== 'string' || !expectedSecret || !providedSecret) return false;
+  const expected = Buffer.from(expectedSecret, 'utf8');
+  const provided = Buffer.from(providedSecret, 'utf8');
+  return expected.length === provided.length && crypto.timingSafeEqual(expected, provided);
+};
 const matchParticipantEmail = (req, match) => {
   const token = req.get('x-match-token');
   if (!match?.accessTokens || !token) return null;
@@ -2446,7 +2452,7 @@ app.post('/api/admin/matches/:id/decision', async (req, res) => {
 app.post('/api/admin/login', adminLoginRateLimit, async (req, res) => {
   const { key, email, password } = req.body || {};
 
-  if (password && ADMIN_CONSOLE_PASSWORD && safeTokenEqual(String(password), ADMIN_CONSOLE_PASSWORD)) {
+  if (password && ADMIN_CONSOLE_PASSWORD && safeSecretEqual(ADMIN_CONSOLE_PASSWORD, String(password))) {
     const token = createToken();
     const ttl = 8 * 60 * 60 * 1000;
     adminConsoleSessions.set(hashToken(token), Date.now() + ttl);
