@@ -446,6 +446,14 @@ const findSessionUser = (req, users) => {
   if (!user || !user.verified || !user.sessionExpires || user.sessionExpires <= Date.now()) return null;
   return user;
 };
+const publicAwards = (user) => (Array.isArray(user.awards) ? user.awards : []).slice(0, 20).map((award) => ({
+  id: String(award.id || ''),
+  type: ['badge', 'cup', 'medal'].includes(award.type) ? award.type : 'medal',
+  title: String(award.title || '').slice(0, 32),
+  theme: ['gold', 'ice', 'violet', 'crimson', 'emerald'].includes(award.theme) ? award.theme : 'gold',
+  effect: ['shine', 'pulse', 'sparkle'].includes(award.effect) ? award.effect : 'shine',
+  awardedAt: award.awardedAt || null
+})).filter((award) => award.title);
 const publicProfile = (user) => {
   const isOwner = Boolean(OWNER_EMAIL && user.email.toLowerCase() === OWNER_EMAIL.toLowerCase());
   const isAdmin = Boolean(user.role === 'admin' || isOwner);
@@ -466,6 +474,7 @@ const publicProfile = (user) => {
     losses: user.losses,
     draws: user.draws,
     rankedMatches: user.rankedMatches,
+    awards: publicAwards(user),
     role: user.role || (isAdmin ? 'admin' : 'user'),
     isAdmin,
     isOwner
@@ -488,7 +497,8 @@ const publicMatchProfile = (user) => ({
   wins: user.wins,
   losses: user.losses,
   draws: user.draws,
-  rankedMatches: user.rankedMatches
+  rankedMatches: user.rankedMatches,
+  awards: publicAwards(user)
 });
 const authenticatedUser = (req) => {
   const users = readUsers();
@@ -2630,7 +2640,8 @@ app.get('/api/admin/users', requireAdmin, (req, res) => {
       platform: u.platform || '',
       country: u.country || '',
       timeZone: u.timeZone || 'UTC',
-      clubName: u.clubName || ''
+      clubName: u.clubName || '',
+      awards: publicAwards(u)
     }));
   res.json({ ok: true, users: userList });
 });
@@ -2683,7 +2694,7 @@ app.put('/api/admin/users/:id', requireAdmin, (req, res) => {
   if (!entry) return res.status(404).json({ message: 'Player account not found.' });
   const [originalEmail, user] = entry;
 
-  const { email, gamerTag, name, rating, verified, role, platform, country, timeZone, clubName } = req.body || {};
+  const { email, gamerTag, name, rating, verified, role, platform, country, timeZone, clubName, awards } = req.body || {};
 
   if (gamerTag) {
     const newTag = String(gamerTag).trim();
@@ -2719,6 +2730,25 @@ app.put('/api/admin/users/:id', requireAdmin, (req, res) => {
   if (clubName !== undefined) {
     if (String(clubName).trim().length > 60) return res.status(400).json({ message: 'Club name must be 60 characters or fewer.' });
     user.clubName = String(clubName).trim();
+  }
+  if (awards !== undefined) {
+    if (!Array.isArray(awards) || awards.length > 20) return res.status(400).json({ message: 'A player can have up to 20 prizes.' });
+    const allowedTypes = ['badge', 'cup', 'medal'];
+    const allowedThemes = ['gold', 'ice', 'violet', 'crimson', 'emerald'];
+    const allowedEffects = ['shine', 'pulse', 'sparkle'];
+    const cleanAwards = [];
+    for (const award of awards) {
+      const title = String(award?.title || '').trim();
+      if (!title || title.length > 32 || !allowedTypes.includes(award?.type) || !allowedThemes.includes(award?.theme) || !allowedEffects.includes(award?.effect)) {
+        return res.status(400).json({ message: 'Each prize needs a name up to 32 characters, a supported type, finish, and animation.' });
+      }
+      const existingAward = (Array.isArray(user.awards) ? user.awards : []).find((item) => item.id && item.id === award.id);
+      cleanAwards.push({
+        id: existingAward?.id || crypto.randomUUID(), type: award.type, title, theme: award.theme, effect: award.effect,
+        awardedAt: existingAward?.awardedAt || new Date().toISOString()
+      });
+    }
+    user.awards = cleanAwards;
   }
 
   // If email address was edited
@@ -2942,14 +2972,15 @@ app.get('/api/admin/content', requireAdmin, (req, res) => {
       announcement: getSiteContent('announcement'),
       tournaments: getSiteContent('tournaments'),
       clubs: getSiteContent('clubs'),
-      bracket: getSiteContent('bracket')
+      bracket: getSiteContent('bracket'),
+      seasons: getSiteContent('seasons', [])
     }
   });
 });
 
 app.put('/api/admin/content/:key', requireAdmin, (req, res) => {
   const { key } = req.params;
-  const validKeys = ['announcement', 'tournaments', 'clubs', 'bracket', 'settings'];
+  const validKeys = ['announcement', 'tournaments', 'clubs', 'bracket', 'seasons', 'settings'];
   if (!validKeys.includes(key)) return res.status(400).json({ message: 'Invalid content key.' });
   const data = req.body;
   if (!data || typeof data !== 'object') return res.status(400).json({ message: 'Content data must be a valid JSON object or array.' });
@@ -2997,6 +3028,14 @@ app.get('/api/site/cup', (req, res) => {
 app.get('/api/site/clubs', (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=30');
   res.json({ ok: true, clubs: getPublicClubs(readUsers()) });
+});
+
+app.get('/api/site/seasons', (req, res) => {
+  const seasons = getSiteContent('seasons', []);
+  const published = (Array.isArray(seasons) ? seasons : []).filter((season) => season && season.published !== false)
+    .sort((a, b) => Number(b.year || 0) - Number(a.year || 0) || String(b.archivedAt || '').localeCompare(String(a.archivedAt || '')));
+  res.setHeader('Cache-Control', 'public, max-age=30');
+  res.json({ ok: true, seasons: published });
 });
 
 app.get('/api/site/bracket', (req, res) => {

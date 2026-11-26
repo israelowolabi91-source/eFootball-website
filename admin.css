@@ -400,3 +400,117 @@
 .activity-action { width:max-content; padding:4px 8px; border-radius:99px; color:#7dd3fc; background:rgba(56,189,248,.08); font-size:.68rem; font-weight:800; text-transform:uppercase; }
 .admin-activity-list .activity-error { display:block; color:#fca5a5; }
 @media (max-width:600px) { .admin-activity-card { padding:16px; } .admin-activity-list li { grid-template-columns:1fr; gap:6px; } }
+
+/* Evidence review workspace */
+.admin-evidence-workspace { margin:0 0 24px; padding:clamp(16px,2.4vw,26px); border:1px solid rgba(244,183,47,.2); border-radius:19px; background:radial-gradient(ellipse at 100% 0,rgba(244,183,47,.09),transparent 36%),linear-gradient(145deg,rgba(17,39,66,.96),rgba(8,22,40,.97)); box-shadow:0 20px 48px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.04); }
+.admin-evidence-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding-bottom:18px; border-bottom:1px solid var(--admin-line); }
+.admin-evidence-heading h3 { margin:3px 0 6px; color:#f5f7fa; font-size:clamp(1.1rem,2vw,1.45rem); letter-spacing:-.035em; }
+.admin-evidence-heading p:not(.admin-section-kicker) { max-width:680px; margin:0; color:#9eafc5; font-size:.78rem; line-height:1.6; }
+.admin-section-kicker { margin:0; color:#e4bd5b; font-size:.61rem; font-weight:900; letter-spacing:.16em; }
+.admin-evidence-count { flex:0 0 auto; padding:9px 12px; border:1px solid rgba(244,183,47,.22); border-radius:999px; background:rgba(244,183,47,.07); color:#ffe29a; font-size:.7rem; font-weight:800; }
+.admin-evidence-tools { display:grid; grid-template-columns:minmax(220px,1fr) auto; align-items:end; gap:8px 14px; margin:16px 0; }
+.admin-evidence-search-label { grid-column:1; color:#aabbd0; font-size:.68rem; font-weight:750; }
+.admin-evidence-search { grid-column:1; grid-row:2; width:100%; min-height:44px; padding:0 12px; border:1px solid rgba(172,197,229,.18); border-radius:10px; background:#08182b; color:#edf3fb; }
+.admin-evidence-search:focus-visible { outline:3px solid rgba(244,183,47,.16); border-color:rgba(244,183,47,.6); }
+.admin-evidence-filters { display:flex; gap:7px; grid-column:2; grid-row:1 / span 2; align-self:end; }
+.admin-evidence-filters button { min-height:42px; padding:0 13px; border:1px solid rgba(172,197,229,.16); border-radius:10px; background:rgba(255,255,255,.035); color:#aabbd0; font-size:.7rem; font-weight:800; cursor:pointer; }
+.admin-evidence-filters button.is-active { border-color:rgba(244,183,47,.36); background:rgba(244,183,47,.1); color:#ffe29a; }
+.admin-evidence-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,370px),1fr)); gap:12px; }
+.admin-evidence-card { min-width:0; padding:15px; border:1px solid rgba(172,197,229,.14); border-radius:14px; background:linear-gradient(150deg,rgba(8,24,43,.9),rgba(5,17,32,.9)); transition:border-color .16s ease,transform .16s ease,box-shadow .16s ease; }
+.admin-evidence-card:hover { transform:translateY(-2px); border-color:rgba(244,183,47,.3); box-shadow:0 12px 28px rgba(0,0,0,.18); }
+.admin-evidence-card-top,.admin-evidence-meta,.admin-evidence-match,.admin-player-submission-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.admin-evidence-status { padding:5px 8px; border:1px solid rgba(244,183,47,.2); border-radius:99px; background:rgba(244,183,47,.07); color:#f3d47f; font-size:.6rem; font-weight:850; text-transform:capitalize; }
+.admin-evidence-status.status-disputed { border-color:rgba(248,113,113,.26); background:rgba(248,113,113,.08); color:#ffaaaa; }
+.admin-evidence-status.status-approved { border-color:rgba(99,212,164,.24); background:rgba(99,212,164,.08); color:#9de8c8; }
+.admin-evidence-competition { color:#8296b0; font-size:.61rem; font-weight:750; }
+.admin-evidence-match { justify-content:flex-start; flex-wrap:wrap; margin:12px 0 4px; color:#e8eff8; font-size:.87rem; font-weight:800; }
+.admin-evidence-match b { color:#788ca6; font-size:.65rem; text-transform:uppercase; }
+.admin-evidence-meta { justify-content:flex-start; flex-wrap:wrap; color:#7f93ad; font-size:.64rem; }
+.admin-player-submission { margin-top:13px; padding:12px; border:1px solid rgba(172,197,229,.1); border-radius:11px; background:rgba(255,255,255,.025); }
+.admin-player-submission-heading > div { display:grid; gap:4px; }
+.admin-player-submission-heading small { color:#8195ae; font-size:.55rem; font-weight:850; letter-spacing:.1em; }
+.admin-player-submission-heading strong { overflow-wrap:anywhere; color:#dce7f4; font-size:.78rem; }
+.admin-submitted-score { flex:0 0 auto; padding:7px 10px; border:1px solid rgba(244,183,47,.2); border-radius:8px; background:rgba(244,183,47,.07); color:#ffe29a; font-size:.86rem; font-weight:900; }
+.admin-evidence-view { display:grid; grid-template-columns:40px minmax(0,1fr) 20px; align-items:center; gap:10px; width:100%; min-height:64px; margin-top:11px; padding:9px 11px; border:1px dashed rgba(244,183,47,.3); border-radius:10px; background:rgba(244,183,47,.045); color:#eaf0f7; text-align:left; cursor:pointer; }
+.admin-evidence-view:hover { border-style:solid; background:rgba(244,183,47,.09); }
+.admin-evidence-view:disabled { opacity:.65; cursor:wait; }
+.admin-evidence-view > span:nth-child(2) { display:grid; gap:4px; }
+.admin-evidence-view strong { font-size:.71rem; }
+.admin-evidence-view small { color:#91a4be; font-size:.61rem; line-height:1.4; }
+.admin-evidence-image-icon { display:grid; place-items:center; width:38px; height:38px; border:1px solid rgba(244,183,47,.2); border-radius:10px; background:rgba(244,183,47,.1); color:#f4ca58; font-size:1.1rem; }
+.admin-evidence-view-arrow { color:#e2c46d; }
+.admin-evidence-image { display:block; width:100%; max-height:440px; margin:12px 0 8px; border:1px solid rgba(172,197,229,.16); border-radius:9px; background:#020a13; object-fit:contain; }
+.admin-evidence-hide { min-height:40px; padding:0 11px; border:1px solid rgba(172,197,229,.16); border-radius:8px; background:rgba(255,255,255,.04); color:#c9d6e5; font-size:.66rem; font-weight:750; cursor:pointer; }
+.admin-evidence-empty,.admin-evidence-loading { grid-column:1/-1; padding:28px 18px; border:1px dashed rgba(172,197,229,.14); border-radius:12px; color:#95a8c0; text-align:center; }
+.admin-evidence-empty > span { display:block; color:#e2bd5d; font-size:1.4rem; }
+.admin-evidence-empty strong { display:block; margin-top:6px; color:#e2eaf4; font-size:.82rem; }
+.admin-evidence-empty p { margin:6px 0 0; font-size:.7rem; }
+.admin-evidence-loading { display:grid; gap:10px; }
+.admin-evidence-loading i { display:block; height:130px; border-radius:10px; background:linear-gradient(90deg,rgba(172,197,229,.035),rgba(172,197,229,.11),rgba(172,197,229,.035)); background-size:200% 100%; animation:admin-evidence-shimmer 1.4s infinite; }
+@keyframes admin-evidence-shimmer { to { background-position:-200% 0; } }
+@media(max-width:650px) { .admin-evidence-heading { flex-direction:column; } .admin-evidence-count { white-space:normal; } .admin-evidence-tools { grid-template-columns:1fr; } .admin-evidence-search-label,.admin-evidence-search,.admin-evidence-filters { grid-column:1; grid-row:auto; } .admin-evidence-filters { display:grid; grid-template-columns:1fr 1fr; } .admin-evidence-filters button { min-height:44px; padding:0 7px; } }
+@media(prefers-reduced-motion:reduce) { .admin-evidence-card,.admin-evidence-loading i { animation:none; transition:none; } }
+.admin-award-editor { margin:5px 0 18px; padding:17px; border:1px solid rgba(244,183,47,.2); border-radius:14px; background:radial-gradient(ellipse at 100% 0,rgba(244,183,47,.085),transparent 42%),rgba(5,17,31,.5); }
+.admin-award-editor-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.admin-award-editor-heading > div > span { color:#e5c36b; font-size:.57rem; font-weight:900; letter-spacing:.15em; }
+.admin-award-editor-heading h4 { margin:4px 0; color:#f4f7fb; font-size:.96rem; }
+.admin-award-editor-heading p { margin:0; color:#91a4be; font-size:.68rem; line-height:1.5; }
+.admin-award-editor-heading > strong { flex:0 0 auto; padding:5px 8px; border:1px solid var(--admin-line); border-radius:99px; color:#ffe29a; font-size:.62rem; }
+.admin-award-existing { display:flex; flex-wrap:wrap; gap:7px; margin:13px 0; }
+.admin-award-existing > p { margin:0; color:#8195ae; font-size:.68rem; }
+.admin-award-existing-item { display:flex; align-items:center; gap:4px; padding:3px 4px 3px 0; border:1px solid rgba(172,197,229,.12); border-radius:99px; background:rgba(255,255,255,.025); }
+.admin-award-existing-item .player-prize-pill { border:0; }
+.admin-award-existing-item > button { min-height:30px; padding:0 8px; border:0; border-radius:99px; background:rgba(255,255,255,.05); color:#a9bad0; font-size:.6rem; font-weight:750; cursor:pointer; }
+.admin-award-existing-item > button:hover { background:rgba(248,113,113,.12); color:#ffb0b0; }
+.admin-award-add-grid { display:grid; grid-template-columns:minmax(160px,1.5fr) repeat(3,minmax(100px,1fr)); gap:8px; }
+.admin-award-add-grid label { display:grid; gap:6px; color:#a7b7ca; font-size:.64rem; font-weight:750; }
+.admin-award-add-grid input,.admin-award-add-grid select { width:100%; min-height:40px; padding:0 9px; border:1px solid rgba(172,197,229,.16); border-radius:8px; background:#08182b; color:#ecf2f9; font-size:.69rem; }
+.admin-award-add-button { min-height:42px; margin-top:9px; padding:0 12px; border:1px solid rgba(244,183,47,.28); border-radius:9px; background:rgba(244,183,47,.09); color:#ffe29a; font-size:.68rem; font-weight:850; cursor:pointer; }
+.admin-award-add-button:hover { border-color:rgba(244,183,47,.52); background:rgba(244,183,47,.15); }
+.admin-award-add-button:disabled { opacity:.5; cursor:not-allowed; }
+.admin-award-feedback { min-height:1em; margin:7px 0 0; color:#a9bad0; font-size:.64rem; }
+@media(max-width:700px) { .admin-award-add-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .admin-award-add-grid label:first-child { grid-column:1/-1; } }
+@media(max-width:420px) { .admin-award-add-grid { grid-template-columns:1fr; } .admin-award-add-grid label:first-child { grid-column:auto; } }
+.admin-season-form-card { margin:0 0 22px; padding:clamp(16px,2.4vw,24px); border:1px solid rgba(244,183,47,.2); border-radius:16px; background:radial-gradient(ellipse at 100% 0,rgba(244,183,47,.08),transparent 45%),linear-gradient(145deg,rgba(17,39,66,.94),rgba(8,22,40,.96)); }
+.admin-season-form-card h3,.admin-season-history-heading h3 { margin:0 0 14px; color:#f4f7fb; font-size:1rem; }
+.admin-season-form-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.admin-season-form-grid label,.admin-season-summary-label { display:grid; gap:6px; color:#aabbd0; font-size:.68rem; font-weight:750; }
+.admin-season-form-grid input,.admin-season-summary-label textarea { width:100%; min-height:42px; padding:9px 11px; border:1px solid rgba(172,197,229,.17); border-radius:9px; background:#08182b; color:#edf3fb; font-size:.76rem; }
+.admin-season-summary-label { margin-top:12px; }
+.admin-season-summary-label small { color:#8599b2; font-size:.61rem; font-weight:500; }
+.admin-season-summary-label textarea { min-height:84px; resize:vertical; }
+.admin-season-published { display:flex; align-items:center; gap:8px; margin:12px 0; color:#d6e1ee; font-size:.7rem; }
+.admin-season-published input { width:17px; height:17px; accent-color:#f4b72f; }
+.admin-season-form-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.admin-season-form-actions button { min-height:44px; }
+.admin-season-history-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin:0 0 12px; }
+.admin-season-history-heading h3 { margin:0 0 3px; }
+.admin-season-history-heading p { margin:0; color:#8fa2ba; font-size:.7rem; }
+.admin-season-history-heading > span { color:#d7b95f; font-size:.66rem; font-weight:850; }
+.admin-season-records { display:grid; gap:10px; }
+.admin-season-record-card { display:grid; grid-template-columns:minmax(220px,1.2fr) minmax(190px,.8fr) minmax(160px,1fr) auto; gap:13px; align-items:center; padding:15px; border:1px solid var(--admin-line); border-radius:13px; background:linear-gradient(140deg,rgba(16,39,66,.86),rgba(8,22,39,.92)); }
+.admin-season-record-main { display:flex; align-items:center; gap:11px; min-width:0; }
+.admin-season-year { display:grid; place-items:center; flex:0 0 46px; min-height:46px; border:1px solid rgba(244,183,47,.27); border-radius:12px; background:rgba(244,183,47,.09); color:#ffe29a; font-size:.72rem; font-weight:900; }
+.admin-season-record-main > div { min-width:0; }
+.admin-season-record-main h4 { margin:0 0 4px; color:#eef3fa; font-size:.83rem; }
+.admin-season-record-main p,.admin-season-record-main small { display:block; margin:0; overflow-wrap:anywhere; color:#8fa3bc; font-size:.64rem; line-height:1.5; }
+.admin-season-record-main p strong { color:#ffe29a; }
+.admin-season-record-meta { display:grid; gap:5px; color:#8296b0; font-size:.6rem; }
+.admin-season-record-meta > span:not(.admin-season-publish-state) strong { color:#dce6f2; }
+.admin-season-publish-state { width:max-content; padding:4px 7px; border:1px solid rgba(99,212,164,.2); border-radius:99px; background:rgba(99,212,164,.07); color:#9de8c8; font-size:.56rem; font-weight:850; }
+.admin-season-publish-state.is-draft { border-color:rgba(172,197,229,.18); background:rgba(172,197,229,.06); color:#aabbd0; }
+.admin-season-record-results { display:grid; gap:4px; color:#b0c0d2; font-size:.61rem; }
+.admin-season-record-results span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.admin-season-record-results small { color:#7f93ad; }
+.admin-season-record-actions { display:flex; gap:5px; }
+.admin-season-record-actions button { min-height:38px; padding:0 9px; font-size:.63rem; }
+.admin-bracket-config { display:grid; grid-template-columns:minmax(180px,250px) minmax(220px,1fr) auto; align-items:center; gap:12px; margin:0 0 14px; padding:13px; border:1px solid var(--admin-line); border-radius:12px; background:rgba(12,30,52,.65); }
+.admin-bracket-config label { display:grid; gap:5px; color:#cad6e5; font-size:.67rem; font-weight:800; }
+.admin-bracket-config input { min-height:40px; padding:0 10px; border:1px solid rgba(172,197,229,.18); border-radius:8px; background:#08182b; color:#edf3fb; }
+.admin-bracket-config p { margin:0; color:#8fa3bc; font-size:.67rem; line-height:1.45; }
+.admin-bracket-config > span { color:#e4c56d; font-size:.62rem; font-weight:800; }
+.admin-bracket-card.is-bye { border-color:rgba(244,183,47,.24); background:rgba(244,183,47,.04); }
+.bracket-bye-note { padding:8px; color:#e8ca75; font-size:.64rem; font-weight:800; text-align:center; }
+@media(max-width:950px) { .admin-season-record-card { grid-template-columns:1fr 1fr; } .admin-season-record-actions { justify-content:flex-end; } .admin-bracket-config { grid-template-columns:minmax(150px,220px) 1fr; } .admin-bracket-config > span { grid-column:1/-1; } }
+@media(max-width:650px) { .admin-season-form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .admin-season-record-card { grid-template-columns:1fr; } .admin-season-record-actions { justify-content:flex-start; } .admin-bracket-config { grid-template-columns:1fr; } .admin-bracket-config > span { grid-column:auto; } }
+@media(max-width:420px) { .admin-season-form-grid { grid-template-columns:1fr; } }

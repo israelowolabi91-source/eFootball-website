@@ -63,6 +63,55 @@
 .match-evidence-preview[hidden] { display: none; }
 .match-evidence-preview img { width: 96px; height: 64px; border-radius: 7px; object-fit: cover; }
 .match-result-form .challenge-report-button { min-height: 42px; white-space: nowrap; }
+.post-kickoff-state-panel { margin-top:12px; padding:14px; border:1px solid rgba(171,197,229,.14); border-radius:14px; background:rgba(4,16,30,.42); }
+.post-kickoff-next-step { margin:0 0 10px; color:#b7c7da; font-size:.84rem; line-height:1.5; }
+.post-kickoff-deadline { margin:10px 0 0; color:#f4cf72; font-size:.78rem; font-weight:800; }
+.post-kickoff-actions { gap:8px; }
+.post-kickoff-actions button,.post-kickoff-actions a { min-height:44px; }
+.post-kickoff-actions .challenge-primary-button,.post-kickoff-actions .challenge-secondary-button { display:inline-flex; align-items:center; justify-content:center; padding:10px 15px; text-decoration:none; }
+.match-timestamp-label { color:#d8e3f0; }
+.challenge-match-time time { color:inherit; }
+@media (max-width:600px) {
+	.post-kickoff-actions { display:grid; grid-template-columns:1fr; width:100%; }
+	.post-kickoff-actions button,.post-kickoff-actions a { width:100%; min-height:48px; }
+	.post-kickoff-state-panel { padding:12px; }
+}
+.match-result-form { grid-template-columns:1fr; align-items:stretch; }
+.match-score-steppers { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:8px; grid-column:1/-1; }
+.match-score-stepper { min-width:0; margin:0; padding:0; border:0; }
+.match-score-stepper legend { width:100%; overflow:hidden; margin-bottom:7px; color:#c8d5e5; font-size:.74rem; font-weight:800; text-overflow:ellipsis; white-space:nowrap; }
+.match-score-controls { display:grid; grid-template-columns:44px minmax(42px,1fr) 44px; gap:5px; align-items:center; }
+.match-score-adjust { min-width:44px; min-height:48px; border:1px solid rgba(171,197,229,.2); border-radius:10px; background:#142b48; color:#f4c958; font-size:1.25rem; font-weight:900; }
+.match-score-controls input { min-width:0; min-height:48px; width:100%; border:1px solid rgba(171,197,229,.2); border-radius:10px; background:#08192d; color:#fff; font-size:1.2rem; font-weight:850; text-align:center; }
+.match-score-divider { color:#8296ad; font-weight:900; }
+.match-result-form .scoreline-preview,.match-result-form .match-evidence-field,.match-result-form .match-evidence-preview,.match-result-form .match-inline-validation,.match-result-review { grid-column:1/-1; }
+.match-result-form .match-evidence-field { display:grid; gap:10px; min-height:84px; align-content:center; padding:14px; border:1px dashed rgba(244,183,47,.38); border-radius:12px; background:rgba(244,183,47,.045); color:#e9d38b; }
+.match-result-form input[type=file] { min-height:44px; }
+.match-result-form input[type=file]::file-selector-button { min-height:44px; }
+.match-inline-validation { margin:0; color:#ffb1a9; font-size:.82rem; }
+.match-result-review { padding:14px; border:1px solid rgba(79,203,147,.22); border-radius:12px; background:rgba(38,151,103,.07); color:#d8e8df; }
+.match-result-review h4 { margin-top:0; }
+.match-review-image { display:block; width:min(100%,360px); max-height:240px; margin:10px 0; object-fit:contain; border-radius:10px; background:#06101c; }
+.match-result-review button { min-height:48px; margin:5px 8px 0 0; }
+.problem-report-sheet { position:fixed; inset:auto 0 0; width:100%; max-width:none; max-height:88dvh; margin:0; overflow:auto; padding:22px max(16px,env(safe-area-inset-left)) calc(18px + env(safe-area-inset-bottom)); border:1px solid rgba(171,197,229,.2); border-radius:22px 22px 0 0; background:#0b1d32; color:#eef4fb; box-shadow:0 -18px 55px rgba(0,0,0,.42); }
+.problem-report-sheet::backdrop { background:rgba(1,8,16,.68); backdrop-filter:blur(3px); }
+.player-report-form { display:grid; gap:14px; max-width:720px; margin:auto; }
+.player-report-form h2,.player-report-form p { margin:0; }
+.player-report-form textarea { width:100%; min-height:104px; margin-top:8px; padding:12px; border:1px solid rgba(171,197,229,.18); border-radius:10px; background:#07172a; color:#edf3fb; font:inherit; }
+.report-reason-chips { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.report-reason-chip { display:flex; align-items:center; gap:8px; min-height:48px; padding:9px 10px; border:1px solid rgba(171,197,229,.18); border-radius:11px; background:rgba(255,255,255,.035); color:#dce6f2; font-size:.78rem; }
+.report-reason-chip:has(input:checked) { border-color:rgba(244,183,47,.55); background:rgba(244,183,47,.1); color:#ffe29a; }
+.report-reason-chip input { width:18px; height:18px; accent-color:#f4b72f; }
+.report-evidence-preview { width:min(100%,360px); max-height:220px; object-fit:contain; border-radius:10px; }
+.report-attachment-note { padding:10px; border-radius:9px; background:rgba(244,183,47,.08); color:#e2c979; font-size:.76rem; line-height:1.5; }
+.player-report-form button { min-height:48px; }
+.player-report-form input[type=file]::file-selector-button { min-height:44px; margin-right:8px; padding:8px 10px; border:1px solid rgba(171,197,229,.18); border-radius:8px; background:#142b48; color:#e6edf6; font-weight:700; }
+.match-loading-skeleton { display:grid; gap:10px; padding:10px; }
+.match-loading-skeleton i { display:block; height:75px; border-radius:13px; background:linear-gradient(90deg,rgba(171,197,229,.04),rgba(171,197,229,.12),rgba(171,197,229,.04)); background-size:200% 100%; animation:match-skeleton-shimmer 1.4s ease-in-out infinite; }
+.match-loading-skeleton i:nth-child(2) { height:110px; }
+.match-retry-button { min-height:48px; margin:0 10px 12px; }
+@keyframes match-skeleton-shimmer { to { background-position:-200% 0; } }
+@media(max-width:380px) { .match-score-controls { grid-template-columns:44px minmax(34px,1fr) 44px; gap:3px; } .report-reason-chips { grid-template-columns:1fr; } }
 .matches-list-section,.public-streams-section { padding: clamp(20px,3vw,36px); border: 1px solid rgba(171,197,229,.12); background: linear-gradient(145deg,rgba(13,32,55,.8),rgba(8,22,40,.78)); }
 .match-list-card { border-radius: 15px; }
 .matches-team-badge { width: 42px; height: 42px; overflow: hidden; border-radius: 50%; }

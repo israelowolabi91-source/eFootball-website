@@ -8,10 +8,10 @@
     <title>Rankings | Tim eFootball League</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css?v=48">
+    <link rel="stylesheet" href="style.css?v=50">
     <link rel="stylesheet" href="member-experience.css?v=2">
     <script src="site-config.js"></script>
-    <script src="script.js?v=46" defer></script>
+    <script src="script.js?v=49" defer></script>
 </head>
 <body class="rankings-page">
     <header class="site-header">
@@ -116,6 +116,13 @@
             </div>
 
             <div class="rankings-legend"><span><i class="legend-up">▲</i> Climbed</span><span><i class="legend-down">▼</i> Dropped</span><span><i class="legend-same">—</i> No change</span><span><i class="form-win">W</i> Win</span><span><i class="form-draw">D</i> Draw</span><span><i class="form-loss">L</i> Loss</span></div>
+        </section>
+
+        <section class="season-history-section" id="hall-of-fame" aria-labelledby="season-history-title">
+            <div class="leaderboard-heading">
+                <div><p class="eyebrow"><span class="eyebrow-line"></span> The champions before you</p><h2 id="season-history-title">Hall of Fame &amp; season history.</h2><p id="season-history-status" class="rank-data-note" role="status" aria-live="polite">Loading past seasons…</p></div>
+            </div>
+            <div class="season-hall-grid" id="season-history-grid"><div class="season-history-loading"><i></i><i></i></div></div>
         </section>
 
         <section class="club-standings-section" id="clubs" aria-labelledby="club-standings-title">

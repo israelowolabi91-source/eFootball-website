@@ -6,8 +6,8 @@
     <title>Admin Operations Console | Tim eFootball League</title>
     <meta name="description" content="Master administrative management console for Tim eFootball League. Live control over player accounts, matches, XP ratings, tournaments, and broadcast announcements.">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css?v=48">
-    <link rel="stylesheet" href="admin.css?v=2">
+    <link rel="stylesheet" href="style.css?v=50">
+    <link rel="stylesheet" href="admin.css?v=5">
 </head>
 <body class="admin-page">
     <!-- Top Announcement Bar (Preview / Live) -->
@@ -101,6 +101,9 @@
                 </button>
                 <button type="button" class="admin-tab" data-tab="clubs">
                     <span class="tab-icon">🛡️</span> Club Standings
+                </button>
+                <button type="button" class="admin-tab" data-tab="seasons">
+                    <span class="tab-icon">🏅</span> Seasons &amp; Hall of Fame
                 </button>
                 <button type="button" class="admin-tab" data-tab="bracket">
                     <span class="tab-icon">👑</span> League Cup Bracket
@@ -325,6 +328,28 @@
                     </div>
                 </div>
 
+                <section class="admin-evidence-workspace" aria-labelledby="evidence-workspace-title">
+                    <div class="admin-evidence-heading">
+                        <div>
+                            <p class="admin-section-kicker">MATCH EVIDENCE</p>
+                            <h3 id="evidence-workspace-title">Player screenshot submissions</h3>
+                            <p>Review each player’s score report and screenshot. Evidence is grouped by match so both submissions can be compared together.</p>
+                        </div>
+                        <div class="admin-evidence-count" id="evidence-submission-count" aria-live="polite">Loading submissions</div>
+                    </div>
+                    <div class="admin-evidence-tools">
+                        <label class="admin-evidence-search-label" for="evidence-search">Find a player or match</label>
+                        <input id="evidence-search" class="admin-evidence-search" type="search" placeholder="Search player, match ID, or score" autocomplete="off">
+                        <div class="admin-evidence-filters" id="evidence-review-filters" role="group" aria-label="Filter screenshot submissions">
+                            <button type="button" class="is-active" aria-pressed="true" data-evidence-filter="pending">Needs review</button>
+                            <button type="button" aria-pressed="false" data-evidence-filter="all">All submissions</button>
+                        </div>
+                    </div>
+                    <div class="admin-evidence-grid" id="admin-evidence-grid" aria-live="polite">
+                        <div class="admin-evidence-loading"><i></i><i></i></div>
+                    </div>
+                </section>
+
                 <div class="admin-table-container">
                     <table class="admin-table" id="matches-table">
                         <thead>
@@ -521,17 +546,51 @@
                 </div>
             </section>
 
-            <!-- TAB 7: CUP BRACKET MASTER -->
+            <section class="admin-tab-pane" id="pane-seasons">
+                <div class="admin-pane-header">
+                    <div><h2>Season archive &amp; Hall of Fame</h2><p>Publish past tournament winners and the last results for each season. Published entries appear on the public Rankings page.</p></div>
+                    <button type="button" class="admin-action-btn primary" id="btn-add-season">+ Add season record</button>
+                </div>
+                <section class="admin-season-form-card" aria-labelledby="admin-season-form-title">
+                    <h3 id="admin-season-form-title">Add a past season</h3>
+                    <form id="admin-season-form">
+                        <input type="hidden" id="admin-season-id">
+                        <div class="admin-season-form-grid">
+                            <label>Season title<input id="admin-season-title" maxlength="50" placeholder="Season 2026" required></label>
+                            <label>Year<input id="admin-season-year" type="number" min="2000" max="2100" required></label>
+                            <label>Featured event<input id="admin-season-event" maxlength="60" placeholder="League Cup"></label>
+                            <label>Champion<input id="admin-season-champion" maxlength="32" required></label>
+                            <label>Runner-up<input id="admin-season-runner-up" maxlength="32"></label>
+                            <label>Season MVP<input id="admin-season-mvp" maxlength="32"></label>
+                        </div>
+                        <label class="admin-season-summary-label">Season story<textarea id="admin-season-summary" maxlength="300" rows="3" placeholder="A short highlight of the season."></textarea></label>
+                        <label class="admin-season-summary-label">Last results <small>One result per line, for example: EasyBTC 3-1 Vikings</small><textarea id="admin-season-results" maxlength="600" rows="5" placeholder="EasyBTC 3-1 Vikings&#10;Nova 2-0 BlueStrike"></textarea></label>
+                        <label class="admin-season-published"><input id="admin-season-published" type="checkbox" checked> Show this season on Rankings</label>
+                        <div class="admin-season-form-actions"><button type="submit" class="admin-submit-btn primary" id="admin-season-save">Publish season record</button><button type="button" class="admin-action-btn secondary" id="admin-season-cancel" hidden>Cancel edit</button></div>
+                        <p id="admin-season-feedback" class="modal-feedback" role="status"></p>
+                    </form>
+                </section>
+                <div class="admin-season-history-heading"><div><h3>Saved seasons</h3><p>Edit or remove historical records.</p></div><span id="admin-season-count"></span></div>
+                <div class="admin-season-records" id="admin-season-records"><p class="table-loading">Loading seasons…</p></div>
+            </section>
+
+            <!-- TAB 8: CUP BRACKET MASTER -->
             <section class="admin-tab-pane" id="pane-bracket">
                 <div class="admin-pane-header">
                     <div>
                         <h2>Official League Cup Knockout Bracket</h2>
-                        <p>Generate the 32-player knockout bracket from registered League Cup players, record winners, and publish updates for visitors to view.</p>
+                        <p>Build a single-elimination bracket for the registered roster size. Non-power-of-two fields receive automatic byes, so events can run before the league reaches 16 or 32 players.</p>
                     </div>
                     <div class="admin-quick-actions">
                         <button type="button" class="admin-action-btn primary" id="btn-save-bracket-live">Publish Bracket to cup.html</button>
-                        <button type="button" class="admin-action-btn secondary" id="btn-reset-bracket-default">Seed from registered players</button>
+                        <button type="button" class="admin-action-btn secondary" id="btn-reset-bracket-default">Build bracket from roster</button>
                     </div>
+                </div>
+
+                <div class="admin-bracket-config">
+                    <label for="bracket-entrant-count">Players to seed<input id="bracket-entrant-count" type="number" min="2" max="128" step="1" placeholder="All registered players"></label>
+                    <p id="bracket-roster-count">Enter a number to seed fewer players, or leave blank to include the full eligible roster.</p>
+                    <span>Single elimination · automatic byes · up to 128 entrants</span>
                 </div>
 
                 <div class="admin-bracket-wrapper" id="admin-bracket-tree">
@@ -579,6 +638,18 @@
                         <p class="form-field-note">Verified ranked record <strong id="edit-user-record">0W – 0D – 0L</strong>. Counts update from approved ranked matches and cannot be manually edited.</p>
                     </div>
                 </div>
+                <section class="admin-award-editor" aria-labelledby="admin-award-title">
+                    <div class="admin-award-editor-heading"><div><span>PLAYER HONORS</span><h4 id="admin-award-title">Badges, cups &amp; medals</h4><p>Award a visible prize. Its style and animation will appear beside the player across the site.</p></div><strong id="edit-user-award-count">0 / 20</strong></div>
+                    <div class="admin-award-existing" id="edit-user-awards-list"><p>No prizes awarded yet.</p></div>
+                    <div class="admin-award-add-grid">
+                        <label for="award-title-input">Prize name<input id="award-title-input" type="text" maxlength="32" placeholder="e.g. Season 4 Champion"></label>
+                        <label for="award-type-input">Prize type<select id="award-type-input"><option value="medal">Medal</option><option value="cup">Cup</option><option value="badge">Badge</option></select></label>
+                        <label for="award-theme-input">Finish<select id="award-theme-input"><option value="gold">Gold</option><option value="ice">Ice</option><option value="violet">Violet</option><option value="crimson">Crimson</option><option value="emerald">Emerald</option></select></label>
+                        <label for="award-effect-input">Animation<select id="award-effect-input"><option value="shine">Radiant shine</option><option value="pulse">Power pulse</option><option value="sparkle">Spark glow</option></select></label>
+                    </div>
+                    <button type="button" class="admin-award-add-button" id="edit-user-add-award">＋ Add prize to player</button>
+                    <p class="admin-award-feedback" id="edit-user-award-feedback" role="status"></p>
+                </section>
                 <div class="form-row">
                     <div class="form-field">
                         <label for="edit-user-role">Role
@@ -995,6 +1066,6 @@
     <!-- Toast Notification Overlay -->
     <div class="admin-toast-container" id="admin-toast-container" aria-live="polite"></div>
 
-    <script src="admin.js?v=45" defer></script>
+    <script src="admin.js?v=48" defer></script>
 </body>
 </html>

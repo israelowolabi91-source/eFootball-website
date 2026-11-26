@@ -8,9 +8,9 @@
     <title>Tournaments &amp; Competitions | Tim eFootball League</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css?v=48">
+    <link rel="stylesheet" href="style.css?v=50">
     <script src="site-config.js"></script>
-    <script src="script.js?v=46" defer></script>
+    <script src="script.js?v=49" defer></script>
     <style>
         /* ─── Tournaments Hub Custom Styles ─── */
         .tourn-header-badge {
@@ -1108,6 +1108,10 @@
                 const capacityPercent = Number.isSafeInteger(slotLimit) && slotLimit > 0 ? Math.min(100, Math.round(registeredCount / slotLimit * 100)) : 0;
                 const registrationOpen = t.registrationOpen === true && t.status === 'Registration Open';
                 const statusCls = t.status === 'Registration Open' ? 'open' : t.status === 'In Progress' ? 'live' : t.status === 'Completed' ? 'completed' : 'upcoming';
+                const eventReturnPath = `tournaments.html#event=${encodeURIComponent(t.id)}`;
+                const accountJoinUrl = new URL('login.html', window.location.href);
+                accountJoinUrl.searchParams.set('next', eventReturnPath);
+                const whatsAppInviteUrl = `https://wa.me/?text=${encodeURIComponent(`Join me in ${t.title} at Tim eFootball League! Sign in or create your free account, then enter this event: ${accountJoinUrl.href}`)}`;
 
                 return `
                 <article class="tourn-card" data-tid="${escapeHtml(t.id)}" data-event-theme="${escapeHtml(String(t.badge || 'event').toLowerCase())}" style="cursor: pointer;">
@@ -1143,6 +1147,7 @@
                         <button type="button" class="tourn-detail-btn" data-open-tid="${escapeHtml(t.id)}">
                             Enter Event →
                         </button>
+                        <a class="tourn-whatsapp-share" data-share-event href="${escapeHtml(whatsAppInviteUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Invite friends to ${escapeHtml(t.title)} on WhatsApp"><span aria-hidden="true">◉</span> Invite on WhatsApp</a>
                     </div>
                 </article>
                 `;
@@ -1285,6 +1290,7 @@
 
         // Grid delegation (clicking card or enter button opens modal)
         grid.addEventListener('click', (e) => {
+            if (e.target.closest('[data-share-event]')) return;
             const checkInBtn = e.target.closest('[data-check-in]');
             if (checkInBtn) {
                 handleCheckIn(checkInBtn);

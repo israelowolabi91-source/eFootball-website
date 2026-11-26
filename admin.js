@@ -9,6 +9,7 @@
     let cachedUsers = [];
     let cachedMatches = [];
     let cachedContent = {};
+    let editingAwards = [];
 
     const toastContainer = document.getElementById('admin-toast-container');
     const authDialog = document.getElementById('admin-auth-dialog');
@@ -227,6 +228,98 @@
         }
     });
 
+    let cachedSeasons = [];
+    const renderSeasonRecords = () => {
+        const list = document.getElementById('admin-season-records');
+        const count = document.getElementById('admin-season-count');
+        if (!list) return;
+        if (count) count.textContent = `${cachedSeasons.length} saved`;
+        if (!cachedSeasons.length) { list.innerHTML = '<p class="table-empty">No archived seasons yet. Add the first Hall of Fame record above.</p>'; return; }
+        list.innerHTML = cachedSeasons.slice().sort((a, b) => Number(b.year) - Number(a.year)).map((season) => `<article class="admin-season-record-card">
+            <div class="admin-season-record-main"><span class="admin-season-year">${escapeHtml(season.year || '')}</span><div><h4>${escapeHtml(season.title || 'Past season')}</h4><p>${escapeHtml(season.event || 'League season')} · Champion: <strong>${escapeHtml(season.champion || 'TBC')}</strong></p><small>${escapeHtml(season.summary || 'No season summary added.')}</small></div></div>
+            <div class="admin-season-record-meta"><span>Runner-up <strong>${escapeHtml(season.runnerUp || '—')}</strong></span><span>MVP <strong>${escapeHtml(season.mvp || '—')}</strong></span><span class="admin-season-publish-state ${season.published === false ? 'is-draft' : ''}">${season.published === false ? 'Draft' : 'Published'}</span></div>
+            <div class="admin-season-record-results">${(season.lastResults || []).slice(0, 5).map((result) => `<span>${escapeHtml(result)}</span>`).join('') || '<small>No final results saved.</small>'}</div>
+            <div class="admin-season-record-actions"><button type="button" class="admin-action-btn secondary" data-edit-season="${escapeHtml(season.id)}">Edit</button><button type="button" class="admin-action-btn secondary" data-delete-season="${escapeHtml(season.id)}">Delete</button></div>
+        </article>`).join('');
+    };
+    const loadSeasons = async () => {
+        const list = document.getElementById('admin-season-records');
+        if (list) list.innerHTML = '<p class="table-loading">Loading season history…</p>';
+        try {
+            const response = await adminFetch('/api/admin/content');
+            cachedSeasons = Array.isArray(response.content?.seasons) ? response.content.seasons : [];
+            cachedContent.seasons = cachedSeasons;
+            renderSeasonRecords();
+        } catch (error) { if (list) list.innerHTML = `<p class="table-error">Could not load seasons: ${escapeHtml(error.message)}</p>`; }
+    };
+    const seasonForm = document.getElementById('admin-season-form');
+    const resetSeasonForm = () => {
+        seasonForm?.reset();
+        document.getElementById('admin-season-id').value = '';
+        document.getElementById('admin-season-year').value = String(new Date().getFullYear());
+        document.getElementById('admin-season-published').checked = true;
+        document.getElementById('admin-season-form-title').textContent = 'Add a past season';
+        document.getElementById('admin-season-save').textContent = 'Publish season record';
+        document.getElementById('admin-season-cancel').hidden = true;
+        document.getElementById('admin-season-feedback').textContent = '';
+    };
+    resetSeasonForm();
+    document.getElementById('btn-add-season')?.addEventListener('click', () => { resetSeasonForm(); document.getElementById('admin-season-title').focus(); });
+    document.getElementById('admin-season-cancel')?.addEventListener('click', resetSeasonForm);
+    document.getElementById('admin-season-records')?.addEventListener('click', async (event) => {
+        const edit = event.target.closest('[data-edit-season]');
+        const remove = event.target.closest('[data-delete-season]');
+        if (edit) {
+            const season = cachedSeasons.find((item) => item.id === edit.dataset.editSeason); if (!season) return;
+            document.getElementById('admin-season-id').value = season.id;
+            document.getElementById('admin-season-title').value = season.title || '';
+            document.getElementById('admin-season-year').value = season.year || '';
+            document.getElementById('admin-season-event').value = season.event || '';
+            document.getElementById('admin-season-champion').value = season.champion || '';
+            document.getElementById('admin-season-runner-up').value = season.runnerUp || '';
+            document.getElementById('admin-season-mvp').value = season.mvp || '';
+            document.getElementById('admin-season-summary').value = season.summary || '';
+            document.getElementById('admin-season-results').value = (season.lastResults || []).join('\n');
+            document.getElementById('admin-season-published').checked = season.published !== false;
+            document.getElementById('admin-season-form-title').textContent = `Edit ${season.title}`;
+            document.getElementById('admin-season-save').textContent = 'Save season changes';
+            document.getElementById('admin-season-cancel').hidden = false;
+            document.getElementById('admin-season-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        if (remove && confirm('Delete this season history record?')) {
+            cachedSeasons = cachedSeasons.filter((item) => item.id !== remove.dataset.deleteSeason);
+            try { await adminFetch('/api/admin/content/seasons', { method: 'PUT', body: JSON.stringify(cachedSeasons) }); showToast('Season record deleted.'); renderSeasonRecords(); }
+            catch (error) { showToast(error.message, 'error'); await loadSeasons(); }
+        }
+    });
+    seasonForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const feedback = document.getElementById('admin-season-feedback');
+        const id = document.getElementById('admin-season-id').value;
+        const existing = cachedSeasons.find((item) => item.id === id);
+        const results = document.getElementById('admin-season-results').value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).slice(0, 10);
+        const season = {
+            id: id || `season-${crypto.randomUUID()}`,
+            title: document.getElementById('admin-season-title').value.trim(),
+            year: Number(document.getElementById('admin-season-year').value),
+            event: document.getElementById('admin-season-event').value.trim(),
+            champion: document.getElementById('admin-season-champion').value.trim(),
+            runnerUp: document.getElementById('admin-season-runner-up').value.trim(),
+            mvp: document.getElementById('admin-season-mvp').value.trim(),
+            summary: document.getElementById('admin-season-summary').value.trim(),
+            lastResults: results,
+            published: document.getElementById('admin-season-published').checked,
+            archivedAt: existing?.archivedAt || new Date().toISOString()
+        };
+        const submit = document.getElementById('admin-season-save'); submit.disabled = true; feedback.textContent = 'Saving season record…';
+        try {
+            const next = id ? cachedSeasons.map((item) => item.id === id ? season : item) : [...cachedSeasons, season];
+            await adminFetch('/api/admin/content/seasons', { method: 'PUT', body: JSON.stringify(next) });
+            cachedSeasons = next; cachedContent.seasons = next; renderSeasonRecords(); resetSeasonForm(); showToast('Season Hall of Fame published.');
+        } catch (error) { feedback.textContent = error.message; }
+        finally { submit.disabled = false; }
+    });
+
     // Tab Navigation
     document.querySelectorAll('.admin-tab').forEach((tab) => {
         tab.addEventListener('click', () => {
@@ -250,6 +343,7 @@
             if (tab.dataset.tab === 'broadcast') loadBroadcastContent();
             if (tab.dataset.tab === 'tournaments') loadTournaments();
             if (tab.dataset.tab === 'clubs') loadClubs();
+            if (tab.dataset.tab === 'seasons') loadSeasons();
             if (tab.dataset.tab === 'bracket') loadBracket();
         });
     });
@@ -259,12 +353,12 @@
     document.getElementById('btn-quick-clubs')?.addEventListener('click', () => openAdminTab('clubs'));
     document.getElementById('btn-goto-bracket')?.addEventListener('click', () => openAdminTab('bracket'));
 
-    // Let operators jump between the seven work areas without leaving the keyboard.
+    // Let operators jump between the eight work areas without leaving the keyboard.
     document.addEventListener('keydown', (event) => {
         if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
         const target = event.target;
         if (target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
-        const tab = document.querySelector(`.admin-tab[data-tab="${['overview', 'users', 'matches', 'broadcast', 'tournaments', 'clubs', 'bracket'][Number(event.key) - 1] || ''}"]`);
+        const tab = document.querySelector(`.admin-tab[data-tab="${['overview', 'users', 'matches', 'broadcast', 'tournaments', 'clubs', 'seasons', 'bracket'][Number(event.key) - 1] || ''}"]`);
         if (tab) {
             event.preventDefault();
             tab.click();
@@ -383,6 +477,17 @@
 
     // Edit User Modal
     const modalEditUser = document.getElementById('modal-edit-user');
+    const renderEditUserAwards = () => {
+        const list = document.getElementById('edit-user-awards-list');
+        const count = document.getElementById('edit-user-award-count');
+        const add = document.getElementById('edit-user-add-award');
+        if (!list) return;
+        if (count) count.textContent = `${editingAwards.length} / 20`;
+        if (add) add.disabled = editingAwards.length >= 20;
+        if (!editingAwards.length) { list.innerHTML = '<p>No prizes awarded yet.</p>'; return; }
+        const icons = { badge: '✦', cup: '🏆', medal: '🏅' };
+        list.innerHTML = editingAwards.map((award) => `<div class="admin-award-existing-item"><span class="player-prize-pill prize-${escapeHtml(award.type)} prize-theme-${escapeHtml(award.theme)} prize-effect-${escapeHtml(award.effect)}"><span aria-hidden="true">${icons[award.type] || '🏅'}</span>${escapeHtml(award.title)}</span><button type="button" data-remove-award="${escapeHtml(award.id)}" aria-label="Remove ${escapeHtml(award.title)}">Remove</button></div>`).join('');
+    };
     document.getElementById('users-tbody')?.addEventListener('click', (e) => {
         const btnEdit = e.target.closest('.btn-action.edit');
         const btnPass = e.target.closest('.btn-action.password');
@@ -406,6 +511,9 @@
             document.getElementById('edit-user-time-zone').value = user.timeZone || 'UTC';
             document.getElementById('edit-user-club-name').value = user.clubName || '';
             document.getElementById('edit-user-feedback').textContent = '';
+            document.getElementById('edit-user-award-feedback').textContent = '';
+            editingAwards = Array.isArray(user.awards) ? user.awards.map((award) => ({ ...award })) : [];
+            renderEditUserAwards();
 
             modalEditUser.showModal();
         }
@@ -445,6 +553,31 @@
         }
     });
 
+    document.getElementById('edit-user-add-award')?.addEventListener('click', () => {
+        const titleInput = document.getElementById('award-title-input');
+        const title = titleInput.value.trim();
+        const feedback = document.getElementById('edit-user-award-feedback');
+        if (!title) { feedback.textContent = 'Add a prize name first.'; titleInput.focus(); return; }
+        if (editingAwards.length >= 20) { feedback.textContent = 'This player already has the maximum of 20 prizes.'; return; }
+        editingAwards.push({
+            id: crypto.randomUUID(), title,
+            type: document.getElementById('award-type-input').value,
+            theme: document.getElementById('award-theme-input').value,
+            effect: document.getElementById('award-effect-input').value
+        });
+        titleInput.value = '';
+        feedback.textContent = `${title} added. Save player changes to publish the prize.`;
+        renderEditUserAwards();
+        titleInput.focus();
+    });
+    document.getElementById('edit-user-awards-list')?.addEventListener('click', (event) => {
+        const remove = event.target.closest('[data-remove-award]');
+        if (!remove) return;
+        editingAwards = editingAwards.filter((award) => award.id !== remove.dataset.removeAward);
+        document.getElementById('edit-user-award-feedback').textContent = 'Prize removed. Save player changes to publish the update.';
+        renderEditUserAwards();
+    });
+
     // Form: Edit User Submit
     document.getElementById('form-edit-user')?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -463,7 +596,8 @@
             platform: document.getElementById('edit-user-platform').value,
             country: document.getElementById('edit-user-country').value.trim(),
             timeZone: document.getElementById('edit-user-time-zone').value.trim() || 'UTC',
-            clubName: document.getElementById('edit-user-club-name').value.trim()
+            clubName: document.getElementById('edit-user-club-name').value.trim(),
+            awards: editingAwards.map(({ id, awardedAt, type, title, theme, effect }) => ({ id, awardedAt, type, title, theme, effect }))
         };
 
         try {
@@ -533,6 +667,43 @@
 
     // Load Matches
     let currentMatchStatusFilter = 'all';
+    let currentEvidenceFilter = 'pending';
+    const evidenceQuery = () => document.getElementById('evidence-search')?.value.trim().toLocaleLowerCase() || '';
+    const renderEvidenceLibrary = (matches) => {
+        const grid = document.getElementById('admin-evidence-grid');
+        const count = document.getElementById('evidence-submission-count');
+        if (!grid || !count) return;
+        const submissions = matches.flatMap((match) => (match.reports || [])
+            .filter((report) => report.hasEvidence && report.playerId)
+            .map((report) => ({ match, report })));
+        const pendingCount = submissions.filter(({ match }) => ['pending-owner', 'disputed', 'rejected'].includes(match.status)).length;
+        count.textContent = `${pendingCount} needs review · ${submissions.length} total screenshot${submissions.length === 1 ? '' : 's'}`;
+        const query = evidenceQuery();
+        const filtered = submissions.filter(({ match, report }) => {
+            const reviewable = ['pending-owner', 'disputed', 'rejected'].includes(match.status);
+            const searchable = `${match.id} ${report.playerTag} ${match.challenger.gamerTag} ${match.opponent.gamerTag} ${report.challengerScore}-${report.opponentScore}`.toLocaleLowerCase();
+            return (currentEvidenceFilter === 'all' || reviewable) && (!query || searchable.includes(query));
+        });
+        if (!filtered.length) {
+            grid.innerHTML = `<div class="admin-evidence-empty"><span aria-hidden="true">⌕</span><strong>${submissions.length ? 'No screenshots match these filters' : 'No player screenshots yet'}</strong><p>${submissions.length ? 'Try another name or switch to all submissions.' : 'Player score screenshots will appear here once submitted.'}</p></div>`;
+            return;
+        }
+        grid.innerHTML = filtered.map(({ match, report }) => {
+            const statusLabel = match.status.replaceAll('-', ' ');
+            const score = `${report.challengerScore} – ${report.opponentScore}`;
+            const date = match.scheduledAt ? new Date(match.scheduledAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Kick-off time unavailable';
+            const evidenceUrl = `/api/admin/matches/${encodeURIComponent(match.id)}/evidence/${encodeURIComponent(report.playerId)}`;
+            return `<article class="admin-evidence-card" data-evidence-card data-search-text="${escapeHtml(`${match.id} ${report.playerTag} ${score}`.toLocaleLowerCase())}">
+                <div class="admin-evidence-card-top"><span class="admin-evidence-status status-${escapeHtml(match.status)}">${escapeHtml(statusLabel)}</span><span class="admin-evidence-competition">${escapeHtml((match.competition || 'open').toUpperCase())} · ${match.ranked ? 'Ranked' : 'Friendly'}</span></div>
+                <div class="admin-evidence-match"><span>${escapeHtml(match.challenger.gamerTag)}</span><b>vs</b><span>${escapeHtml(match.opponent.gamerTag)}</span></div>
+                <div class="admin-evidence-meta"><span>Match #${escapeHtml(match.id.slice(0, 10))}</span><time>${escapeHtml(date)}</time></div>
+                <div class="admin-player-submission"><div class="admin-player-submission-heading"><div><small>PLAYER SUBMISSION</small><strong>${escapeHtml(report.playerTag || 'Player')}</strong></div><span class="admin-submitted-score">${escapeHtml(score)}</span></div>
+                    <div class="admin-evidence-image-slot" data-evidence-slot><button type="button" class="admin-evidence-view" data-evidence-view data-evidence-url="${evidenceUrl}" aria-label="View ${escapeHtml(report.playerTag || 'player')} screenshot for match ${escapeHtml(match.id.slice(0, 10))}"><span class="admin-evidence-image-icon" aria-hidden="true">▧</span><span><strong>View submitted screenshot</strong><small>Private evidence · opens in this review card</small></span><span class="admin-evidence-view-arrow" aria-hidden="true">↗</span></button></div>
+                </div>
+            </article>`;
+        }).join('');
+    };
+
     const loadMatches = async () => {
         const tbody = document.getElementById('matches-tbody');
         tbody.innerHTML = '<tr><td colspan="6" class="table-loading">Loading matches from database…</td></tr>';
@@ -540,10 +711,41 @@
             const data = await adminFetch('/api/admin/all-matches');
             cachedMatches = data.matches || [];
             renderMatchesTable();
+            renderEvidenceLibrary(cachedMatches);
         } catch (err) {
             tbody.innerHTML = `<tr><td colspan="6" class="table-error">Error loading matches: ${err.message}</td></tr>`;
+            const evidenceGrid = document.getElementById('admin-evidence-grid');
+            if (evidenceGrid) evidenceGrid.innerHTML = `<div class="admin-evidence-empty"><strong>Could not load screenshot submissions</strong><p>${escapeHtml(err.message)}</p><button type="button" class="admin-action-btn secondary" id="retry-evidence-load">Retry loading matches</button></div>`;
         }
     };
+
+    document.getElementById('evidence-search')?.addEventListener('input', () => renderEvidenceLibrary(cachedMatches));
+    document.getElementById('evidence-review-filters')?.addEventListener('click', (event) => {
+        const filter = event.target.closest('[data-evidence-filter]');
+        if (!filter) return;
+        currentEvidenceFilter = filter.dataset.evidenceFilter;
+        document.querySelectorAll('#evidence-review-filters [data-evidence-filter]').forEach((button) => { button.classList.toggle('is-active', button === filter); button.setAttribute('aria-pressed', String(button === filter)); });
+        renderEvidenceLibrary(cachedMatches);
+    });
+    document.getElementById('admin-evidence-grid')?.addEventListener('click', async (event) => {
+        const retry = event.target.closest('#retry-evidence-load');
+        if (retry) { retry.disabled = true; retry.textContent = 'Retrying…'; await loadMatches(); return; }
+        const button = event.target.closest('[data-evidence-view]');
+        if (!button) return;
+        const slot = button.closest('[data-evidence-slot]');
+        const currentImage = slot.querySelector('img');
+        if (currentImage) { currentImage.remove(); button.hidden = false; button.querySelector('strong').textContent = 'View submitted screenshot'; return; }
+        button.disabled = true; button.querySelector('strong').textContent = 'Loading private screenshot…';
+        try {
+            const response = await fetch(button.dataset.evidenceUrl, { credentials: 'same-origin', headers: { 'X-Admin-Key': currentAdminKey }, cache: 'no-store' });
+            if (!response.ok) throw new Error(response.status === 404 ? 'This screenshot is no longer available.' : 'Could not load this screenshot. Check your admin access and retry.');
+            const blob = await response.blob();
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(blob.type)) throw new Error('The evidence file is not a supported image.');
+            const image = document.createElement('img'); image.className = 'admin-evidence-image'; image.alt = `Score screenshot submitted by ${button.getAttribute('aria-label').replace(/^View | screenshot.*$/g, '')}`; image.src = URL.createObjectURL(blob);
+            const hide = document.createElement('button'); hide.type = 'button'; hide.className = 'admin-evidence-hide'; hide.textContent = 'Hide screenshot'; hide.addEventListener('click', () => { image.remove(); hide.remove(); button.hidden = false; button.disabled = false; button.querySelector('strong').textContent = 'View submitted screenshot'; });
+            slot.append(image, hide); button.hidden = true; button.disabled = false;
+        } catch (error) { showToast(error.message, 'error'); button.disabled = false; button.querySelector('strong').textContent = 'Retry screenshot'; }
+    });
 
     const renderMatchesTable = () => {
         const tbody = document.getElementById('matches-tbody');
@@ -1203,7 +1405,10 @@
         const container = document.getElementById('admin-bracket-tree');
         const b = cachedContent.bracket || {};
         const legacy = Array.isArray(b.round1);
-        const rounds = legacy
+        const generic = Array.isArray(b.rounds);
+        const rounds = generic
+            ? b.rounds.map((round, index) => ({ ...round, key: `dynamic-${index}`, dynamicIndex: index }))
+            : legacy
             ? [
                 { key: 'round1', name: 'Round of 16', matches: b.round1 },
                 { key: 'quarterFinals', name: 'Quarter-Finals', matches: b.quarterFinals || [] },
@@ -1222,21 +1427,22 @@
             return;
         }
         container.innerHTML = `<div class="admin-bracket-grid">${rounds.map((round) => `
-            <div class="bracket-col ${round.key === 'finalMatch' ? 'final-col' : ''}">
+            <div class="bracket-col ${round.key === 'finalMatch' || round.dynamicIndex === rounds.length - 1 ? 'final-col' : ''}">
                 <h4>${round.name} (${round.matches.length} match${round.matches.length === 1 ? '' : 'es'})</h4>
                 ${round.matches.map((match, idx) => `
-                    <div class="admin-bracket-card ${round.key === 'finalMatch' ? 'is-final' : ''}">
+                    <div class="admin-bracket-card ${round.key === 'finalMatch' || round.dynamicIndex === rounds.length - 1 ? 'is-final' : ''} ${match.isBye ? 'is-bye' : ''}">
                         ${['p1', 'p2'].map((side) => {
                             const team = match[side] || 'TBD';
                             const selected = match.winner === team && team !== 'TBD';
                             return `<label class="bracket-team-option ${selected ? 'is-winner' : ''}">
-                                <input type="radio" name="${round.key}-${idx}" value="${side}" data-bracket-round="${round.key}" data-bracket-index="${idx}" ${selected ? 'checked' : ''} ${team === 'TBD' ? 'disabled' : ''}>
+                                <input type="radio" name="${round.key}-${idx}" value="${side}" data-bracket-round="${round.key}" data-bracket-index="${idx}" ${round.dynamicIndex !== undefined ? `data-bracket-round-index="${round.dynamicIndex}"` : ''} ${selected ? 'checked' : ''} ${team === 'TBD' || team === 'BYE' || match.p1 === 'TBD' || match.p2 === 'TBD' ? 'disabled' : ''}>
                                 <span>${escapeHtml(team)}</span>
                             </label>`;
                         }).join('')}
+                        ${match.isBye ? '<small class="bracket-bye-note">Automatic bye · advances to next round</small>' : ''}
                     </div>
                 `).join('')}
-                ${round.key === 'finalMatch' && b.champion ? `<div class="admin-champ-box">🏆 CROWNED CHAMPION: <strong>${escapeHtml(b.champion)}</strong></div>` : ''}
+                ${(round.key === 'finalMatch' || round.dynamicIndex === rounds.length - 1) && b.champion ? `<div class="admin-champ-box">🏆 CROWNED CHAMPION: <strong>${escapeHtml(b.champion)}</strong></div>` : ''}
             </div>
         `).join('')}</div>`;
     };
@@ -1245,6 +1451,37 @@
         const input = e.target;
         const b = cachedContent.bracket;
         if (!b) return;
+        if (Array.isArray(b.rounds) && input.dataset.bracketRoundIndex !== undefined) {
+            const roundIndex = Number(input.dataset.bracketRoundIndex);
+            const matchIndex = Number(input.dataset.bracketIndex);
+            const round = b.rounds[roundIndex];
+            const match = round?.matches?.[matchIndex];
+            if (!match) return;
+            const previousWinner = match.winner;
+            match.winner = match[input.value];
+            if (roundIndex === b.rounds.length - 1) {
+                b.champion = match.winner;
+            } else {
+                let advancingMatchIndex = matchIndex;
+                let advancingWinner = match.winner;
+                for (let nextRoundIndex = roundIndex + 1; nextRoundIndex < b.rounds.length; nextRoundIndex += 1) {
+                    const nextMatchIndex = Math.floor(advancingMatchIndex / 2);
+                    const nextSide = advancingMatchIndex % 2 === 0 ? 'p1' : 'p2';
+                    const nextMatch = b.rounds[nextRoundIndex].matches[nextMatchIndex];
+                    if (!nextMatch) break;
+                    const oldAdvancingPlayer = nextMatch[nextSide];
+                    nextMatch[nextSide] = advancingWinner || 'TBD';
+                    if (oldAdvancingPlayer !== nextMatch[nextSide] && nextMatch.winner !== nextMatch.p1 && nextMatch.winner !== nextMatch.p2) nextMatch.winner = null;
+                    if (oldAdvancingPlayer !== nextMatch[nextSide]) {
+                        advancingWinner = nextMatch.winner || 'TBD';
+                        advancingMatchIndex = nextMatchIndex;
+                    } else break;
+                }
+                if (previousWinner !== match.winner) b.champion = null;
+            }
+            renderAdminBracket();
+            return;
+        }
         const legacy = Array.isArray(b.round1);
         const keys = legacy
             ? ['round1', 'quarterFinals', 'semiFinals', 'finalMatch']
@@ -1283,6 +1520,41 @@
         renderAdminBracket();
     });
 
+    const buildSingleEliminationBracket = (players) => {
+        const countInput = document.getElementById('bracket-entrant-count');
+        const requested = countInput.value === '' ? players.length : Number(countInput.value);
+        if (!Number.isInteger(requested) || requested < 2 || requested > 128) throw new Error('Choose a bracket size from 2 to 128 players.');
+        if (requested > players.length) throw new Error(`Only ${players.length} players are currently registered for this event.`);
+        const selectedPlayers = players.slice().sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0) || String(a.gamerTag).localeCompare(String(b.gamerTag))).slice(0, requested);
+        let size = 2; while (size < requested) size *= 2;
+        let seedOrder = [1, 2];
+        while (seedOrder.length < size) {
+            const nextSize = seedOrder.length * 2;
+            seedOrder = seedOrder.flatMap((seed) => [seed, nextSize + 1 - seed]);
+        }
+        const bySeed = new Map(selectedPlayers.map((player, index) => [index + 1, `#${index + 1} ${player.gamerTag}`]));
+        const firstMatches = Array.from({ length: size / 2 }, (_, index) => {
+            const p1 = bySeed.get(seedOrder[index * 2]) || 'BYE';
+            const p2 = bySeed.get(seedOrder[index * 2 + 1]) || 'BYE';
+            const isBye = p1 === 'BYE' || p2 === 'BYE';
+            return { p1, p2, winner: isBye ? (p1 === 'BYE' ? p2 : p1) : null, isBye };
+        });
+        const rounds = [];
+        let matches = firstMatches;
+        let remainingSlots = size;
+        while (remainingSlots >= 2) {
+            const name = remainingSlots === 2 ? 'Grand Final' : remainingSlots === 4 ? 'Semi-Finals' : remainingSlots === 8 ? 'Quarter-Finals' : `Round of ${remainingSlots}`;
+            rounds.push({ name, matches });
+            if (matches.length === 1) break;
+            const next = [];
+            for (let index = 0; index < matches.length; index += 2) {
+                next.push({ p1: matches[index].winner || 'TBD', p2: matches[index + 1].winner || 'TBD', winner: null });
+            }
+            matches = next; remainingSlots /= 2;
+        }
+        return { format: 'single-elimination', entrantCount: requested, rounds, champion: null, generatedAt: new Date().toISOString() };
+    };
+
     document.getElementById('btn-reset-bracket-default')?.addEventListener('click', async () => {
         const cup = (cachedContent.tournaments || []).find((tournament) => tournament.featuredCup === true);
         if (!cup) {
@@ -1290,47 +1562,23 @@
             return;
         }
         const existingBracketHasWinners = [
+            ...(cachedContent.bracket?.rounds || []).flatMap((round) => round.matches || []),
             ...(cachedContent.bracket?.round32 || []),
             ...(cachedContent.bracket?.round16 || []),
             ...(cachedContent.bracket?.round1 || []),
             ...(cachedContent.bracket?.quarterFinals || []),
             ...(cachedContent.bracket?.semiFinals || []),
             ...(cachedContent.bracket?.finalMatch ? [cachedContent.bracket.finalMatch] : [])
-        ].some((match) => match.winner);
+        ].some((match) => match.winner && !match.isBye);
         if (existingBracketHasWinners && !confirm('Regenerating seeds clears all current bracket winners. Continue?')) return;
         try {
             const data = await adminFetch(`/api/admin/tournaments/${encodeURIComponent(cup.id)}/participants`);
-            const players = (data.participants || []).slice(0, 32);
-            const seedOrder = [1, 32, 16, 17, 8, 25, 9, 24, 4, 29, 13, 20, 5, 28, 12, 21, 2, 31, 15, 18, 7, 26, 10, 23, 3, 30, 14, 19, 6, 27, 11, 22];
-            const seeded = new Map(players.map((player, index) => [index + 1, `#${index + 1} ${player.gamerTag}`]));
-            const round32 = Array.from({ length: 16 }, (_, index) => ({
-                p1: seeded.get(seedOrder[index * 2]) || 'TBD',
-                p2: seeded.get(seedOrder[index * 2 + 1]) || 'TBD',
-                winner: null
-            }));
-            const createRound = (length) => Array.from({ length }, () => ({ p1: 'TBD', p2: 'TBD', winner: null }));
-            const round16 = createRound(8);
-            const quarterFinals = createRound(4);
-            const semiFinals = createRound(2);
-            const finalMatch = { p1: 'TBD', p2: 'TBD', winner: null };
-            cachedContent.bracket = {
-                rounds: [
-                    { name: 'Round of 32', matches: round32 },
-                    { name: 'Round of 16', matches: round16 },
-                    { name: 'Quarter-Finals', matches: quarterFinals },
-                    { name: 'Semi-Finals', matches: semiFinals },
-                    { name: 'Grand Final', matches: [finalMatch] }
-                ],
-                round32,
-                round16,
-                quarterFinals,
-                semiFinals,
-                finalMatch,
-                champion: null,
-                generatedAt: new Date().toISOString()
-            };
+            const players = (data.participants || []).slice(0, 128);
+            document.getElementById('bracket-roster-count').textContent = `${data.participants?.length || 0} players registered. Leave the size blank to include everyone, or choose a smaller field.`;
+            if (players.length < 2) throw new Error('At least two players must register before a knockout bracket can be built.');
+            cachedContent.bracket = buildSingleEliminationBracket(players);
             renderAdminBracket();
-            showToast(`Bracket seeded from ${players.length} registered player${players.length === 1 ? '' : 's'}; unfilled places remain TBD.`);
+            showToast(`Bracket built for ${cachedContent.bracket.entrantCount} players with automatic byes where needed.`);
         } catch (err) {
             alert(`Could not load the registered Cup players: ${err.message}`);
         }

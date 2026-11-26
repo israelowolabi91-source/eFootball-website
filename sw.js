@@ -1,13 +1,13 @@
-const CACHE_NAME = 'tim-league-shell-v48';
+const CACHE_NAME = 'tim-league-shell-v49';
 const APP_SHELL = [
   './login.html',
   './signup.html',
   './privacy.html',
   './terms.html',
-  './style.css',
-  './member-experience.css',
+  './style.css?v=50',
+  './member-experience.css?v=3',
   './site-config.js',
-  './script.js?v=46',
+  './script.js?v=49',
   './favicon.png',
   './manifest.webmanifest'
 ];

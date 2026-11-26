@@ -9341,6 +9341,99 @@ body {
 	font-weight: 900;
 }
 
+/* League honors: the same prize vocabulary is used on rankings, profiles and Match Centre cards. */
+.player-prize-rack { display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin-top:6px; }
+.player-prize-rack.is-compact { gap:4px; margin-top:5px; }
+.player-prize-pill { position:relative; display:inline-flex; align-items:center; gap:5px; max-width:100%; overflow:hidden; isolation:isolate; padding:5px 9px; border:1px solid rgba(255,255,255,.16); border-radius:999px; color:#f8fafc; font-size:.66rem; font-weight:850; line-height:1.2; letter-spacing:.01em; white-space:nowrap; }
+.player-prize-pill > span { position:relative; z-index:1; font-size:.78rem; }
+.player-prize-pill.prize-cup { border-radius:8px 8px 11px 11px; }
+.player-prize-pill.prize-badge { border-radius:7px; }
+.player-prize-pill.prize-theme-gold { border-color:rgba(244,183,47,.43); background:linear-gradient(120deg,rgba(244,183,47,.2),rgba(151,91,18,.12)); color:#ffe29a; }
+.player-prize-pill.prize-theme-ice { border-color:rgba(111,209,255,.4); background:linear-gradient(120deg,rgba(56,189,248,.18),rgba(33,73,118,.18)); color:#bdeaff; }
+.player-prize-pill.prize-theme-violet { border-color:rgba(177,139,255,.4); background:linear-gradient(120deg,rgba(139,92,246,.19),rgba(65,44,119,.16)); color:#d9c4ff; }
+.player-prize-pill.prize-theme-crimson { border-color:rgba(255,120,128,.4); background:linear-gradient(120deg,rgba(225,59,76,.18),rgba(104,25,46,.18)); color:#ffbdc4; }
+.player-prize-pill.prize-theme-emerald { border-color:rgba(85,220,161,.4); background:linear-gradient(120deg,rgba(16,185,129,.18),rgba(20,86,75,.2)); color:#a8f2d4; }
+.player-prize-pill.prize-effect-shine::after { position:absolute; z-index:0; top:-90%; bottom:-90%; left:-55%; width:34%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.44),transparent); content:""; transform:rotate(22deg); animation:prize-shine-sweep 3.2s ease-in-out infinite; }
+.player-prize-pill.prize-effect-pulse { animation:prize-pill-pulse 2.4s ease-in-out infinite; }
+.player-prize-pill.prize-effect-sparkle { box-shadow:0 0 14px rgba(244,183,47,.2); animation:prize-spark-glow 2.1s ease-in-out infinite; }
+.player-prize-more { color:#a7b7cb; font-size:.64rem; font-weight:800; }
+.rank-player > span:nth-child(2) .player-prize-rack { max-width:250px; }
+.ranking-row-enter.has-player-prizes td:first-child { box-shadow:inset 2px 0 rgba(244,183,47,.52); }
+.rank-avatar.player-award-avatar { border-color:rgba(244,183,47,.68); box-shadow:0 0 0 2px rgba(244,183,47,.08),0 0 18px rgba(244,183,47,.18); }
+.rank-avatar.player-award-avatar.prize-theme-ice { border-color:rgba(111,209,255,.68); box-shadow:0 0 0 2px rgba(111,209,255,.08),0 0 18px rgba(111,209,255,.18); }
+.rank-avatar.player-award-avatar.prize-theme-violet { border-color:rgba(177,139,255,.68); box-shadow:0 0 0 2px rgba(177,139,255,.08),0 0 18px rgba(177,139,255,.18); }
+.rank-avatar.player-award-avatar.prize-theme-crimson { border-color:rgba(255,120,128,.68); box-shadow:0 0 0 2px rgba(255,120,128,.08),0 0 18px rgba(255,120,128,.18); }
+.rank-avatar.player-award-avatar.prize-theme-emerald { border-color:rgba(85,220,161,.68); box-shadow:0 0 0 2px rgba(85,220,161,.08),0 0 18px rgba(85,220,161,.18); }
+.player-directory-card.has-player-prizes { border-color:rgba(244,183,47,.27); box-shadow:0 15px 40px rgba(0,0,0,.18),0 0 28px rgba(244,183,47,.055); }
+.player-directory-card.has-player-prizes.award-row-pulse { animation:prize-card-pulse 3.6s ease-in-out infinite; }
+.player-directory-card.has-player-prizes.award-row-sparkle { box-shadow:0 15px 40px rgba(0,0,0,.18),0 0 35px rgba(139,92,246,.11); }
+.player-directory-name { display:flex; flex-direction:column; align-items:flex-start; gap:2px; }
+.profile-prize-gallery { display:flex; flex-wrap:wrap; justify-content:center; gap:7px; margin:12px 0 2px; }
+.profile-prize-gallery .player-prize-pill { min-height:30px; font-size:.7rem; }
+.profile-avatar-lg.profile-honored { box-shadow:0 0 0 3px rgba(244,183,47,.16),0 0 32px rgba(244,183,47,.29); }
+.profile-avatar-lg.profile-honored.prize-effect-pulse { animation:prize-card-pulse 2.8s ease-in-out infinite; }
+.profile-avatar-lg.profile-honored.prize-effect-sparkle { filter:drop-shadow(0 0 12px rgba(244,183,47,.52)); }
+@keyframes prize-shine-sweep { 0%,48% { left:-55%; } 75%,100% { left:125%; } }
+@keyframes prize-pill-pulse { 0%,100% { box-shadow:0 0 0 rgba(244,183,47,0); } 50% { box-shadow:0 0 18px rgba(244,183,47,.23); } }
+@keyframes prize-spark-glow { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.22); } }
+@keyframes prize-card-pulse { 0%,100% { box-shadow:0 15px 40px rgba(0,0,0,.18),0 0 15px rgba(244,183,47,.05); } 50% { box-shadow:0 15px 40px rgba(0,0,0,.18),0 0 34px rgba(244,183,47,.2); } }
+.result-card-actions { display:flex; flex-wrap:wrap; align-items:center; gap:9px; grid-column:1/-1; }
+.share-result-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:0 14px; border:1px solid rgba(244,183,47,.32); border-radius:10px; background:linear-gradient(135deg,rgba(244,183,47,.15),rgba(244,183,47,.06)); color:#ffe29a; font:inherit; font-size:.72rem; font-weight:850; cursor:pointer; transition:transform .16s ease,border-color .16s ease,background .16s ease; }
+.share-result-button::before { content:"↗"; font-size:.9rem; }
+.share-result-button:hover { transform:translateY(-1px); border-color:rgba(244,183,47,.62); background:rgba(244,183,47,.16); }
+.share-result-button:disabled { cursor:wait; opacity:.7; }
+.share-result-status { color:#9eb2ca; font-size:.68rem; }
+@media(prefers-reduced-motion:reduce) { .player-prize-pill,.player-directory-card.has-player-prizes,.profile-avatar-lg.profile-honored { animation:none !important; } .player-prize-pill::after { animation:none !important; } }
+.player-whatsapp-invite,.profile-whatsapp-invite,.tourn-whatsapp-share { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:44px; padding:0 13px; border:1px solid rgba(65,199,126,.32); border-radius:10px; background:linear-gradient(135deg,rgba(37,190,105,.16),rgba(15,108,67,.08)); color:#a6f0c6; font-size:.7rem; font-weight:850; text-decoration:none; transition:transform .16s ease,border-color .16s ease,background .16s ease; }
+.player-whatsapp-invite:hover,.profile-whatsapp-invite:hover,.tourn-whatsapp-share:hover { transform:translateY(-1px); border-color:rgba(65,199,126,.62); background:rgba(37,190,105,.18); color:#d4ffe3; }
+.player-whatsapp-invite { width:100%; margin-top:7px; }
+.player-whatsapp-invite > span,.profile-whatsapp-invite > span,.tourn-whatsapp-share > span { display:grid; place-items:center; width:20px; height:20px; border-radius:50%; background:rgba(37,190,105,.2); font-size:.8rem; }
+.profile-whatsapp-invite { margin-top:12px; }
+.tourn-whatsapp-share { flex:1 1 100%; min-height:42px; }
+.season-history-section { margin:32px 0; padding:clamp(18px,3vw,30px); border:1px solid rgba(244,183,47,.18); border-radius:22px; background:radial-gradient(ellipse at 0 0,rgba(244,183,47,.075),transparent 35%),linear-gradient(145deg,rgba(12,31,54,.87),rgba(7,20,37,.92)); }
+.season-hall-grid { display:grid; grid-template-columns:minmax(230px,.8fr) repeat(2,minmax(260px,1fr)); align-items:stretch; gap:12px; }
+.season-hall-of-fame-card,.season-history-card,.season-history-empty,.season-history-loading { min-width:0; padding:18px; border:1px solid rgba(171,197,229,.14); border-radius:16px; background:linear-gradient(150deg,rgba(16,39,66,.88),rgba(7,21,39,.96)); }
+.season-hall-of-fame-card { border-color:rgba(244,183,47,.28); background:radial-gradient(ellipse at 100% 0,rgba(244,183,47,.14),transparent 55%),linear-gradient(150deg,#162d48,#0a1a30); }
+.season-hall-kicker { margin:0; color:#e7c76b; font-size:.6rem; font-weight:900; letter-spacing:.16em; }
+.season-hall-of-fame-card h3,.season-history-card h3 { margin:7px 0 13px; color:#f4f7fb; font-size:1.08rem; letter-spacing:-.025em; }
+.season-hall-of-fame-card ol { display:grid; gap:0; margin:0; padding:0; list-style:none; }
+.season-hall-of-fame-card li { display:grid; gap:4px; padding:12px 0; border-top:1px solid rgba(255,255,255,.08); }
+.season-hall-of-fame-card li::before { content:"♛"; float:right; grid-row:1/4; grid-column:2; align-self:center; color:#f4c957; font-size:1.2rem; }
+.season-hall-of-fame-card li small { color:#8296b0; font-size:.6rem; }
+.season-hall-of-fame-card li strong { color:#ffe29a; font-size:.84rem; }
+.season-hall-of-fame-card li > span { color:#a5b6ca; font-size:.63rem; }
+.season-history-card { display:flex; flex-direction:column; }
+.season-history-card-heading { display:flex; justify-content:space-between; gap:8px; }
+.season-archive-year { color:#f4ce69; font-size:.69rem; font-weight:900; }
+.season-event-label { color:#91a5be; font-size:.62rem; text-align:right; }
+.season-history-card h3 { margin:6px 0 10px; }
+.season-champion-label { margin:4px 0; color:#879bb4; font-size:.57rem; font-weight:850; letter-spacing:.13em; }
+.season-history-champion { color:#fff0bc; font-size:1.28rem; letter-spacing:-.035em; }
+.season-honors { display:flex; flex-wrap:wrap; gap:8px; margin:13px 0; }
+.season-honors > span { display:grid; gap:4px; min-width:0; padding:9px 10px; border:1px solid rgba(171,197,229,.1); border-radius:9px; background:rgba(255,255,255,.025); }
+.season-honors small { color:#8296b0; font-size:.55rem; }
+.season-honors strong { overflow-wrap:anywhere; color:#d9e4f1; font-size:.68rem; }
+.season-history-summary { margin:8px 0 12px; color:#a7b7ca; font-size:.72rem; line-height:1.55; }
+.season-last-results { margin-top:auto; padding-top:10px; border-top:1px solid rgba(171,197,229,.11); }
+.season-last-results h4 { margin:0 0 7px; color:#dbe6f2; font-size:.7rem; }
+.season-last-results ul { display:grid; gap:5px; margin:0; padding:0; list-style:none; }
+.season-last-results li { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:8px; align-items:center; color:#9fb1c8; font-size:.65rem; }
+.season-last-results li span:last-child { text-align:right; }
+.season-last-results li strong { padding:4px 7px; border-radius:7px; background:rgba(244,183,47,.09); color:#ffe29a; font-size:.69rem; }
+.season-history-empty,.season-history-loading { grid-column:1/-1; text-align:center; }
+.season-history-empty > span { font-size:1.7rem; }
+.season-history-empty h3 { margin:7px 0; color:#eaf0f7; font-size:1rem; }
+.season-history-empty p { margin:0; color:#92a5be; font-size:.73rem; }
+.season-history-retry { min-height:44px; padding:0 14px; border:1px solid rgba(244,183,47,.3); border-radius:9px; background:rgba(244,183,47,.08); color:#ffe29a; cursor:pointer; }
+.season-history-loading { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.season-history-loading i { height:190px; border-radius:12px; background:linear-gradient(90deg,rgba(171,197,229,.03),rgba(171,197,229,.1),rgba(171,197,229,.03)); background-size:200% 100%; animation:prize-shine-sweep 2s ease-in-out infinite; }
+.bracket-match-card.is-bye { border-color:rgba(244,183,47,.25); background:linear-gradient(145deg,rgba(244,183,47,.07),rgba(9,23,42,.92)); }
+.bracket-bye-public-note { display:block; padding:6px 7px 2px; color:#e5c871; font-size:.59rem; font-weight:750; text-align:center; }
+.rank-avatar.player-award-avatar.prize-effect-pulse { animation:prize-pill-pulse 2.4s ease-in-out infinite; }
+.rank-avatar.player-award-avatar.prize-effect-sparkle { animation:prize-spark-glow 2s ease-in-out infinite; }
+@media(max-width:900px) { .season-hall-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .season-hall-of-fame-card { grid-column:1/-1; } .season-hall-of-fame-card ol { grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:15px; } }
+@media(max-width:600px) { .season-history-section { padding:16px 12px; } .season-hall-grid { grid-template-columns:1fr; } .season-hall-of-fame-card { grid-column:auto; } .season-hall-of-fame-card ol { grid-template-columns:1fr; } .season-history-card,.season-hall-of-fame-card { padding:15px; } }
+
 .leaderboard-table .rank-avatar img {
 	display: block;
 	width: 100%;

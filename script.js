@@ -1,6 +1,31 @@
 const menuToggle = document.querySelector('.menu-toggle');
 const navigation = document.querySelector('.navigation');
 
+const playerPrizeSymbols = { badge: '✦', cup: '🏆', medal: '🏅' };
+const appendPlayerPrizes = (parent, awards, { compact = true, limit = 3 } = {}) => {
+	if (!Array.isArray(awards) || !awards.length) return null;
+	const rack = document.createElement('span');
+	rack.className = `player-prize-rack${compact ? ' is-compact' : ''}`;
+	rack.setAttribute('aria-label', `${awards.length} player prize${awards.length === 1 ? '' : 's'}`);
+	const types = ['badge', 'cup', 'medal'];
+	const themes = ['gold', 'ice', 'violet', 'crimson', 'emerald'];
+	const effects = ['shine', 'pulse', 'sparkle'];
+	awards.slice(0, limit).forEach((award) => {
+		const type = types.includes(award.type) ? award.type : 'medal';
+		const theme = themes.includes(award.theme) ? award.theme : 'gold';
+		const effect = effects.includes(award.effect) ? award.effect : 'shine';
+		const prize = document.createElement('span');
+		prize.className = `player-prize-pill prize-${type} prize-theme-${theme} prize-effect-${effect}`;
+		prize.title = award.title;
+		const icon = document.createElement('span'); icon.setAttribute('aria-hidden', 'true'); icon.textContent = playerPrizeSymbols[type];
+		prize.append(icon, document.createTextNode(award.title));
+		rack.append(prize);
+	});
+	if (awards.length > limit) rack.append(Object.assign(document.createElement('span'), { className: 'player-prize-more', textContent: `+${awards.length - limit}` }));
+	parent.append(rack);
+	return rack;
+};
+
 // Keep player identity visible when a stored avatar cannot be fetched after deployment.
 document.addEventListener('error', (event) => {
 	const image = event.target;
@@ -1667,6 +1692,7 @@ if (rankingSearch && rankingDivision && rankingSort && rankingCount && leaderboa
 					const tier = window.LEAGUE_CONFIG.getTier(ratingValue);
 					row.className = 'ranking-row-enter';
 					row.style.animationDelay = `${Math.min(player.rank - 1, 8) * 45}ms`;
+					if (player.awards?.length) row.classList.add('has-player-prizes', `award-row-${['shine', 'pulse', 'sparkle'].includes(player.awards[0].effect) ? player.awards[0].effect : 'shine'}`);
 					Object.assign(row.dataset, {
 						name: player.gamerTag.toLocaleLowerCase(),
 						division: tier.id,
@@ -1684,6 +1710,7 @@ if (rankingSearch && rankingDivision && rankingSort && rankingCount && leaderboa
 					playerLabel.className = 'rank-player';
 					const avatar = document.createElement('span');
 					avatar.className = 'rank-avatar avatar-gold';
+					if (player.awards?.length) avatar.classList.add('player-award-avatar', `prize-theme-${['gold', 'ice', 'violet', 'crimson', 'emerald'].includes(player.awards[0].theme) ? player.awards[0].theme : 'gold'}`, `prize-effect-${['shine', 'pulse', 'sparkle'].includes(player.awards[0].effect) ? player.awards[0].effect : 'shine'}`);
 					if (player.avatarUrl) {
 						const image = document.createElement('img');
 						image.src = player.avatarUrl;
@@ -1698,6 +1725,7 @@ if (rankingSearch && rankingDivision && rankingSort && rankingCount && leaderboa
 					const detail = document.createElement('small');
 					detail.textContent = ratedMatches ? `${ratedMatches} owner-approved ranked matches` : 'No approved ranked matches yet';
 					identity.append(name, detail);
+					appendPlayerPrizes(identity, player.awards, { limit: 2 });
 					playerLabel.append(avatar, identity);
 					playerCell.append(playerLabel);
 					const ratingCell = document.createElement('td');
@@ -1887,6 +1915,117 @@ if (readinessChecklist) {
 
 const matchesList = document.querySelector('#matches-list');
 
+const seasonHistoryGrid = document.querySelector('#season-history-grid');
+if (seasonHistoryGrid) {
+	const status = document.querySelector('#season-history-status');
+	const renderSeasonHistory = (seasons) => {
+		seasonHistoryGrid.replaceChildren();
+		if (!seasons.length) {
+			const empty = document.createElement('article'); empty.className = 'season-history-empty';
+		empty.append(Object.assign(document.createElement('span'), { textContent: '🏆' }), Object.assign(document.createElement('h3'), { textContent: 'Your Hall of Fame starts here' }), Object.assign(document.createElement('p'), { textContent: 'Past champions and season results will appear when league administrators publish the archive.' }));
+			seasonHistoryGrid.append(empty); return;
+		}
+		const hall = document.createElement('aside'); hall.className = 'season-hall-of-fame-card';
+		hall.append(Object.assign(document.createElement('p'), { className: 'season-hall-kicker', textContent: 'HALL OF FAME' }), Object.assign(document.createElement('h3'), { textContent: 'League champions' }));
+		const champions = document.createElement('ol');
+		seasons.slice(0, 8).forEach((season) => {
+			const item = document.createElement('li'); const year = document.createElement('small'); year.textContent = `${season.year || ''} · ${season.title || 'Past season'}`;
+			const champion = document.createElement('strong'); champion.textContent = season.champion || 'Champion to be announced'; item.append(year, champion);
+			if (season.event) item.append(Object.assign(document.createElement('span'), { textContent: season.event }));
+			champions.append(item);
+		});
+		hall.append(champions); seasonHistoryGrid.append(hall);
+		seasons.forEach((season) => {
+			const card = document.createElement('article'); card.className = 'season-history-card';
+			const heading = document.createElement('div'); heading.className = 'season-history-card-heading';
+			heading.append(Object.assign(document.createElement('span'), { className: 'season-archive-year', textContent: String(season.year || 'Season') }), Object.assign(document.createElement('span'), { className: 'season-event-label', textContent: season.event || 'League season' }));
+			card.append(heading, Object.assign(document.createElement('h3'), { textContent: season.title || `Season ${season.year || ''}` }));
+			const title = document.createElement('p'); title.className = 'season-champion-label'; title.textContent = 'SEASON CHAMPION'; card.append(title, Object.assign(document.createElement('strong'), { className: 'season-history-champion', textContent: season.champion || 'Champion TBC' }));
+			const honors = document.createElement('div'); honors.className = 'season-honors';
+			[['Runner-up', season.runnerUp], ['Season MVP', season.mvp]].filter(([, value]) => value).forEach(([label, value]) => { const block = document.createElement('span'); block.append(Object.assign(document.createElement('small'), { textContent: label }), Object.assign(document.createElement('strong'), { textContent: value })); honors.append(block); });
+			if (honors.childElementCount) card.append(honors);
+			if (season.summary) card.append(Object.assign(document.createElement('p'), { className: 'season-history-summary', textContent: season.summary }));
+			const results = Array.isArray(season.lastResults) ? season.lastResults.slice(0, 10) : [];
+			if (results.length) {
+				const resultsBlock = document.createElement('div'); resultsBlock.className = 'season-last-results';
+				resultsBlock.append(Object.assign(document.createElement('h4'), { textContent: 'Last results' }));
+				const list = document.createElement('ul');
+				results.forEach((result) => {
+					const line = document.createElement('li'); const parsed = String(result).match(/^(.+?)\s+(\d{1,2})\s*[-–:]\s*(\d{1,2})\s+(.+)$/);
+					if (parsed) { line.append(Object.assign(document.createElement('span'), { textContent: parsed[1] }), Object.assign(document.createElement('strong'), { textContent: `${parsed[2]} – ${parsed[3]}` }), Object.assign(document.createElement('span'), { textContent: parsed[4] })); }
+					else line.textContent = result;
+					list.append(line);
+				});
+				resultsBlock.append(list); card.append(resultsBlock);
+			}
+			seasonHistoryGrid.append(card);
+		});
+	};
+	const loadSeasonHistory = async () => {
+		if (status) status.textContent = 'Loading past seasons…';
+		try {
+			const response = await fetch('/api/site/seasons', { cache: 'no-store' }); const data = await response.json().catch(() => ({}));
+			if (!response.ok) throw new Error(data.message || 'Season history could not be loaded.');
+			const seasons = Array.isArray(data.seasons) ? data.seasons : [];
+			renderSeasonHistory(seasons);
+			if (status) status.textContent = seasons.length ? `${seasons.length} past season${seasons.length === 1 ? '' : 's'} in the archive.` : 'Past seasons are added by league administrators.';
+		} catch (error) {
+			if (status) status.textContent = `Season history could not be loaded: ${error.message}`;
+			const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'season-history-retry'; retry.textContent = 'Retry loading seasons'; retry.addEventListener('click', loadSeasonHistory); seasonHistoryGrid.replaceChildren(retry);
+		}
+	};
+	loadSeasonHistory();
+}
+
+const makeMatchShareImage = async (match) => {
+	const width = 1200; const height = 630;
+	const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+	const context = canvas.getContext('2d');
+	if (!context) throw new Error('Your browser could not create the share image.');
+	const roundedRect = (x, y, w, h, radius, fill, stroke = null) => {
+		context.beginPath();
+		if (typeof context.roundRect === 'function') context.roundRect(x, y, w, h, radius); else context.rect(x, y, w, h);
+		context.fillStyle = fill; context.fill();
+		if (stroke) { context.strokeStyle = stroke; context.lineWidth = 2; context.stroke(); }
+	};
+	const background = context.createLinearGradient(0, 0, width, height); background.addColorStop(0, '#102a4b'); background.addColorStop(.55, '#07162a'); background.addColorStop(1, '#10182d');
+	context.fillStyle = background; context.fillRect(0, 0, width, height);
+	const glow = context.createRadialGradient(1010, 80, 20, 1010, 80, 520); glow.addColorStop(0, 'rgba(244,183,47,.24)'); glow.addColorStop(1, 'rgba(244,183,47,0)'); context.fillStyle = glow; context.fillRect(500, 0, 700, 550);
+	context.strokeStyle = 'rgba(255,255,255,.045)'; context.lineWidth = 1;
+	for (let x = -200; x < width; x += 56) { context.beginPath(); context.moveTo(x, 0); context.lineTo(x + 300, height); context.stroke(); }
+	context.save(); context.shadowColor = 'rgba(0,0,0,.3)'; context.shadowBlur = 24; roundedRect(42, 38, 1116, 554, 28, 'rgba(6,17,32,.78)', 'rgba(220,232,247,.1)'); context.restore();
+	try { const logo = new Image(); logo.src = 'favicon.png'; await logo.decode(); context.save(); context.beginPath(); context.roundRect(78, 67, 54, 54, 14); context.clip(); context.drawImage(logo, 78, 67, 54, 54); context.restore(); } catch {}
+	context.fillStyle = '#f8fafc'; context.font = '800 22px system-ui, sans-serif'; context.fillText('TIM EFOOTBALL LEAGUE', 148, 93);
+	context.fillStyle = '#97abc4'; context.font = '700 12px system-ui, sans-serif'; context.letterSpacing = '3px'; context.fillText('OFFICIAL MATCH RESULT', 150, 115); context.letterSpacing = '0px';
+	context.textAlign = 'right'; context.fillStyle = '#e9ca72'; context.font = '800 14px system-ui, sans-serif'; context.fillText(String(match.competition || 'LEAGUE').replace(/[-_]/g, ' ').toUpperCase(), 1110, 88); context.textAlign = 'left';
+	const leftScore = Number(match.challengerScore); const rightScore = Number(match.opponentScore);
+	const leftWon = leftScore > rightScore; const rightWon = rightScore > leftScore;
+	context.fillStyle = '#8da2bd'; context.font = '800 13px system-ui, sans-serif'; context.letterSpacing = '4px'; context.fillText('FULL TIME', 80, 190); context.letterSpacing = '0px';
+	context.fillStyle = '#f7f9fc'; context.font = '750 42px system-ui, sans-serif'; context.textAlign = 'center';
+	context.fillText(match.challenger || 'Home', 320, 282, 360); context.fillText(match.opponent || 'Away', 880, 282, 360);
+	context.textAlign = 'left';
+	roundedRect(82, 320, 1036, 126, 20, 'rgba(255,255,255,.045)', 'rgba(255,255,255,.08)');
+	context.fillStyle = leftWon ? '#ffd873' : '#eaf0f7'; context.font = '900 92px system-ui, sans-serif'; context.textAlign = 'center'; context.fillText(String(leftScore), 440, 412);
+	context.fillStyle = '#7589a3'; context.font = '700 35px system-ui, sans-serif'; context.fillText('—', 600, 401);
+	context.fillStyle = rightWon ? '#ffd873' : '#eaf0f7'; context.font = '900 92px system-ui, sans-serif'; context.fillText(String(rightScore), 760, 412); context.textAlign = 'left';
+	if (match.ranked && match.ratingChanges && Number.isFinite(Number(match.ratingChanges.challenger)) && Number.isFinite(Number(match.ratingChanges.opponent))) {
+		const leftXp = Number(match.ratingChanges.challenger); const rightXp = Number(match.ratingChanges.opponent);
+		const xpText = `${match.challenger}: ${leftXp > 0 ? '+' : ''}${leftXp} XP     ·     ${match.opponent}: ${rightXp > 0 ? '+' : ''}${rightXp} XP`;
+		roundedRect(235, 468, 730, 48, 24, 'rgba(244,183,47,.12)', 'rgba(244,183,47,.26)');
+		context.fillStyle = '#ffe29a'; context.font = '800 16px system-ui, sans-serif'; context.textAlign = 'center'; context.fillText(xpText, 600, 498, 690); context.textAlign = 'left';
+	} else if (match.ranked) {
+		roundedRect(420, 468, 360, 48, 24, 'rgba(255,255,255,.06)', 'rgba(255,255,255,.1)');
+		context.fillStyle = '#c4d0df'; context.font = '800 15px system-ui, sans-serif'; context.textAlign = 'center'; context.fillText('RANKED RESULT · XP DETAILS UNAVAILABLE', 600, 498); context.textAlign = 'left';
+	} else {
+		roundedRect(420, 468, 360, 48, 24, 'rgba(255,255,255,.06)', 'rgba(255,255,255,.1)');
+		context.fillStyle = '#c4d0df'; context.font = '800 15px system-ui, sans-serif'; context.textAlign = 'center'; context.fillText('FRIENDLY MATCH · XP UNCHANGED', 600, 498); context.textAlign = 'left';
+	}
+	const approvedDate = match.approvedAt ? new Date(match.approvedAt).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '';
+	context.fillStyle = '#8397b0'; context.font = '600 13px system-ui, sans-serif'; context.fillText(`${approvedDate ? `${approvedDate}  ·  ` : ''}APPROVED RESULT`, 80, 558);
+	context.textAlign = 'right'; context.fillStyle = '#b9c7d8'; context.font = '700 13px system-ui, sans-serif'; context.fillText(location.hostname.replace(/^www\./, '') || 'TIM EFOOTBALL LEAGUE', 1110, 558); context.textAlign = 'left';
+	return await new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Could not export the share image.')), 'image/png'));
+};
+
 if (matchesList) {
 	const matchSearch = document.querySelector('#match-search');
 	const matchFilters = [...document.querySelectorAll('[data-match-filter]')];
@@ -1978,7 +2117,30 @@ if (matchesList) {
 		const verified = document.createElement('span');
 		verified.className = 'result-verified-label';
 		verified.textContent = 'Approved';
-		article.append(dateBlock, main, verified);
+		const resultActions = document.createElement('div'); resultActions.className = 'result-card-actions';
+		const shareButton = document.createElement('button'); shareButton.type = 'button'; shareButton.className = 'share-result-button'; shareButton.textContent = 'Share result card';
+		shareButton.setAttribute('aria-label', `Create a share image for ${match.challenger} ${match.challengerScore} to ${match.opponentScore} ${match.opponent}`);
+		const shareStatus = document.createElement('span'); shareStatus.className = 'share-result-status'; shareStatus.setAttribute('role', 'status'); shareStatus.hidden = true;
+		shareButton.addEventListener('click', async () => {
+			shareButton.disabled = true; shareButton.textContent = 'Creating image…'; shareStatus.hidden = true;
+			try {
+				const blob = await makeMatchShareImage(match);
+				const safeName = `${match.challenger}-${match.challengerScore}-${match.opponentScore}-${match.opponent}`.replace(/[^a-z0-9-]+/gi, '-').replace(/^-|-$/g, '').toLowerCase();
+				const file = new File([blob], `${safeName || 'match-result'}.png`, { type: 'image/png' });
+				if (navigator.share && navigator.canShare?.({ files: [file] })) {
+					await navigator.share({ files: [file], title: `${match.challenger} ${match.challengerScore}-${match.opponentScore} ${match.opponent}`, text: 'Approved result · Tim eFootball League' });
+					shareStatus.textContent = 'Share sheet opened.';
+				} else {
+					const imageUrl = URL.createObjectURL(blob); const download = document.createElement('a'); download.href = imageUrl; download.download = file.name; document.body.append(download); download.click(); download.remove(); window.setTimeout(() => URL.revokeObjectURL(imageUrl), 30000);
+					shareStatus.textContent = 'Share image downloaded. Add it to your social post.';
+				}
+				shareStatus.hidden = false;
+			} catch (error) {
+				if (error.name !== 'AbortError') { shareStatus.textContent = error.message || 'The share image could not be created.'; shareStatus.hidden = false; }
+			} finally { shareButton.disabled = false; shareButton.textContent = 'Share result card'; }
+		});
+		resultActions.append(shareButton, shareStatus);
+		article.append(dateBlock, main, verified, resultActions);
 		return article;
 	};
 
@@ -2115,6 +2277,21 @@ const matchApi = async (url, options = {}) => {
 	return result;
 };
 
+const uploadMatchResult = (matchId, body, progress) => new Promise((resolve, reject) => {
+	const xhr = new XMLHttpRequest();
+	xhr.open('POST', `/api/matches/${encodeURIComponent(matchId)}/result`);
+	xhr.withCredentials = true;
+	xhr.setRequestHeader('Content-Type', 'application/json');
+	const link = readPrivateMatchLinks()[matchId];
+	if (link?.token) xhr.setRequestHeader('X-Match-Token', link.token);
+	xhr.upload.addEventListener('progress', (event) => { if (event.lengthComputable) progress(Math.round(event.loaded / event.total * 100)); });
+	xhr.addEventListener('load', () => { let data = {}; try { data = JSON.parse(xhr.responseText); } catch {} if (xhr.status >= 200 && xhr.status < 300) resolve(data); else reject(new Error(data.message || 'The result could not be submitted. Please retry.')); });
+	xhr.addEventListener('error', () => reject(new Error('Connection interrupted while sending the result. Check your connection and retry.')));
+	xhr.addEventListener('timeout', () => reject(new Error('The upload took too long. Please retry.')));
+	xhr.timeout = 120000;
+	xhr.send(JSON.stringify(body));
+});
+
 const matchMessage = (element, message, isError = false) => {
 	if (!element) return;
 	element.textContent = message;
@@ -2184,6 +2361,32 @@ const challengeStatusText = (status, match = null) => {
 	}[status] || 'Match update');
 };
 
+const POST_KICKOFF_REPORT_WINDOW_MS = 24 * 60 * 60 * 1000;
+const MATCH_WALKOVER_GRACE_MS = 20 * 60 * 1000;
+const isPostKickoffMatch = (match) => ['accepted', 'awaiting-opponent', 'pending-owner', 'disputed', 'approved', 'rejected'].includes(match.status) &&
+	Date.now() >= Date.parse(match.scheduledAt);
+const postKickoffStatus = (match) => {
+	if (match.status === 'approved') return 'Approved';
+	if (['disputed', 'pending-owner'].includes(match.status)) return 'Under admin review';
+	if (match.status === 'rejected') return 'Clarification needed';
+	if (match.status === 'awaiting-opponent') return match.result?.youReported ? 'Waiting for opponent' : 'Opponent submitted';
+	if (match.status === 'accepted') return 'Awaiting result';
+	return challengeStatusText(match.status, match);
+};
+const formatResultDeadline = (deadline) => {
+	const remaining = deadline - Date.now();
+	if (remaining <= 0) return 'Submit your result as soon as possible';
+	const hours = Math.floor(remaining / 3600000);
+	const minutes = Math.floor((remaining % 3600000) / 60000);
+	return `Submit within ${hours}h ${minutes}m`;
+};
+const refreshResultDeadlineLabels = () => {
+	document.querySelectorAll('[data-result-deadline]').forEach((label) => {
+		label.textContent = formatResultDeadline(Number(label.dataset.resultDeadline));
+	});
+};
+if (document.querySelector('#my-matches-list')) window.setInterval(refreshResultDeadlineLabels, 60000);
+
 const playerRatingBand = (rating) => {
 	const tier = window.LEAGUE_CONFIG.getTier(rating);
 	return { key: tier.id, label: tier.name, className: tier.className };
@@ -2227,6 +2430,7 @@ const renderPlayerDirectory = () => {
 		const total = player.wins + player.draws + player.losses;
 		const winRate = total ? Math.round(player.wins / total * 100) : 0;
 		const card = makeMatchElement('article', 'player-directory-card');
+		if (player.awards?.length) card.classList.add('has-player-prizes', `award-row-${['shine', 'pulse', 'sparkle'].includes(player.awards[0].effect) ? player.awards[0].effect : 'shine'}`);
 		const cardTop = makeMatchElement('div', 'player-card-topline');
 		const avatar = makeMatchElement('span', `player-directory-avatar ${rating.className}`, player.gamerTag.slice(0, 1).toLocaleUpperCase());
 		avatar.setAttribute('aria-hidden', 'true');
@@ -2242,6 +2446,7 @@ const renderPlayerDirectory = () => {
 		const tier = makeMatchElement('span', `player-rating-tier ${rating.className}`, rating.label);
 		cardTop.append(avatar, tier);
 		const name = makeMatchElement('h4', 'player-directory-name', player.gamerTag);
+		appendPlayerPrizes(name, player.awards, { limit: 3 });
 		const ratingLine = makeMatchElement('p', 'player-directory-rating');
 		ratingLine.append(makeMatchElement('strong', '', Number(player.rating).toLocaleString()), makeMatchElement('span', '', 'XP'));
 		const stats = makeMatchElement('dl', 'player-directory-stats');
@@ -2264,7 +2469,13 @@ const renderPlayerDirectory = () => {
 		challengeButton.disabled = directoryPlayers.length === 0;
 		if (challengeButton.disabled) challengeButton.title = 'There are no other verified player profiles to challenge yet.';
 		challengeButton.append(makeMatchElement('span', 'player-challenge-arrow', '→'));
-		card.append(cardTop, name, ratingLine, stats, experienceNote, challengeButton);
+		const challengePath = `matches.html?challengePlayer=${encodeURIComponent(player.id)}#challenges`;
+		const challengeJoinUrl = new URL('login.html', window.location.href);
+		challengeJoinUrl.searchParams.set('next', challengePath);
+		const waShare = makeMatchElement('a', 'player-whatsapp-invite', 'Challenge me · WhatsApp');
+		waShare.href = `https://wa.me/?text=${encodeURIComponent(`Join Tim eFootball League and challenge ${player.gamerTag}. Create a free account or sign in to send the match invite: ${challengeJoinUrl.href}`)}`;
+		waShare.target = '_blank'; waShare.rel = 'noopener noreferrer';
+		card.append(cardTop, name, ratingLine, stats, experienceNote, challengeButton, waShare);
 		directory.append(card);
 	});
 };
@@ -2280,109 +2491,128 @@ const addMatchAction = (parent, action, id, text, primary = false) => {
 const makeScoreForm = (match) => {
 	const form = makeMatchElement('form', 'match-result-form');
 	form.dataset.matchId = match.id;
-	[
-		['yourScore', 'Your score'],
-		['opponentScore', 'Opponent score']
-	].forEach(([name, text]) => {
-		const label = makeMatchElement('label', '', text);
+	const other = match.isChallenger ? match.opponent : match.challenger;
+	const scoreRow = makeMatchElement('div', 'match-score-steppers');
+	const buildStepper = (name, team) => {
+		const group = makeMatchElement('fieldset', 'match-score-stepper');
+		group.append(makeMatchElement('legend', '', team));
+		const controls = makeMatchElement('div', 'match-score-controls');
+		const minus = makeMatchElement('button', 'match-score-adjust', '−');
+		minus.type = 'button'; minus.setAttribute('aria-label', `Decrease ${team} score`);
 		const input = document.createElement('input');
-		input.name = name;
-		input.type = 'number';
-		input.min = '0';
-		input.max = '99';
-		input.required = true;
-		label.append(input);
-		form.append(label);
-	});
-	const scorelinePreview = makeMatchElement('p', 'scoreline-preview', 'Enter both scores to preview your result.');
+		input.name = name; input.type = 'number'; input.min = '0'; input.max = '99'; input.value = '0'; input.required = true;
+		input.setAttribute('aria-label', `${team} score, from 0 to 99`);
+		input.inputMode = 'numeric';
+		const plus = makeMatchElement('button', 'match-score-adjust', '+');
+		plus.type = 'button'; plus.setAttribute('aria-label', `Increase ${team} score`);
+		minus.addEventListener('click', () => { input.value = String(Math.max(0, Number(input.value || 0) - 1)); input.dispatchEvent(new Event('input', { bubbles: true })); });
+		plus.addEventListener('click', () => { input.value = String(Math.min(99, Number(input.value || 0) + 1)); input.dispatchEvent(new Event('input', { bubbles: true })); });
+		input.addEventListener('input', () => { if (input.value !== '') input.value = String(Math.max(0, Math.min(99, Number(input.value) || 0))); });
+		controls.append(minus, input, plus); group.append(controls); return { group, input };
+	};
+	const your = buildStepper('yourScore', 'You');
+	const opponent = buildStepper('opponentScore', other.gamerTag);
+	scoreRow.append(your.group, makeMatchElement('span', 'match-score-divider', '–'), opponent.group);
+	form.append(scoreRow);
+	const scorelinePreview = makeMatchElement('p', 'scoreline-preview', `You 0 - 0 ${other.gamerTag}`);
 	scorelinePreview.setAttribute('aria-live', 'polite');
 	const updateScorelinePreview = () => {
 		const yourScore = form.elements.yourScore.value;
 		const opponentScore = form.elements.opponentScore.value;
-		if (yourScore === '' || opponentScore === '') {
-			scorelinePreview.textContent = 'Enter both scores to preview your result.';
-			scorelinePreview.dataset.outcome = '';
-			return;
-		}
 		const outcome = Number(yourScore) > Number(opponentScore) ? 'WIN' : Number(yourScore) < Number(opponentScore) ? 'LOSS' : 'DRAW';
-		scorelinePreview.textContent = `Your report: ${yourScore}–${opponentScore} · ${outcome}`;
+		scorelinePreview.textContent = `You ${yourScore || 0} - ${opponentScore || 0} ${other.gamerTag} · ${outcome}`;
 		scorelinePreview.dataset.outcome = outcome.toLowerCase();
 	};
-	form.elements.yourScore.addEventListener('input', updateScorelinePreview);
-	form.elements.opponentScore.addEventListener('input', updateScorelinePreview);
+	your.input.addEventListener('input', updateScorelinePreview);
+	opponent.input.addEventListener('input', updateScorelinePreview);
 	form.append(scorelinePreview);
-	const evidenceLabel = makeMatchElement('label', 'match-evidence-field', 'Scoreline screenshot (PNG, JPEG or WebP · max 5 MB)');
+	const evidenceLabel = makeMatchElement('label', 'match-evidence-field', 'Add match screenshot · JPG, PNG or WebP · max 5 MB');
 	const evidence = document.createElement('input');
 	evidence.name = 'evidence';
 	evidence.type = 'file';
 	evidence.accept = 'image/png,image/jpeg,image/webp';
-	evidence.required = true;
+	evidence.setAttribute('aria-label', 'Required match screenshot, JPG PNG or WebP, maximum 5 megabytes');
 	evidenceLabel.append(evidence);
 	const evidencePreview = makeMatchElement('div', 'match-evidence-preview');
 	evidencePreview.hidden = true;
 	evidence.addEventListener('change', () => {
 		const file = evidence.files?.[0];
+		form._compressedEvidence = null;
 		if (!file) {
 			evidencePreview.hidden = true;
 			evidencePreview.replaceChildren();
 			return;
 		}
-		if (file.size > 5 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+		if (file.size > 20 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
 			evidence.value = '';
 			evidencePreview.hidden = true;
-			matchMessage(challengeStatusMessage, 'Choose a PNG, JPEG or WebP screenshot smaller than 5 MB.', true);
+			matchMessage(challengeStatusMessage, 'Choose a JPG, PNG or WebP image smaller than 20 MB. The upload will be compressed to 5 MB or less.', true);
 			return;
 		}
 		const preview = document.createElement('img');
 		preview.alt = 'Selected match score screenshot preview';
 		preview.src = URL.createObjectURL(file);
-		const dimensions = makeMatchElement('span', 'match-evidence-dimensions', 'Loading image preview…');
-		preview.addEventListener('load', () => {
-			const orientation = preview.naturalWidth > preview.naturalHeight ? 'Landscape' : preview.naturalWidth < preview.naturalHeight ? 'Portrait' : 'Square';
-			dimensions.textContent = `${orientation} screenshot · ${preview.naturalWidth} × ${preview.naturalHeight} · ready to submit`;
-		});
-		evidencePreview.replaceChildren(preview, dimensions);
+		const status = makeMatchElement('span', 'match-evidence-dimensions', 'Preparing screenshot…');
+		const replace = makeMatchElement('button', 'challenge-secondary-button', 'Replace screenshot'); replace.type = 'button'; replace.addEventListener('click', () => { evidence.value = ''; form._compressedEvidence = null; evidence.click(); });
+		const remove = makeMatchElement('button', 'challenge-secondary-button', 'Remove screenshot'); remove.type = 'button'; remove.addEventListener('click', () => { evidence.value = ''; form._compressedEvidence = null; evidencePreview.hidden = true; evidencePreview.replaceChildren(); });
+		evidencePreview.replaceChildren(preview, status, replace, remove);
 		evidencePreview.hidden = false;
+		(async () => {
+			try {
+				const bitmap = await createImageBitmap(file);
+				const scale = Math.min(1, 2560 / Math.max(bitmap.width, bitmap.height));
+				const canvas = document.createElement('canvas'); canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
+				const context = canvas.getContext('2d'); context.drawImage(bitmap, 0, 0, canvas.width, canvas.height); bitmap.close();
+				let blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.86));
+				for (const quality of [0.76, 0.66, 0.56]) if (blob && blob.size > 5 * 1024 * 1024) blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+				if (!blob || blob.size > 5 * 1024 * 1024) throw new Error('This image is still larger than 5 MB after compression. Choose a smaller screenshot.');
+				form._compressedEvidence = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('Could not prepare the screenshot.')); reader.readAsDataURL(blob); });
+				status.textContent = `Screenshot ready · ${(blob.size / 1024 / 1024).toFixed(1)} MB after compression`;
+			} catch (error) { status.textContent = error.message; form._compressedEvidence = null; }
+		})();
 	});
-	const submit = makeMatchElement('button', 'challenge-secondary-button challenge-report-button', match.result ? 'Resubmit score & screenshot' : 'Submit score & screenshot');
-	submit.type = 'submit';
-	form.append(evidenceLabel, evidencePreview, submit);
+	const review = makeMatchElement('button', 'challenge-primary-button challenge-report-button', 'Review result');
+	review.type = 'button';
+	const validation = makeMatchElement('p', 'match-inline-validation'); validation.setAttribute('role', 'alert');
+	const reviewPanel = makeMatchElement('section', 'match-result-review'); reviewPanel.hidden = true;
+	review.addEventListener('click', () => {
+		validation.textContent = '';
+		if (!form.elements.yourScore.checkValidity() || !form.elements.opponentScore.checkValidity()) { validation.textContent = 'Enter both scores from 0 to 99.'; return; }
+		if (!evidence.files?.[0]) { validation.textContent = 'Add a screenshot to continue.'; return; }
+		if (!form._compressedEvidence) { validation.textContent = 'Your screenshot is still preparing or could not be compressed. Choose it again or use a smaller image.'; return; }
+		reviewPanel.replaceChildren(makeMatchElement('h4', '', 'Confirm your result'), makeMatchElement('p', '', scorelinePreview.textContent), makeMatchElement('img', 'match-review-image'), makeMatchElement('p', '', 'Both players must agree, or an admin reviews it.'));
+		reviewPanel.querySelector('img').src = form._compressedEvidence;
+		const edit = makeMatchElement('button', 'challenge-secondary-button', 'Edit score or screenshot'); edit.type = 'button'; edit.addEventListener('click', () => { reviewPanel.hidden = true; review.hidden = false; });
+		const submit = makeMatchElement('button', 'challenge-primary-button', 'Submit result'); submit.type = 'submit'; submit.dataset.finalSubmit = 'true';
+		reviewPanel.append(edit, submit); reviewPanel.hidden = false; review.hidden = true;
+	});
+	form.append(evidenceLabel, evidencePreview, validation, review, reviewPanel);
 	return form;
 };
 
 const makePlayerReportForm = (match) => {
-	const details = makeMatchElement('details', 'player-report-details');
-	details.append(makeMatchElement('summary', '', 'Report a problem with this player'));
-	const form = makeMatchElement('form', 'player-report-form');
-	form.dataset.matchId = match.id;
-	const reason = document.createElement('select');
-	reason.name = 'reason';
-	reason.required = true;
-	[
-		['', 'Choose a reason'],
-		['no-show', 'Repeated no-show'],
-		['inappropriate', 'Inappropriate conduct'],
-		['score-pressure', 'Pressure to submit a false score'],
-		['other', 'Other match conduct']
-	].forEach(([value, label]) => {
-		const option = document.createElement('option');
-		option.value = value;
-		option.textContent = label;
-		reason.append(option);
-	});
-	const reasonLabel = makeMatchElement('label', '', 'Reason');
-	reasonLabel.append(reason);
-	const detailsLabel = makeMatchElement('label', '', 'Details (optional)');
-	const notes = document.createElement('textarea');
-	notes.name = 'details';
-	notes.maxLength = 1000;
-	notes.placeholder = 'Share relevant facts about this match (up to 1,000 characters).';
-	detailsLabel.append(notes);
-	const submit = makeMatchElement('button', 'challenge-secondary-button', 'Send private report');
-	submit.type = 'submit';
-	form.append(reasonLabel, detailsLabel, submit);
-	details.append(form);
-	return details;
+	const button = makeMatchElement('button', 'challenge-secondary-button', match.result?.youReportedProblem ? 'Report sent' : 'Report a problem');
+	button.type = 'button'; button.dataset.openProblemReport = match.id;
+	button.disabled = Boolean(match.result?.youReportedProblem);
+	return button;
+};
+
+const openProblemReportSheet = (match) => {
+	let dialog = document.querySelector('#problem-report-sheet');
+	if (!dialog) { dialog = document.createElement('dialog'); dialog.id = 'problem-report-sheet'; dialog.className = 'problem-report-sheet'; document.body.append(dialog); }
+	const form = makeMatchElement('form', 'player-report-form'); form.dataset.matchId = match.id;
+	form.append(makeMatchElement('h2', '', 'Report a match problem'), makeMatchElement('p', 'post-kickoff-next-step', 'League administrators will review the details you send.'));
+	const reasons = [['no-show','Opponent no-show'],['other','Wrong score submitted'],['other','Disconnect'],['inappropriate','Cheating or abuse'],['other','Other']];
+	const chipGroup = makeMatchElement('div', 'report-reason-chips'); chipGroup.setAttribute('role','radiogroup'); chipGroup.setAttribute('aria-label','Problem reason');
+	reasons.forEach(([value,label], index) => { const chipLabel = makeMatchElement('label','report-reason-chip'); const radio = document.createElement('input'); radio.type='radio'; radio.name='reason'; radio.value=value; radio.required=true; radio.dataset.reasonLabel=label; radio.setAttribute('aria-label',label); if(index===0) radio.checked=true; chipLabel.append(radio,document.createTextNode(label)); chipGroup.append(chipLabel); });
+	const detailsLabel=makeMatchElement('label','','Details (optional)'); const details=document.createElement('textarea'); details.name='details'; details.maxLength=1000; details.placeholder='Add any helpful context.'; details.setAttribute('aria-label','Details about the match problem'); detailsLabel.append(details);
+	const evidenceLabel=makeMatchElement('label','match-evidence-field','Optional screenshot · JPG, PNG or WebP'); const evidence=document.createElement('input'); evidence.type='file'; evidence.accept='image/png,image/jpeg,image/webp'; evidence.setAttribute('aria-label','Optional report screenshot'); evidenceLabel.append(evidence);
+	const preview=makeMatchElement('img','report-evidence-preview'); preview.hidden=true; evidence.addEventListener('change',()=>{ const file=evidence.files?.[0]; if(!file)return; if(file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type)){evidence.value=''; preview.hidden=true; matchMessage(challengeStatusMessage,'Choose a JPG, PNG or WebP screenshot no larger than 5 MB.',true); return;} preview.src=URL.createObjectURL(file); preview.alt='Optional report screenshot preview'; preview.hidden=false; });
+	const note=makeMatchElement('p','report-attachment-note','The current report service accepts text only, so this optional screenshot stays on your device and will not be attached.'); note.setAttribute('role','note');
+	const send=makeMatchElement('button','challenge-primary-button','Send report'); send.type='submit';
+	const close=makeMatchElement('button','challenge-secondary-button','Cancel'); close.type='button'; close.addEventListener('click',()=>dialog.close());
+	form.append(chipGroup,detailsLabel,evidenceLabel,preview,note,makeMatchElement('p','match-inline-validation'),send,close);
+	dialog.replaceChildren(form); if(typeof dialog.showModal==='function')dialog.showModal(); else dialog.setAttribute('open','');
 };
 
 const makeStreamForm = (match) => {
@@ -2454,13 +2684,112 @@ const renderMatchCards = (matches) => {
 	matches.forEach((match) => {
 		const other = match.isChallenger ? match.opponent : match.challenger;
 		const card = makeMatchElement('article', 'challenge-match-card');
+		card.dataset.matchId = match.id;
+		const postKickoff = isPostKickoffMatch(match);
 		const heading = makeMatchElement('div', 'challenge-match-heading');
 		const title = makeMatchElement('div');
 		title.append(
 			makeMatchElement('strong', '', `${match.isChallenger ? 'You' : other.gamerTag} vs ${match.isChallenger ? other.gamerTag : 'you'}`),
 			makeMatchElement('span', 'challenge-match-type', match.ranked ? 'Ranked · XP' : 'Friendly')
 		);
-		heading.append(title, makeMatchElement('span', `challenge-match-status status-${match.status}`, challengeStatusText(match.status, match)));
+		heading.append(title, makeMatchElement('span', `challenge-match-status status-${match.status}`, postKickoff ? postKickoffStatus(match) : challengeStatusText(match.status, match)));
+		const kickoffLabel = makeMatchElement('p', 'challenge-match-time');
+		kickoffLabel.append(makeMatchElement('strong', 'match-timestamp-label', 'Kick-off · '), document.createTextNode(formatChallengeTime(match.scheduledAt) + ' · your local time'));
+		if (postKickoff) {
+			card.append(heading, kickoffLabel);
+			const appendTimestamp = (label, value) => {
+				if (!value || !Number.isFinite(Date.parse(value))) return;
+				const line = makeMatchElement('p', 'challenge-match-time');
+				const time = document.createElement('time');
+				time.dateTime = new Date(value).toISOString();
+				time.textContent = formatChallengeTime(value) + ' · your local time';
+				line.append(makeMatchElement('strong', 'match-timestamp-label', `${label} · `), time);
+				card.append(line);
+			};
+			appendTimestamp('Submitted', match.result?.submittedAt);
+			appendTimestamp('Approved', match.result?.approvedAt);
+			const actions = makeMatchElement('div', 'challenge-match-actions post-kickoff-actions');
+			const statePanel = makeMatchElement('div', 'post-kickoff-state-panel');
+			const addStateButton = (label, { primary = false, disabled = false, handler = null } = {}) => {
+				const button = makeMatchElement('button', primary ? 'challenge-primary-button' : 'challenge-secondary-button', label);
+				button.type = 'button';
+				button.disabled = disabled;
+				if (handler) button.addEventListener('click', handler);
+				actions.append(button);
+				return button;
+			};
+			const openScoreEditor = (message) => {
+				statePanel.replaceChildren(makeMatchElement('p', 'post-kickoff-next-step', message), makeScoreForm(match));
+			};
+			const submitDeadline = Date.parse(match.scheduledAt) + POST_KICKOFF_REPORT_WINDOW_MS;
+			if (match.status === 'approved') {
+				const ownScore = match.isChallenger ? match.result.challengerScore : match.result.opponentScore;
+				const otherScore = match.isChallenger ? match.result.opponentScore : match.result.challengerScore;
+				card.append(makeMatchElement('p', 'challenge-final-score', `Final score: ${ownScore} – ${otherScore}`));
+				const delta = match.isChallenger ? match.result.ratingChanges?.challenger : match.result.ratingChanges?.opponent;
+				if (match.ranked && Number.isFinite(delta)) card.append(makeMatchElement('p', 'challenge-rating-change', `XP change: ${delta > 0 ? '+' : ''}${delta}`));
+				else if (match.ranked && match.result.farmCapApplied) card.append(makeMatchElement('p', 'challenge-awaiting-note', 'Approved. No XP change was applied because the daily opponent limit was reached.'));
+				else if (!match.ranked) card.append(makeMatchElement('p', 'challenge-awaiting-note', 'Friendly result approved · no XP change.'));
+				const rematch = makeMatchElement('a', 'challenge-primary-button', 'Rematch');
+				rematch.href = 'matches.html#challenges';
+				actions.append(rematch);
+			} else if (['disputed', 'pending-owner'].includes(match.status)) {
+				statePanel.append(makeMatchElement('p', 'post-kickoff-next-step', match.status === 'disputed'
+					? 'Your reports differ. An administrator will review the screenshots and contact both players with the next step.'
+					: 'Both reports are in. An administrator is checking the screenshots before the result is added to player records.'));
+				addStateButton('Under admin review', { primary: true, disabled: true });
+			} else if (!match.canReport) {
+				statePanel.append(makeMatchElement('p', 'post-kickoff-next-step', 'Sign in to the player account linked to this match to report or review its result.'));
+				const signIn = makeMatchElement('a', 'challenge-primary-button', 'Sign in to manage match');
+				signIn.href = challengeSignInDestination;
+				actions.append(signIn);
+			} else if (match.status === 'awaiting-opponent' && match.result?.youReported) {
+				statePanel.append(makeMatchElement('p', 'post-kickoff-next-step', 'Your score and screenshot are saved. Your opponent still needs to submit their report.'));
+				addStateButton('Waiting for opponent', { primary: true, disabled: true });
+				addStateButton('Edit', { handler: () => openScoreEditor('Re-enter both scores and attach the screenshot to update your report.') });
+				const deadline = makeMatchElement('p', 'post-kickoff-deadline', formatResultDeadline(submitDeadline));
+				deadline.dataset.resultDeadline = String(submitDeadline);
+				statePanel.append(deadline);
+			} else if (match.status === 'awaiting-opponent') {
+				statePanel.append(makeMatchElement('p', 'post-kickoff-next-step', 'Your opponent has submitted a score. Enter the score you saw to confirm it, or submit the score you believe is correct to flag a difference.'));
+				addStateButton('Confirm result', { primary: true, handler: () => openScoreEditor('Enter the matching score and add your screenshot to confirm the result.') });
+				addStateButton('Dispute', { handler: () => openScoreEditor('Enter the score you believe is correct. A different report sends the result for administrator review.') });
+				const deadline = makeMatchElement('p', 'post-kickoff-deadline', formatResultDeadline(submitDeadline));
+				deadline.dataset.resultDeadline = String(submitDeadline);
+				statePanel.append(deadline);
+			} else if (match.status === 'rejected') {
+				statePanel.append(makeMatchElement('p', 'post-kickoff-next-step', match.result?.reviewNote || 'An administrator needs clarification. Submit the correct score and screenshot again.'));
+				addStateButton('Submit result', { primary: true, handler: () => openScoreEditor('Submit both scores and a fresh screenshot for another review.') });
+				const deadline = makeMatchElement('p', 'post-kickoff-deadline', formatResultDeadline(submitDeadline));
+				deadline.dataset.resultDeadline = String(submitDeadline);
+				statePanel.append(deadline);
+			} else {
+				const elapsed = Date.now() - Date.parse(match.scheduledAt);
+				if (elapsed >= MATCH_WALKOVER_GRACE_MS) {
+					statePanel.append(makeMatchElement('p', 'post-kickoff-next-step', 'If your opponent did not appear within 20 minutes of kick-off, you can claim a forfeit.'));
+					const walkover = addStateButton('Claim forfeit', { primary: true });
+					walkover.dataset.matchAction = 'walkover';
+					walkover.dataset.matchId = match.id;
+					addStateButton('Submit result instead', { handler: () => openScoreEditor('Both players should report the score that was played, with a screenshot.') });
+				} else {
+					statePanel.append(makeMatchElement('p', 'post-kickoff-next-step', 'Enter the final score and attach a screenshot from the match.'));
+					addStateButton('Submit result', { primary: true, handler: () => openScoreEditor('Enter both scores and attach the screenshot to submit your result.') });
+				}
+				const deadline = makeMatchElement('p', 'post-kickoff-deadline', formatResultDeadline(submitDeadline));
+				deadline.dataset.resultDeadline = String(submitDeadline);
+				statePanel.append(deadline);
+			}
+			if (match.status === 'approved' || match.status === 'disputed' || match.status === 'pending-owner' || !match.canReport) {
+				if (statePanel.childElementCount) card.append(statePanel);
+			} else if (statePanel.childElementCount) card.append(statePanel);
+			if (match.canReport && match.status !== 'approved') {
+				actions.append(match.playerReportSubmitted ? makeMatchElement('span', 'challenge-awaiting-note', 'Problem report sent') : makePlayerReportForm(match));
+			}
+			if (actions.childElementCount) card.append(actions);
+			list.append(card);
+			cards.push({ card, match, other });
+			return;
+		}
 		card.append(heading, makeMatchElement('p', 'challenge-match-time', `${formatChallengeTime(match.scheduledAt)} · your local time · reminder ${match.reminderMinutes >= 1440 ? '24 hours' : `${match.reminderMinutes} minutes`} before`));
 		if (match.status === 'pending' && !match.canReport && !match.isChallenger) {
 			card.append(makeMatchElement('p', 'challenge-awaiting-note', 'Sign in with the invited account to accept or decline this match.'));
@@ -2659,6 +2988,7 @@ const loadChallengeData = async () => {
 		accountMatches.matches.forEach((match) => matchesById.set(match.id, match));
 	}
 	const validMatches = [...matchesById.values()];
+	window._latestPrivateMatches = validMatches;
 	renderMatchCards(validMatches);
 	if (links && Object.keys(links).length && validMatches.length === 0) {
 		matchMessage(challengeStatusMessage, 'Saved private match links have expired or were revoked. Open the newest match email link to continue.', true);
@@ -2685,6 +3015,20 @@ if (challengeForm) {
 		earliestTime.setMinutes(Math.ceil(earliestTime.getMinutes() / 5) * 5, 0, 0);
 		dateInput.min = new Date(earliestTime.getTime() - earliestTime.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 	};
+	const openChallengeForPlayer = (playerId) => {
+		const player = directoryPlayers.find((item) => item.id === playerId);
+		if (!player) { matchMessage(challengeStatusMessage, 'This player profile is no longer available. Refresh the player directory and try again.', true); return; }
+		if (!currentUserAuthenticated) {
+			const destination = `matches.html?challengePlayer=${encodeURIComponent(player.id)}#challenges`;
+			window.location.href = `login.html?next=${encodeURIComponent(destination)}`;
+			return;
+		}
+		opponentInput.value = player.id;
+		document.querySelector('#challenge-dialog-title').textContent = `Challenge ${player.gamerTag}`;
+		document.querySelector('#challenge-dialog-player-summary').textContent = `${player.rating.toLocaleString()} XP · ${player.rankedMatches} approved ranked matches · private invitation sent to the profile email`;
+		updateEarliestKickoff();
+		challengeDialog.showModal();
+	};
 	document.querySelectorAll('#player-search, #player-rating-filter, #player-experience-filter, #player-sort').forEach((control) => {
 		control.addEventListener('input', renderPlayerDirectory);
 		control.addEventListener('change', renderPlayerDirectory);
@@ -2700,17 +3044,7 @@ if (challengeForm) {
 	document.querySelector('#player-directory').addEventListener('click', (event) => {
 		const button = event.target.closest('[data-challenge-player]');
 		if (!button) return;
-		const player = directoryPlayers.find((item) => item.id === button.dataset.challengePlayer);
-		if (!player) return;
-		if (!currentUserAuthenticated) {
-			window.location.href = challengeSignInDestination;
-			return;
-		}
-		opponentInput.value = player.id;
-		document.querySelector('#challenge-dialog-title').textContent = `Challenge ${player.gamerTag}`;
-		document.querySelector('#challenge-dialog-player-summary').textContent = `${player.rating.toLocaleString()} XP · ${player.rankedMatches} approved ranked matches · private invitation sent to the profile email`;
-		updateEarliestKickoff();
-		challengeDialog.showModal();
+		openChallengeForPlayer(button.dataset.challengePlayer);
 	});
 	document.querySelectorAll('[data-close-challenge]').forEach((button) => {
 		button.addEventListener('click', () => challengeDialog.close());
@@ -2779,20 +3113,39 @@ if (pendingVerificationToken && challengeForm) {
 		})
 		.catch((error) => matchMessage(challengeStatusMessage, error.message, true));
 }
-if (challengeForm) loadChallengeData().catch((error) => {
+if (challengeForm) {
+	const matchList = document.querySelector('#my-matches-list');
+	if (matchList?.querySelector('.challenge-list-empty')) matchList.innerHTML = '<div class="match-loading-skeleton" aria-label="Loading matches"><i></i><i></i><i></i></div>';
+	loadChallengeData().then(() => {
+		const challengePlayer = new URLSearchParams(window.location.search).get('challengePlayer');
+		if (challengePlayer) openChallengeForPlayer(challengePlayer);
+	}).catch((error) => {
 	document.querySelector('#challenge-player-count').textContent = 'Player records unavailable';
 	document.querySelector('#player-directory').replaceChildren(
 		makeMatchElement('div', 'player-directory-empty', error.message.includes('website server')
 			? error.message
 			: 'Could not load player records from the website server. Check that it is running, then refresh this page.')
 	);
+	if (matchList) {
+		const retry = makeMatchElement('button', 'challenge-secondary-button match-retry-button', 'Retry loading matches'); retry.type = 'button'; retry.id = 'match-load-retry';
+		matchList.replaceChildren(makeMatchElement('p', 'challenge-list-empty', 'Matches could not load. Check your connection and try again.'), retry);
+		retry.addEventListener('click', async () => { retry.disabled = true; retry.textContent = 'Retrying…'; try { await loadChallengeData(); } catch (retryError) { matchMessage(challengeStatusMessage, `${retryError.message} Please retry.`, true); retry.disabled = false; retry.textContent = 'Retry loading matches'; } });
+	}
 	matchMessage(challengeStatusMessage, error.message, true);
-});
+}); }
 if (document.querySelector('#public-stream-list')) loadPublicStreams();
 
 document.querySelector('#live-streams-retry')?.addEventListener('click', loadPublicStreams);
 
 document.querySelector('#my-matches-list')?.addEventListener('click', async (event) => {
+	const reportButton = event.target.closest('[data-open-problem-report]');
+	if (reportButton) {
+		const card = reportButton.closest('[data-match-id]');
+		const matchId = reportButton.dataset.openProblemReport;
+		const match = (window._latestPrivateMatches || []).find((item) => item.id === matchId);
+		if (match) openProblemReportSheet(match);
+		return;
+	}
 	const chatToggle = event.target.closest('[data-toggle-match-chat]');
 	if (chatToggle) {
 		const matchId = chatToggle.dataset.toggleMatchChat;
@@ -2887,48 +3240,50 @@ document.querySelector('#my-matches-list')?.addEventListener('submit', async (ev
 	if (!form) return;
 	event.preventDefault();
 	const button = form.querySelector('button[type="submit"]');
-	const file = form.elements.evidence.files[0];
-	if (!file || file.size > 5 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
-		matchMessage(challengeStatusMessage, 'Choose a PNG, JPEG, or WebP screenshot smaller than 5 MB.', true);
+	const evidence = form._compressedEvidence;
+	if (!evidence) {
+		const validation = form.querySelector('.match-inline-validation');
+		if (validation) validation.textContent = 'Add a screenshot to continue.';
 		return;
 	}
 	button.disabled = true;
+	button.textContent = 'Sending 0%';
 	try {
-		const evidence = await new Promise((resolve, reject) => {
-			const reader = new FileReader();
-			reader.onload = () => resolve(reader.result);
-			reader.onerror = () => reject(new Error('Could not read the screenshot file.'));
-			reader.readAsDataURL(file);
-		});
-		const response = await matchApi(`/api/matches/${encodeURIComponent(form.dataset.matchId)}/result`, { method: 'POST', body: JSON.stringify({
+		const response = await uploadMatchResult(form.dataset.matchId, {
 			yourScore: Number(form.elements.yourScore.value),
 			opponentScore: Number(form.elements.opponentScore.value),
 			evidence
-		}) });
-		matchMessage(challengeStatusMessage, response.message);
-		await loadChallengeData();
+		}, (percent) => { button.textContent = `Sending ${percent}%`; });
+		matchMessage(challengeStatusMessage, `${response.message || 'Result submitted.'} Status: awaiting opponent confirmation or admin review.`);
+		button.textContent = 'Result submitted';
+		try { await loadChallengeData(); } catch (refreshError) { matchMessage(challengeStatusMessage, `Result submitted successfully. The match card could not refresh yet; retry shortly. ${refreshError.message}`, true); }
 	} catch (error) {
-		matchMessage(challengeStatusMessage, error.message, true);
+		matchMessage(challengeStatusMessage, `${error.message} You can retry without losing your score or screenshot.`, true);
 		button.disabled = false;
+		button.textContent = 'Submit result';
 	}
 });
 
-document.querySelector('#my-matches-list')?.addEventListener('submit', async (event) => {
+document.addEventListener('submit', async (event) => {
 	const form = event.target.closest('.player-report-form');
 	if (!form) return;
 	event.preventDefault();
 	const button = form.querySelector('button[type="submit"]');
 	button.disabled = true;
 	try {
+		const selectedReason = form.querySelector('input[name="reason"]:checked');
+		if (!selectedReason) { form.querySelector('.match-inline-validation').textContent = 'Choose a reason to continue.'; button.disabled = false; return; }
+		const details = form.elements.details.value.trim();
 		const result = await matchApi(`/api/matches/${encodeURIComponent(form.dataset.matchId)}/report-player`, {
 			method: 'POST',
 			body: JSON.stringify({
-				reason: form.elements.reason.value,
-				details: form.elements.details.value.trim()
+				reason: selectedReason.value,
+				details: `${selectedReason.dataset.reasonLabel}${details ? `: ${details}` : ''}`
 			})
 		});
-		matchMessage(challengeStatusMessage, result.message || 'Your report was sent privately to league administrators.');
-		form.closest('details').replaceWith(makeMatchElement('p', 'challenge-awaiting-note', 'Your private report has been sent to league administrators.'));
+		matchMessage(challengeStatusMessage, result.message || 'Report sent to league administrators. The match result status remains unchanged until both score reports are reviewed.');
+		const dialog = form.closest('dialog'); if (dialog?.open) dialog.close();
+		await loadChallengeData();
 	} catch (error) {
 		matchMessage(challengeStatusMessage, error.message, true);
 		button.disabled = false;
@@ -3067,9 +3422,14 @@ if (homeDashboardStatus) {
 					result.topPlayers.forEach((player) => {
 						const row = makeNode('tr');
 						row.className = 'home-ranking-row-enter';
+						if (player.awards?.length) row.classList.add('has-player-prizes', `award-row-${['shine', 'pulse', 'sparkle'].includes(player.awards[0].effect) ? player.awards[0].effect : 'shine'}`);
 						row.style.setProperty('--rank-stagger', `${Math.min(Number(player.rank || 1) - 1, 7) * 75}ms`);
 						[player.rank, player.gamerTag, Number(player.rating || 0).toLocaleString(), `${player.wins || 0}–${player.draws || 0}–${player.losses || 0}`]
-							.forEach((value) => row.append(makeNode('td', '', value)));
+							.forEach((value, index) => {
+								const cell = makeNode('td', '', value);
+								if (index === 1) appendPlayerPrizes(cell, player.awards, { limit: 2 });
+								row.append(cell);
+							});
 						playerTable.append(row);
 					});
 				}
@@ -3321,14 +3681,15 @@ if (cupPage) {
 				header.append(node('h4', '', round.name || round.title || 'Knockout round'));
 				header.append(node('span', '', `${round.matches.length} match${round.matches.length === 1 ? '' : 'es'}`));
 				const list = node('div', 'bracket-matches-list');
-				round.matches.forEach((match) => {
-					const card = node('article', `bracket-match-card${round.name === 'Grand Final' ? ' is-final' : ''}`);
+					round.matches.forEach((match) => {
+						const card = node('article', `bracket-match-card${round.name === 'Grand Final' ? ' is-final' : ''}${match.isBye ? ' is-bye' : ''}`);
 					['p1', 'p2'].forEach((side) => {
 						const playerName = typeof match[side] === 'string' ? match[side] : match[side]?.gamerTag || match[side]?.name || 'TBD';
 						const player = node('div', `bracket-team-btn${match.winner && match.winner === playerName ? ' is-winner' : ''}`, playerName || 'TBD');
 						player.setAttribute('aria-label', `${side === 'p1' ? 'First' : 'Second'} player: ${playerName || 'To be determined'}`);
 						card.append(player);
 					});
+					if (match.isBye) card.append(node('small', 'bracket-bye-public-note', 'Automatic bye · advances to next round'));
 					list.append(card);
 				});
 				column.append(header, list);
@@ -3426,7 +3787,7 @@ if (cupPage) {
 }
 
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js?v=47').catch(() => {
+    navigator.serviceWorker.register('./sw.js?v=48').catch(() => {
 		// The interface remains usable when service workers are unavailable.
 	});
 }

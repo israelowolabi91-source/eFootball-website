@@ -8,10 +8,10 @@
     <meta name="description" content="Your personal eFootball League dashboard — stats, match history, XP rating, rank, and account settings.">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="style.css?v=48">
+    <link rel="stylesheet" href="style.css?v=50">
     <link rel="stylesheet" href="member-experience.css?v=2">
     <script src="site-config.js"></script>
-    <script src="script.js?v=46" defer></script>
+    <script src="script.js?v=49" defer></script>
     <style>
         /* ─── Profile page layout ─── */
         .profile-shell {
@@ -505,6 +505,18 @@
                 const profileProgress = profileSteps.filter(Boolean).length;
                 const tier = tierInfo(rating);
                 const eloPercent = Math.min(100, Math.max(5, Math.round(((rating - 500) / 2000) * 100)));
+                const profileAwardIcons = { badge: '✦', cup: '🏆', medal: '🏅' };
+                const profileAwards = Array.isArray(me.awards) ? me.awards.filter((award) => award?.title).slice(0, 20) : [];
+                const awardsMarkup = profileAwards.length ? `<div class="profile-prize-gallery" aria-label="Player prizes">${profileAwards.map((award) => {
+                    const type = ['badge', 'cup', 'medal'].includes(award.type) ? award.type : 'medal';
+                    const theme = ['gold', 'ice', 'violet', 'crimson', 'emerald'].includes(award.theme) ? award.theme : 'gold';
+                    const effect = ['shine', 'pulse', 'sparkle'].includes(award.effect) ? award.effect : 'shine';
+                    return `<span class="player-prize-pill prize-${type} prize-theme-${theme} prize-effect-${effect}" title="${escapeHtml(award.title)}"><span aria-hidden="true">${profileAwardIcons[type]}</span>${escapeHtml(award.title)}</span>`;
+                }).join('')}</div>` : '';
+                const challengeReturnPath = `matches.html?challengePlayer=${encodeURIComponent(me.id)}#challenges`;
+                const challengeLoginUrl = new URL('login.html', window.location.href);
+                challengeLoginUrl.searchParams.set('next', challengeReturnPath);
+                const whatsappChallengeUrl = `https://wa.me/?text=${encodeURIComponent(`Challenge me on Tim eFootball League! Create an account or sign in, then send me a match invite: ${challengeLoginUrl.href}`)}`;
 
                 // Match history HTML
                 const matches = matchData.matches || [];
@@ -547,10 +559,12 @@
                 shell.innerHTML = `
                     <aside class="profile-sidebar">
                         <div class="profile-card-main">
-                            <div class="profile-avatar-lg${avatarUrl ? ' has-photo' : ''}" id="profile-avatar-lg">${avatarUrl ? `<img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(gamerTag)} profile photo">` : gamerTag.charAt(0).toUpperCase()}</div>
+                            <div class="profile-avatar-lg${avatarUrl ? ' has-photo' : ''}${profileAwards.length ? ` profile-honored prize-effect-${['shine', 'pulse', 'sparkle'].includes(profileAwards[0].effect) ? profileAwards[0].effect : 'shine'}` : ''}" id="profile-avatar-lg">${avatarUrl ? `<img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(gamerTag)} profile photo">` : gamerTag.charAt(0).toUpperCase()}</div>
                             <h2 class="profile-display-name" id="profile-display-name">${escapeHtml(name)}</h2>
                             <p class="profile-gamertag-lg">@${escapeHtml(gamerTag)}</p>
                             <span class="profile-tier-chip ${tier.cls}">${tier.icon} ${tier.name}</span>
+                            ${awardsMarkup}
+                            <a class="profile-whatsapp-invite" href="${escapeHtml(whatsappChallengeUrl)}" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">◉</span> Invite someone to challenge you</a>
                             <div class="profile-elo-display">
                                 <small>XP RATING</small>
                                 <strong id="profile-elo">${rating.toLocaleString()}</strong>
