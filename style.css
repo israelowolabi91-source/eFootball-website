@@ -6083,6 +6083,10 @@ body {
 }
 #home-player-rankings tr:hover td { background: rgba(243, 190, 74, .07); }
 #home-player-rankings tr td:first-child { color: var(--gold); font-weight: 900; }
+.home-ranking-identity { display:flex; min-width:0; align-items:center; gap:10px; }
+.home-ranking-avatar { display:grid; flex:0 0 38px; width:38px; height:38px; overflow:hidden; place-items:center; border:1px solid rgba(244,183,47,.28); border-radius:50%; background:linear-gradient(145deg,rgba(244,183,47,.2),rgba(106,172,255,.14)); color:#f7df9e; font-size:.8rem; font-weight:900; }
+.home-ranking-avatar img { display:block; width:100%; height:100%; object-fit:cover; object-position:center; border-radius:inherit; }
+.home-ranking-player-name { min-width:0; overflow-wrap:anywhere; color:#f4f7fb; font-weight:800; }
 @keyframes home-rank-reveal {
 	from { opacity: 0; transform: translateY(12px); }
 	60% { opacity: 1; }
@@ -9384,10 +9388,9 @@ body {
 .share-result-button:disabled { cursor:wait; opacity:.7; }
 .share-result-status { color:#9eb2ca; font-size:.68rem; }
 @media(prefers-reduced-motion:reduce) { .player-prize-pill,.player-directory-card.has-player-prizes,.profile-avatar-lg.profile-honored { animation:none !important; } .player-prize-pill::after { animation:none !important; } }
-.player-whatsapp-invite,.profile-whatsapp-invite,.tourn-whatsapp-share { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:44px; padding:0 13px; border:1px solid rgba(65,199,126,.32); border-radius:10px; background:linear-gradient(135deg,rgba(37,190,105,.16),rgba(15,108,67,.08)); color:#a6f0c6; font-size:.7rem; font-weight:850; text-decoration:none; transition:transform .16s ease,border-color .16s ease,background .16s ease; }
-.player-whatsapp-invite:hover,.profile-whatsapp-invite:hover,.tourn-whatsapp-share:hover { transform:translateY(-1px); border-color:rgba(65,199,126,.62); background:rgba(37,190,105,.18); color:#d4ffe3; }
-.player-whatsapp-invite { width:100%; margin-top:7px; }
-.player-whatsapp-invite > span,.profile-whatsapp-invite > span,.tourn-whatsapp-share > span { display:grid; place-items:center; width:20px; height:20px; border-radius:50%; background:rgba(37,190,105,.2); font-size:.8rem; }
+.profile-whatsapp-invite,.tourn-whatsapp-share { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:44px; padding:0 13px; border:1px solid rgba(65,199,126,.32); border-radius:10px; background:linear-gradient(135deg,rgba(37,190,105,.16),rgba(15,108,67,.08)); color:#a6f0c6; font-size:.7rem; font-weight:850; text-decoration:none; transition:transform .16s ease,border-color .16s ease,background .16s ease; }
+.profile-whatsapp-invite:hover,.tourn-whatsapp-share:hover { transform:translateY(-1px); border-color:rgba(65,199,126,.62); background:rgba(37,190,105,.18); color:#d4ffe3; }
+.profile-whatsapp-invite > span,.tourn-whatsapp-share > span { display:grid; place-items:center; width:20px; height:20px; border-radius:50%; background:rgba(37,190,105,.2); font-size:.8rem; }
 .profile-whatsapp-invite { margin-top:12px; }
 .tourn-whatsapp-share { flex:1 1 100%; min-height:42px; }
 .season-history-section { margin:32px 0; padding:clamp(18px,3vw,30px); border:1px solid rgba(244,183,47,.18); border-radius:22px; background:radial-gradient(ellipse at 0 0,rgba(244,183,47,.075),transparent 35%),linear-gradient(145deg,rgba(12,31,54,.87),rgba(7,20,37,.92)); }

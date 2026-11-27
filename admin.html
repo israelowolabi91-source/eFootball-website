@@ -7,7 +7,7 @@
     <meta name="description" content="Master administrative management console for Tim eFootball League. Live control over player accounts, matches, XP ratings, tournaments, and broadcast announcements.">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="style.css?v=50">
-    <link rel="stylesheet" href="admin.css?v=5">
+    <link rel="stylesheet" href="admin.css?v=8">
 </head>
 <body class="admin-page">
     <!-- Top Announcement Bar (Preview / Live) -->
@@ -51,7 +51,10 @@
                 <p>Sign in with the dedicated admin console password to manage the live website.</p>
             </div>
 
-            <div class="admin-auth-tabs" hidden></div>
+            <div class="admin-auth-tabs" role="group" aria-label="Choose an administrator sign-in method">
+                <button type="button" class="admin-auth-tab is-active" aria-pressed="true" data-auth-mode="password">Console password</button>
+                <button type="button" class="admin-auth-tab" aria-pressed="false" data-auth-mode="key">Master key</button>
+            </div>
 
             <form id="admin-key-form" class="admin-auth-form" hidden>
                 <label for="admin-master-key">Master Secret Password or Key
@@ -320,11 +323,11 @@
 
                 <div class="admin-toolbar">
                     <div class="admin-filter-tabs" id="match-status-tabs">
-                        <button type="button" class="filter-tab is-active" data-status="all">All Matches</button>
-                        <button type="button" class="filter-tab" data-status="pending-owner">Pending Review</button>
-                        <button type="button" class="filter-tab" data-status="disputed">Disputed</button>
-                        <button type="button" class="filter-tab" data-status="accepted">Upcoming / Active</button>
-                        <button type="button" class="filter-tab" data-status="approved">Approved &amp; Sched</button>
+                        <button type="button" class="filter-tab is-active" aria-pressed="true" data-status="all">All Matches</button>
+                        <button type="button" class="filter-tab" aria-pressed="false" data-status="pending-owner">Pending Review</button>
+                        <button type="button" class="filter-tab" aria-pressed="false" data-status="disputed">Disputed</button>
+                        <button type="button" class="filter-tab" aria-pressed="false" data-status="accepted">Upcoming / Active</button>
+                        <button type="button" class="filter-tab" aria-pressed="false" data-status="approved">Approved</button>
                     </div>
                 </div>
 
@@ -1066,6 +1069,6 @@
     <!-- Toast Notification Overlay -->
     <div class="admin-toast-container" id="admin-toast-container" aria-live="polite"></div>
 
-    <script src="admin.js?v=48" defer></script>
+    <script src="admin.js?v=52" defer></script>
 </body>
 </html>

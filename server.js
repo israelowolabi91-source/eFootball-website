@@ -2502,6 +2502,11 @@ app.post('/api/admin/login', adminLoginRateLimit, async (req, res) => {
       adminUser.verified = true;
       adminUser.role = 'admin';
       setSessionCookie(req, res, adminUser);
+      const adminToken = createToken();
+      const adminTtl = 8 * 60 * 60 * 1000;
+      adminConsoleSessions.set(hashToken(adminToken), Date.now() + adminTtl);
+      const secure = process.env.NODE_ENV === 'production' || req.secure;
+      res.append('Set-Cookie', `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(adminToken)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(adminTtl / 1000)}${secure ? '; Secure' : ''}`);
       writeUsers(users);
       return res.json({ ok: true, admin: true, user: publicProfile(adminUser) });
     }
@@ -3143,8 +3148,8 @@ app.put('/api/admin/tournaments/:id', requireAdmin, (req, res) => {
   const t = tournaments[idx];
   if (published !== undefined && typeof published !== 'boolean') return res.status(400).json({ message: 'Tournament visibility must be set to published or draft.' });
   const isFeaturedCup = featuredCup === undefined ? Boolean(t.featuredCup) : featuredCup === true;
-  const cleanMinXP = minXP === undefined ? t.minXP ?? null : minXP === null || minXP === '' ? null : Number(minXP);
-  const cleanMaxXP = maxXP === undefined ? t.maxXP ?? null : maxXP === null || maxXP === '' ? null : Number(maxXP);
+  const cleanMinXP = minXP === undefined ? t.minXP ?? t.minElo ?? null : minXP === null || minXP === '' ? null : Number(minXP);
+  const cleanMaxXP = maxXP === undefined ? t.maxXP ?? t.maxElo ?? null : maxXP === null || maxXP === '' ? null : Number(maxXP);
   if ((cleanMinXP !== null && (!Number.isSafeInteger(cleanMinXP) || cleanMinXP < 0 || cleanMinXP > 3000)) ||
       (cleanMaxXP !== null && (!Number.isSafeInteger(cleanMaxXP) || cleanMaxXP < 0 || cleanMaxXP > 3000)) ||
       (cleanMinXP !== null && cleanMaxXP !== null && cleanMinXP > cleanMaxXP)) {
@@ -3175,8 +3180,8 @@ app.put('/api/admin/tournaments/:id', requireAdmin, (req, res) => {
   if (prizePool !== undefined) t.prizePool = String(prizePool).trim().slice(0, 100);
   if (prizeDetails !== undefined) t.prizeDetails = String(prizeDetails).trim().slice(0, 1000);
   if (rules !== undefined) t.rules = String(rules).trim().slice(0, 3000);
-  t.minElo = cleanMinElo;
-  t.maxElo = cleanMaxElo;
+  t.minXP = cleanMinXP;
+  t.maxXP = cleanMaxXP;
   if (entryLink !== undefined) t.entryLink = String(entryLink).trim().slice(0, 200);
   if (t.status !== 'Registration Open' || !t.registrationOpen) {
     t.status = t.status === 'Registration Open' ? 'Coming Soon' : t.status;
@@ -3197,6 +3202,17 @@ app.delete('/api/admin/tournaments/:id', requireAdmin, (req, res) => {
   setSiteContent('tournaments', tournaments);
   recordAdminActivity(req, 'deleted', 'tournament', removed.id, `Deleted ${removed.title}`);
   res.json({ ok: true, message: `Tournament "${removed.title}" deleted.` });
+});
+
+// Admin: Get registration totals for all tournament cards.
+app.get('/api/admin/tournaments/interests', requireAdmin, (req, res) => {
+  const tournaments = getSiteContent('tournaments', []);
+  const users = Object.values(readUsers());
+  const interestCounts = Object.fromEntries(tournaments.map((tournament) => [
+    tournament.id,
+    users.filter((user) => user.verified && user.tournamentInterests?.[tournament.id]).length
+  ]));
+  res.json({ ok: true, interestCounts });
 });
 
 // User: Register or toggle interest in a tournament
@@ -3222,11 +3238,13 @@ app.post('/api/tournaments/:id/register-interest', (req, res) => {
     return res.status(409).json({ message: 'Registration for this tournament is closed.' });
   }
   const rating = Number(user.rating) || 1000;
-  if (Number.isFinite(tourn.minXP) && rating < tourn.minXP) {
-    return res.status(403).json({ message: `This tournament requires at least ${tourn.minElo} XP.` });
+  const minimumXP = tourn.minXP ?? tourn.minElo;
+  const maximumXP = tourn.maxXP ?? tourn.maxElo;
+  if (Number.isFinite(minimumXP) && rating < minimumXP) {
+    return res.status(403).json({ message: `This tournament requires at least ${minimumXP} XP.` });
   }
-  if (Number.isFinite(tourn.maxXP) && rating > tourn.maxXP) {
-    return res.status(403).json({ message: `This tournament is limited to ${tourn.maxElo} XP.` });
+  if (Number.isFinite(maximumXP) && rating > maximumXP) {
+    return res.status(403).json({ message: `This tournament is limited to ${maximumXP} XP.` });
   }
   const slotLimit = Number.parseInt(String(tourn.slots || ''), 10);
   const registeredCount = Object.values(users).filter((candidate) => candidate.verified && candidate.tournamentInterests?.[tournId]).length;

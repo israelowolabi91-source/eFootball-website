@@ -30,7 +30,7 @@ const appendPlayerPrizes = (parent, awards, { compact = true, limit = 3 } = {}) 
 document.addEventListener('error', (event) => {
 	const image = event.target;
 	if (!(image instanceof HTMLImageElement)) return;
-	const frame = image.closest('.rank-avatar, .player-directory-avatar, .matches-team-badge, .tournament-participant-avatar, .profile-avatar-lg, .profile-photo-preview, .profile-history-avatar');
+	const frame = image.closest('.rank-avatar, .player-directory-avatar, .home-ranking-avatar, .matches-team-badge, .tournament-participant-avatar, .profile-avatar-lg, .profile-photo-preview, .profile-history-avatar');
 	if (!frame || frame.dataset.avatarFallbackApplied === 'true') return;
 	frame.dataset.avatarFallbackApplied = 'true';
 	const label = (image.dataset.fallback || image.alt || '').replace(/profile photo|current profile photo/ig, '').trim();
@@ -2469,13 +2469,7 @@ const renderPlayerDirectory = () => {
 		challengeButton.disabled = directoryPlayers.length === 0;
 		if (challengeButton.disabled) challengeButton.title = 'There are no other verified player profiles to challenge yet.';
 		challengeButton.append(makeMatchElement('span', 'player-challenge-arrow', '→'));
-		const challengePath = `matches.html?challengePlayer=${encodeURIComponent(player.id)}#challenges`;
-		const challengeJoinUrl = new URL('login.html', window.location.href);
-		challengeJoinUrl.searchParams.set('next', challengePath);
-		const waShare = makeMatchElement('a', 'player-whatsapp-invite', 'Challenge me · WhatsApp');
-		waShare.href = `https://wa.me/?text=${encodeURIComponent(`Join Tim eFootball League and challenge ${player.gamerTag}. Create a free account or sign in to send the match invite: ${challengeJoinUrl.href}`)}`;
-		waShare.target = '_blank'; waShare.rel = 'noopener noreferrer';
-		card.append(cardTop, name, ratingLine, stats, experienceNote, challengeButton, waShare);
+		card.append(cardTop, name, ratingLine, stats, experienceNote, challengeButton);
 		directory.append(card);
 	});
 };
@@ -3426,8 +3420,23 @@ if (homeDashboardStatus) {
 						row.style.setProperty('--rank-stagger', `${Math.min(Number(player.rank || 1) - 1, 7) * 75}ms`);
 						[player.rank, player.gamerTag, Number(player.rating || 0).toLocaleString(), `${player.wins || 0}–${player.draws || 0}–${player.losses || 0}`]
 							.forEach((value, index) => {
-								const cell = makeNode('td', '', value);
-								if (index === 1) appendPlayerPrizes(cell, player.awards, { limit: 2 });
+								const cell = makeNode('td');
+								if (index === 1) {
+									const playerIdentity = makeNode('span', 'home-ranking-identity');
+									const avatar = makeNode('span', 'home-ranking-avatar', String(player.gamerTag || '?').slice(0, 1).toLocaleUpperCase());
+									avatar.setAttribute('aria-hidden', 'true');
+									if (player.avatarUrl) {
+										const image = document.createElement('img');
+										image.src = player.avatarUrl;
+										image.alt = '';
+										image.loading = 'lazy';
+										image.dataset.fallback = String(player.gamerTag || '?').slice(0, 1).toLocaleUpperCase();
+										avatar.replaceChildren(image);
+									}
+									playerIdentity.append(avatar, makeNode('span', 'home-ranking-player-name', value));
+									appendPlayerPrizes(playerIdentity, player.awards, { limit: 2 });
+									cell.append(playerIdentity);
+								} else cell.textContent = value;
 								row.append(cell);
 							});
 						playerTable.append(row);

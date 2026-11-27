@@ -10,6 +10,7 @@
     let cachedMatches = [];
     let cachedContent = {};
     let editingAwards = [];
+    const requestedInitialTab = window.location.hash.slice(1);
 
     const toastContainer = document.getElementById('admin-toast-container');
     const authDialog = document.getElementById('admin-auth-dialog');
@@ -84,6 +85,7 @@
                 document.getElementById('admin-avatar').textContent = (adminUser.gamerTag || 'A').charAt(0).toUpperCase();
                 hideAuthDialog();
                 loadInitialData();
+                activateRequestedTab();
             } else {
                 showAuthDialog();
             }
@@ -114,6 +116,7 @@
             hideAuthDialog();
             showToast('Authenticated as Administrator!');
             loadInitialData();
+            activateRequestedTab();
         } catch (err) {
             authMessage.textContent = err.message.includes('fetch') ? 'Cannot connect to server. Ensure the server is running on port 3000.' : err.message;
             authMessage.className = 'admin-auth-message error';
@@ -142,6 +145,7 @@
             hideAuthDialog();
             showToast('Signed in successfully.');
             loadInitialData();
+            activateRequestedTab();
         } catch (err) {
             authMessage.textContent = err.message.includes('fetch') ? 'Cannot connect to server. Ensure the server is running on port 3000.' : err.message;
             authMessage.className = 'admin-auth-message error';
@@ -167,8 +171,12 @@
     // Auth tabs toggle
     document.querySelectorAll('.admin-auth-tab').forEach((tab) => {
         tab.addEventListener('click', () => {
-            document.querySelectorAll('.admin-auth-tab').forEach(t => t.classList.remove('is-active'));
+            document.querySelectorAll('.admin-auth-tab').forEach((item) => {
+                item.classList.remove('is-active');
+                item.setAttribute('aria-pressed', 'false');
+            });
             tab.classList.add('is-active');
+            tab.setAttribute('aria-pressed', 'true');
             const mode = tab.dataset.authMode;
             document.getElementById('admin-key-form').hidden = mode !== 'key';
             document.getElementById('admin-password-form').hidden = mode !== 'password';
@@ -364,9 +372,6 @@
             tab.click();
         }
     });
-
-    const initialTab = window.location.hash.slice(1);
-    if (initialTab && document.querySelector(`.admin-tab[data-tab="${CSS.escape(initialTab)}"]`)) openAdminTab(initialTab);
 
     // Shortcuts from overview cards
     document.getElementById('btn-goto-broadcast')?.addEventListener('click', () => {
@@ -581,6 +586,9 @@
     // Form: Edit User Submit
     document.getElementById('form-edit-user')?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submitButton = e.submitter || e.currentTarget.querySelector('[type="submit"]');
+        if (submitButton?.disabled) return;
+        if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Saving…'; }
         const originalUserId = document.getElementById('edit-user-original-id').value;
         const feedback = document.getElementById('edit-user-feedback');
         feedback.textContent = 'Saving changes live…';
@@ -612,6 +620,8 @@
         } catch (err) {
             feedback.textContent = err.message;
             feedback.className = 'modal-feedback error';
+        } finally {
+            if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Save Changes Live'; }
         }
     });
 
@@ -629,6 +639,9 @@
 
     document.getElementById('form-create-user')?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submitButton = e.submitter || e.currentTarget.querySelector('[type="submit"]');
+        if (submitButton?.disabled) return;
+        if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Creating…'; }
         const feedback = document.getElementById('create-user-feedback');
         feedback.textContent = 'Creating account…';
         feedback.className = 'modal-feedback';
@@ -655,6 +668,8 @@
         } catch (err) {
             feedback.textContent = err.message;
             feedback.className = 'modal-feedback error';
+        } finally {
+            if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Create Account Live'; }
         }
     });
 
@@ -668,6 +683,7 @@
     // Load Matches
     let currentMatchStatusFilter = 'all';
     let currentEvidenceFilter = 'pending';
+    let matchesLoadSequence = 0;
     const evidenceQuery = () => document.getElementById('evidence-search')?.value.trim().toLocaleLowerCase() || '';
     const renderEvidenceLibrary = (matches) => {
         const grid = document.getElementById('admin-evidence-grid');
@@ -706,13 +722,16 @@
 
     const loadMatches = async () => {
         const tbody = document.getElementById('matches-tbody');
+        const requestSequence = ++matchesLoadSequence;
         tbody.innerHTML = '<tr><td colspan="6" class="table-loading">Loading matches from database…</td></tr>';
         try {
             const data = await adminFetch('/api/admin/all-matches');
+            if (requestSequence !== matchesLoadSequence) return;
             cachedMatches = data.matches || [];
             renderMatchesTable();
             renderEvidenceLibrary(cachedMatches);
         } catch (err) {
+            if (requestSequence !== matchesLoadSequence) return;
             tbody.innerHTML = `<tr><td colspan="6" class="table-error">Error loading matches: ${err.message}</td></tr>`;
             const evidenceGrid = document.getElementById('admin-evidence-grid');
             if (evidenceGrid) evidenceGrid.innerHTML = `<div class="admin-evidence-empty"><strong>Could not load screenshot submissions</strong><p>${escapeHtml(err.message)}</p><button type="button" class="admin-action-btn secondary" id="retry-evidence-load">Retry loading matches</button></div>`;
@@ -781,7 +800,7 @@
                     </td>
                     <td><small>${dateStr}</small></td>
                     <td>${scoreText}</td>
-                    <td><span class="match-status-pill status-${m.status}">${m.status}</span></td>
+                    <td><span class="match-status-pill status-${escapeHtml(m.status)}">${escapeHtml(String(m.status || 'unknown').replaceAll('-', ' '))}</span></td>
                     <td class="text-right">
                         <div class="row-actions">
                             <button type="button" class="btn-action edit" data-match-id="${m.id}" title="Edit / Settle Match">⚖️ Settle</button>
@@ -794,9 +813,14 @@
     };
 
     document.querySelectorAll('#match-status-tabs .filter-tab').forEach((tab) => {
+        tab.setAttribute('aria-pressed', String(tab.classList.contains('is-active')));
         tab.addEventListener('click', () => {
-            document.querySelectorAll('#match-status-tabs .filter-tab').forEach(t => t.classList.remove('is-active'));
+            document.querySelectorAll('#match-status-tabs .filter-tab').forEach((t) => {
+                t.classList.remove('is-active');
+                t.setAttribute('aria-pressed', 'false');
+            });
             tab.classList.add('is-active');
+            tab.setAttribute('aria-pressed', 'true');
             currentMatchStatusFilter = tab.dataset.status;
             renderMatchesTable();
         });
@@ -852,7 +876,11 @@
         e.preventDefault();
         const matchId = document.getElementById('edit-match-id').value;
         const feedback = document.getElementById('edit-match-feedback');
-        feedback.textContent = 'Saving match decision live…';
+        const submitButton = e.submitter || e.currentTarget.querySelector('[type="submit"]');
+        if (submitButton?.disabled) return;
+        if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Saving…'; }
+        feedback.textContent = 'Saving match decision…';
+        feedback.className = 'modal-feedback';
 
         const challengerScore = Number(document.getElementById('edit-match-challenger-score').value);
         const opponentScore = Number(document.getElementById('edit-match-opponent-score').value);
@@ -873,13 +901,21 @@
                     body: JSON.stringify({ status, challengerScore, opponentScore, ranked, reviewNote: note })
                 });
             }
-            showToast(res.message || 'Match outcome recorded live!');
+            const updatedMatch = cachedMatches.find((match) => match.id === matchId);
+            if (updatedMatch) {
+                updatedMatch.status = status;
+                updatedMatch.scores = { challenger: challengerScore, opponent: opponentScore };
+                if (res.ratingChanges) updatedMatch.ratingChanges = res.ratingChanges;
+            }
+            renderMatchesTable();
+            showToast(res.message || 'Match outcome recorded.');
             modalEditMatch.close();
-            loadMatches();
-            loadOverview();
+            await Promise.all([loadMatches(), loadOverview()]);
         } catch (err) {
             feedback.textContent = err.message;
             feedback.className = 'modal-feedback error';
+        } finally {
+            if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Apply Changes & Settle'; }
         }
     });
 
@@ -912,6 +948,9 @@
 
     document.getElementById('form-create-match')?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submitButton = e.submitter || e.currentTarget.querySelector('[type="submit"]');
+        if (submitButton?.disabled) return;
+        if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Scheduling…'; }
         const feedback = document.getElementById('create-match-feedback');
         feedback.textContent = 'Scheduling fixture…';
 
@@ -935,6 +974,8 @@
         } catch (err) {
             feedback.textContent = err.message;
             feedback.className = 'modal-feedback error';
+        } finally {
+            if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Schedule Match Live'; }
         }
     });
 
@@ -1005,7 +1046,11 @@
 
     document.getElementById('broadcast-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submitButton = e.submitter || e.currentTarget.querySelector('[type="submit"]');
+        if (submitButton?.disabled) return;
+        if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Publishing…'; }
         const feedback = document.getElementById('broadcast-feedback');
+        feedback.className = 'form-feedback';
         feedback.textContent = 'Publishing sitewide banner live…';
 
         const payload = {
@@ -1026,6 +1071,9 @@
             loadAdminActivity();
         } catch (err) {
             feedback.textContent = `Error: ${err.message}`;
+            feedback.className = 'form-feedback error';
+        } finally {
+            if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Publish Announcement Live →'; }
         }
     });
 
@@ -1092,7 +1140,7 @@
                         <div><span>Registered:</span> <strong style="color: #f4b72f;">★ ${interestCount} players</strong></div>
                         ${t.featuredCup ? '<div><span>Public page:</span> <strong>League Cup</strong></div>' : ''}
                         ${t.prizePool ? `<div><span>Prize:</span> <strong>${escapeHtml(t.prizePool)}</strong></div>` : ''}
-                        ${t.minElo || t.maxElo ? `<div><span>XP Req:</span> <strong>${t.minElo ? escapeHtml(t.minElo) + '+' : 'Any'} ${t.maxElo ? 'to ' + escapeHtml(t.maxElo) : ''}</strong></div>` : ''}
+                        ${(t.minXP ?? t.minElo) != null || (t.maxXP ?? t.maxElo) != null ? `<div><span>XP Req:</span> <strong>${(t.minXP ?? t.minElo) != null ? escapeHtml(t.minXP ?? t.minElo) + '+' : 'Any'} ${(t.maxXP ?? t.maxElo) != null ? 'to ' + escapeHtml(t.maxXP ?? t.maxElo) : ''}</strong></div>` : ''}
                     </div>
                     <div class="event-actions">
                         <button type="button" class="btn-action edit" data-edit-tourn="${escapeHtml(t.id)}">Edit</button>
@@ -1214,8 +1262,8 @@
             document.getElementById('t-starts-at').value = '';
             document.getElementById('t-prize').value = '';
             document.getElementById('t-prize-details').value = '';
-            document.getElementById('t-min-elo').value = t.minElo ?? '';
-            document.getElementById('t-max-elo').value = t.maxElo ?? '';
+            document.getElementById('t-min-elo').value = t.minXP ?? t.minElo ?? '';
+            document.getElementById('t-max-elo').value = t.maxXP ?? t.maxElo ?? '';
             document.getElementById('t-entry-link').value = '';
             document.getElementById('t-desc').value = '';
             document.getElementById('t-rules').value = '';
@@ -1254,8 +1302,8 @@
             document.getElementById('t-starts-at').value = t.startsAt ? new Date(new Date(t.startsAt).getTime() - new Date(t.startsAt).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
             document.getElementById('t-prize').value = t.prizePool || '';
             document.getElementById('t-prize-details').value = t.prizeDetails || '';
-            document.getElementById('t-min-elo').value = t.minElo || '';
-            document.getElementById('t-max-elo').value = t.maxElo || '';
+            document.getElementById('t-min-elo').value = t.minXP ?? t.minElo ?? '';
+            document.getElementById('t-max-elo').value = t.maxXP ?? t.maxElo ?? '';
             document.getElementById('t-entry-link').value = t.entryLink || '';
             document.getElementById('t-desc').value = t.desc || '';
             document.getElementById('t-rules').value = t.rules || '';
@@ -1328,8 +1376,8 @@
             startsAt: document.getElementById('t-starts-at').value ? new Date(document.getElementById('t-starts-at').value).toISOString() : null,
             prizePool: document.getElementById('t-prize').value.trim(),
             prizeDetails: document.getElementById('t-prize-details').value.trim(),
-            minElo: document.getElementById('t-min-elo').value ? Number(document.getElementById('t-min-elo').value) : null,
-            maxElo: document.getElementById('t-max-elo').value ? Number(document.getElementById('t-max-elo').value) : null,
+            minXP: document.getElementById('t-min-elo').value ? Number(document.getElementById('t-min-elo').value) : null,
+            maxXP: document.getElementById('t-max-elo').value ? Number(document.getElementById('t-max-elo').value) : null,
             entryLink: document.getElementById('t-entry-link').value.trim(),
             desc: document.getElementById('t-desc').value.trim(),
             rules: document.getElementById('t-rules').value.trim(),
@@ -1612,6 +1660,12 @@
     // Initial Data Load
     const loadInitialData = async () => {
         await Promise.all([loadOverview(), loadUsers(), loadAdminActivity()]);
+    };
+
+    // Restore the requested work area only after every lazy loader has been initialized.
+    const activateRequestedTab = () => {
+        const allowedTabs = ['overview', 'users', 'matches', 'broadcast', 'tournaments', 'clubs', 'seasons', 'bracket'];
+        if (allowedTabs.includes(requestedInitialTab)) openAdminTab(requestedInitialTab);
     };
 
     // Run Auth Check on startup
