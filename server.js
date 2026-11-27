@@ -1413,34 +1413,30 @@ app.get('/api/profile', (req, res) => {
 });
 
 const saveProfilePhoto = (user, dataUrl) => {
-  if (typeof dataUrl !== 'string') throw new Error('Choose a PNG, JPEG, or WebP profile photo.');
-  const match = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataUrl);
-  if (!match) throw new Error('Use a PNG, JPEG, or WebP profile photo.');
+  if (typeof dataUrl !== 'string') throw new Error('Choose an image file for your profile photo.');
+  const trimmed = dataUrl.trim().replace(/\s+/g, '');
+  const match = /^data:image\/(png|jpe?g|webp|gif|avif);base64,([A-Za-z0-9+/=]+)$/i.exec(trimmed);
+  if (!match) throw new Error('Use a standard image format (JPG, PNG, WebP, GIF, or AVIF).');
   const contents = Buffer.from(match[2], 'base64');
-  if (!contents.length || contents.length > 2 * 1024 * 1024) throw new Error('Profile photos must be 2 MB or smaller.');
-  const imageType = match[1];
-  const validBytes = imageType === 'png'
-    ? contents.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
-    : imageType === 'jpeg'
-      ? contents.length >= 3 && contents[0] === 0xff && contents[1] === 0xd8 && contents[2] === 0xff
-      : contents.length >= 12 && contents.toString('ascii', 0, 4) === 'RIFF' && contents.toString('ascii', 8, 12) === 'WEBP';
-  if (!validBytes) throw new Error('The photo contents do not match the selected image type.');
-  const extension = imageType === 'jpeg' ? 'jpg' : imageType;
-  const file = `photo-${crypto.randomUUID()}.${extension}`;
-  if (user.avatar?.file && /^photo-[\w-]+\.(png|jpg|webp)$/.test(user.avatar.file)) {
+  if (!contents.length || contents.length > 8 * 1024 * 1024) throw new Error('Profile photos must be 8 MB or smaller.');
+  let rawType = match[1].toLowerCase();
+  const imageType = rawType === 'jpeg' ? 'jpg' : rawType;
+  const file = `photo-${crypto.randomUUID()}.${imageType}`;
+  if (user.avatar?.file && /^photo-[\w-]+\.(png|jpe?g|webp|gif|avif)$/i.test(user.avatar.file)) {
     fs.rmSync(path.join(PROFILE_PHOTO_DIR, path.basename(user.avatar.file)), { force: true });
   }
   fs.writeFileSync(path.join(PROFILE_PHOTO_DIR, file), contents, { mode: 0o600 });
-  return { file, contentType: `image/${imageType}`, updatedAt: new Date().toISOString() };
+  return { file, contentType: `image/${imageType === 'jpg' ? 'jpeg' : imageType}`, updatedAt: new Date().toISOString() };
 };
 
 app.get('/api/players/:id/avatar', (req, res) => {
   const user = Object.values(readUsers()).find((candidate) => candidate.id === req.params.id && candidate.verified);
   const avatar = user?.avatar;
-  if (!avatar || !/^photo-[\w-]+\.(png|jpg|webp)$/.test(avatar.file)) {
+  if (!avatar || !/^photo-[\w-]+\.(png|jpe?g|webp|gif|avif)$/i.test(avatar.file)) {
     return res.sendStatus(404);
   }
-  res.setHeader('Content-Type', avatar.contentType || (avatar.file.endsWith('.jpg') ? 'image/jpeg' : `image/${path.extname(avatar.file).slice(1)}`));
+  const ext = path.extname(avatar.file).slice(1).toLowerCase();
+  res.setHeader('Content-Type', avatar.contentType || (ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : `image/${ext}`));
   res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   return res.sendFile(path.join(PROFILE_PHOTO_DIR, avatar.file));
 });
@@ -1474,7 +1470,7 @@ app.patch('/api/profile', (req, res) => {
   }
   if (Object.hasOwn(req.body, 'avatarData')) {
     if (req.body.avatarData === null) {
-      if (user.avatar?.file && /^photo-[\w-]+\.(png|jpg|webp)$/.test(user.avatar.file)) {
+      if (user.avatar?.file && /^photo-[\w-]+\.(png|jpe?g|webp|gif|avif)$/i.test(user.avatar.file)) {
         fs.rmSync(path.join(PROFILE_PHOTO_DIR, path.basename(user.avatar.file)), { force: true });
       }
       delete user.avatar;

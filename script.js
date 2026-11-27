@@ -30,7 +30,7 @@ const appendPlayerPrizes = (parent, awards, { compact = true, limit = 3 } = {}) 
 document.addEventListener('error', (event) => {
 	const image = event.target;
 	if (!(image instanceof HTMLImageElement)) return;
-	const frame = image.closest('.rank-avatar, .player-directory-avatar, .home-ranking-avatar, .matches-team-badge, .tournament-participant-avatar, .profile-avatar-lg, .profile-photo-preview, .profile-history-avatar');
+	const frame = image.closest('.rank-avatar, .player-directory-avatar, .home-ranking-avatar, .matches-team-badge, .tournament-participant-avatar, .profile-avatar-lg, .profile-photo-preview, .profile-history-avatar, .header-user-avatar-frame');
 	if (!frame || frame.dataset.avatarFallbackApplied === 'true') return;
 	frame.dataset.avatarFallbackApplied = 'true';
 	const label = (image.dataset.fallback || image.alt || '').replace(/profile photo|current profile photo/ig, '').trim();
@@ -62,21 +62,26 @@ if (menuToggle && navigation) {
 
 const syncAccountNavigation = async () => {
 	const list = document.querySelector('.navigation ul');
-	if (!list) return;
 	let authenticated = false;
+	let sessionUser = null;
 	try {
 		const response = await fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' });
 		if (!response.ok) throw new Error('Account session could not be checked.');
-		authenticated = (await response.json()).authenticated === true;
+		const data = await response.json();
+		authenticated = data.authenticated === true;
+		if (authenticated) sessionUser = data;
 	} catch {
-		list.dataset.authState = 'unknown';
+		if (list) list.dataset.authState = 'unknown';
 		return;
 	}
 
-	list.dataset.authState = authenticated ? 'signed-in' : 'signed-out';
-	list.querySelectorAll('.nav-auth-item').forEach((item) => item.remove());
+	if (list) {
+		list.dataset.authState = authenticated ? 'signed-in' : 'signed-out';
+		list.querySelectorAll('.nav-auth-item').forEach((item) => item.remove());
+	}
 	const returnPath = `${location.pathname}${location.search}${location.hash}`;
 	const createAuthItem = (label, href, action) => {
+		if (!list) return;
 		const item = document.createElement('li');
 		item.className = 'nav-auth-item';
 		if (action) {
@@ -105,20 +110,79 @@ const syncAccountNavigation = async () => {
 		list.append(item);
 	};
 
-	if (authenticated) {
-		createAuthItem('My Profile', 'profile.html');
+	if (authenticated && sessionUser) {
+		const gamerTag = sessionUser.gamerTag || sessionUser.name || 'Player';
+		const initial = gamerTag.charAt(0).toUpperCase() || 'P';
+		const avatarUrl = sessionUser.avatarUrl || '';
+
+		if (list) {
+			const profileLi = document.createElement('li');
+			profileLi.className = 'nav-auth-item nav-user-item';
+			const profileLink = document.createElement('a');
+			profileLink.href = 'profile.html';
+			profileLink.className = 'nav-user-profile-link';
+			const avatarSpan = document.createElement('span');
+			avatarSpan.className = 'header-user-avatar-frame is-small';
+			if (avatarUrl) {
+				const img = document.createElement('img');
+				img.src = avatarUrl;
+				img.alt = '';
+				img.className = 'header-user-avatar';
+				avatarSpan.append(img);
+			} else {
+				avatarSpan.textContent = initial;
+			}
+			const textSpan = document.createElement('span');
+			textSpan.textContent = `My Profile (@${gamerTag})`;
+			profileLink.append(avatarSpan, textSpan);
+			profileLi.append(profileLink);
+			list.append(profileLi);
+		}
 		createAuthItem('Log out', '', true);
+
+		const signInLink = document.querySelector('.header-sign-in');
+		if (signInLink) {
+			signInLink.href = 'profile.html';
+			signInLink.className = 'header-sign-in header-user-pill';
+			signInLink.setAttribute('aria-label', `Signed in as @${gamerTag}`);
+			signInLink.replaceChildren();
+
+			const avatarFrame = document.createElement('span');
+			avatarFrame.className = 'header-user-avatar-frame';
+			avatarFrame.setAttribute('aria-hidden', 'true');
+			if (avatarUrl) {
+				const avatarImg = document.createElement('img');
+				avatarImg.src = avatarUrl;
+				avatarImg.alt = '';
+				avatarImg.className = 'header-user-avatar';
+				avatarFrame.append(avatarImg);
+			} else {
+				const fallback = document.createElement('span');
+				fallback.className = 'header-user-fallback';
+				fallback.textContent = initial;
+				avatarFrame.append(fallback);
+			}
+
+			const tagSpan = document.createElement('span');
+			tagSpan.className = 'header-user-tag';
+			tagSpan.textContent = gamerTag;
+
+			signInLink.append(avatarFrame, tagSpan);
+		}
 	} else {
 		const next = encodeURIComponent(returnPath || 'index.html');
 		createAuthItem('Sign in', `login.html?next=${next}`);
 		createAuthItem('Create account', `signup.html?next=${next}`);
+
+		const signInLink = document.querySelector('.header-sign-in');
+		if (signInLink) {
+			signInLink.href = `login.html?next=${next}`;
+			signInLink.className = 'header-sign-in';
+			signInLink.removeAttribute('aria-label');
+			signInLink.textContent = 'Sign in';
+		}
 	}
 
-	const signInLink = document.querySelector('.header-sign-in');
-	if (signInLink) {
-		signInLink.href = authenticated ? 'profile.html' : `login.html?next=${encodeURIComponent(returnPath || 'index.html')}`;
-		signInLink.textContent = authenticated ? 'My Profile' : 'Sign in';
-	}
 	document.querySelectorAll('.header-action[href="signup.html"]').forEach((link) => {
 		if (authenticated) link.hidden = true;
 		else link.href = `signup.html?next=${encodeURIComponent(returnPath || 'index.html')}`;
